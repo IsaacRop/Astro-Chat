@@ -155,6 +155,9 @@ export default function Home() {
   // Track if node was created for this session (for real-time graph updates)
   const [nodeCreated, setNodeCreated] = useState(false);
 
+  // Store AI-generated title for the conversation
+  const [generatedTitle, setGeneratedTitle] = useState<string | null>(null);
+
   // Ref for auto-scrolling to latest message
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -214,8 +217,8 @@ export default function Home() {
   useEffect(() => {
     // Trigger save when status changes from 'streaming' to 'ready' and we have messages
     if (prevStatusRef.current === 'streaming' && status === 'ready' && messages.length > 0) {
-      // Save chat using unified storage
-      saveChat(currentSessionId, messages);
+      // Save chat using unified storage with AI-generated title
+      saveChat(currentSessionId, messages, generatedTitle || undefined);
 
       // Update local state for sidebar
       setSavedChats(prev => {
@@ -230,7 +233,7 @@ export default function Home() {
       });
     }
     prevStatusRef.current = status;
-  }, [status, messages, currentSessionId]);
+  }, [status, messages, currentSessionId, generatedTitle]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -254,8 +257,22 @@ export default function Home() {
         .then(data => {
           if (data.label && data.embedding) {
             console.log('[Real-time Graph] Node created with label:', data.label);
+            // Store the AI-generated title for use when saving chat
+            setGeneratedTitle(data.label);
             // Use unified storage: node.id === currentSessionId (UUID)
             addNode(currentSessionId, data.label, data.embedding);
+            // IMPORTANT: Re-save chat with the AI-generated title (fixes timing issue)
+            if (messages.length > 0) {
+              saveChat(currentSessionId, messages, data.label);
+              // Update sidebar with new title
+              setSavedChats(getAllChats().map(c => ({
+                uuid: c.uuid,
+                title: c.title,
+                createdAt: c.createdAt,
+                updatedAt: c.updatedAt,
+                messageCount: c.messageCount
+              })));
+            }
           }
         })
         .catch(err => console.error('[Real-time Graph] Failed to create node:', err));
@@ -268,6 +285,7 @@ export default function Home() {
     const uuid = generateUUID();
     setCurrentSessionId(uuid);
     setNodeCreated(false);
+    setGeneratedTitle(null);
     setSidebarOpen(false);
 
     // Update URL without reload
@@ -283,6 +301,7 @@ export default function Home() {
       setMessages(session.messages);
       setCurrentSessionId(uuid);
       setNodeCreated(true); // Node already exists for this chat
+      setGeneratedTitle(session.title); // Restore saved title
       setSidebarOpen(false);
 
       // Update URL
