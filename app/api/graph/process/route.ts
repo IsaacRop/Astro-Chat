@@ -7,6 +7,24 @@ const ollama = createOpenAI({
     apiKey: 'ollama',
 });
 
+// System instruction to generate conversation titles
+const SYSTEM_INSTRUCTION = `Você é um gerador de títulos. Analise a PRIMEIRA MENSAGEM DO USUÁRIO abaixo e crie um título curto e descritivo.
+
+REGRAS OBRIGATÓRIAS:
+1. O título deve ter 2-5 palavras
+2. O título deve refletir EXATAMENTE o assunto da pergunta do usuário
+3. Use português
+4. Retorne APENAS o título, nada mais
+5. NÃO use pontuação no final
+
+EXEMPLOS:
+- Pergunta: "O que é logaritmo?" → Título: Logaritmos
+- Pergunta: "Me explica as leis de Newton" → Título: Leis de Newton
+- Pergunta: "Como calcular a área de um círculo?" → Título: Área do Círculo
+- Pergunta: "Quais foram as causas da primeira guerra mundial?" → Título: Causas da Primeira Guerra
+
+CONVERSA:`;
+
 // Allow up to 60 seconds for processing
 export const maxDuration = 60;
 
@@ -24,14 +42,10 @@ export async function POST(request: Request) {
 
         const topicResult = await generateText({
             model: ollama.chat('llama3.2'),
-            prompt: `Analyze this study conversation and extract the main topic being discussed.
-Return ONLY a short label in the format "Topic: Subtopic" (e.g., "Math: Logarithms", "Physics: Kinematics", "Biology: Cell Division").
-Keep it under 30 characters. Do not include any explanation.
-
-Conversation:
+            prompt: `${SYSTEM_INSTRUCTION}
 ${conversationText}
 
-Topic Label:`,
+TÍTULO:`,
         });
 
         const label = topicResult.text.trim().replace(/^["']|["']$/g, '');
