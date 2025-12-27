@@ -1,10 +1,8 @@
-import { convertToModelMessages, streamText, UIMessage } from "ai"
-import { createOpenAI } from '@ai-sdk/openai'
+import { convertToCoreMessages, streamText, Message } from "ai"
+import { openai } from '@ai-sdk/openai'
 
-const ollama = createOpenAI({
-    baseURL: 'http://localhost:11434/v1',
-    apiKey: 'ollama',
-});
+// A chave OPENAI_API_KEY é lida automaticamente pelo @ai-sdk/openai
+// A variável de ambiente está definida em .env.local (protegida pelo .gitignore)
 
 // System instruction to be injected into user messages
 const SYSTEM_INSTRUCTION = `Você é o TEO (Tutor de Estudo Otimizado), um assistente de inteligência artificial especializado e exclusivo para a preparação do ENEM (Exame Nacional do Ensino Médio).
@@ -43,10 +41,10 @@ PERGUNTA DO USUÁRIO:`;
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
-    const { messages }: { messages: UIMessage[] } = await request.json()
+    const { messages }: { messages: Message[] } = await request.json()
 
-    // Convert UI messages to model messages
-    const modelMessages = convertToModelMessages(messages);
+    // Convert UI messages to core messages
+    const modelMessages = convertToCoreMessages(messages);
 
     // Find and modify the last user message to include system instructions
     const modifiedMessages = modelMessages.map((message, index) => {
@@ -81,10 +79,10 @@ export async function POST(request: Request) {
     });
 
     const result = streamText({
-        model: ollama.chat('llama3.2'),
+        model: openai('gpt-4o-mini'),
         // Remove system prop since we're injecting into user message
         messages: modifiedMessages,
     })
 
-    return result.toUIMessageStreamResponse()
+    return result.toDataStreamResponse()
 }

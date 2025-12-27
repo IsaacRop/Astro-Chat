@@ -1,7 +1,6 @@
 'use client'
 
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, UIMessage } from "ai";
+import { useChat, Message } from "ai/react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Send, Bot, User, Menu, Plus, Trash2, MessageSquare, X, Network } from "lucide-react";
 import Link from "next/link";
@@ -21,7 +20,7 @@ import {
 type SavedChat = ChatSummary;
 
 // Get title from first user message
-const getTitleFromMessages = (messages: UIMessage[]): string => {
+const getTitleFromMessages = (messages: Message[]): string => {
   const firstUserMessage = messages.find(m => m.role === 'user');
   if (!firstUserMessage) return 'Nova Conversa';
 
@@ -142,15 +141,10 @@ export default function Home() {
   const [currentSessionId, setCurrentSessionId] = useState<string>('');
   const [isClient, setIsClient] = useState(false);
 
-  // AI SDK v5: useChat with transport, manage input state manually
-  const { messages, setMessages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-    }),
+  // AI SDK v4: useChat with api option
+  const { messages, setMessages, input, handleInputChange, handleSubmit: submitChat, isLoading } = useChat({
+    api: '/api/chat',
   });
-
-  // Manage input state manually (SDK v5 requirement)
-  const [input, setInput] = useState('');
 
   // Track if node was created for this session (for real-time graph updates)
   const [nodeCreated, setNodeCreated] = useState(false);
@@ -161,11 +155,11 @@ export default function Home() {
   // Ref for auto-scrolling to latest message
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Track previous status for auto-save trigger
-  const prevStatusRef = useRef(status);
+  // Track previous isLoading for auto-save trigger
+  const prevLoadingRef = useRef(isLoading);
 
   // Determine if AI is currently responding
-  const isStreaming = status === 'streaming' || status === 'submitted';
+  const isStreaming = isLoading;
 
   // Load saved chats from localStorage on mount and handle session from URL
   useEffect(() => {
@@ -215,8 +209,8 @@ export default function Home() {
 
   // Auto-save chat when AI finishes responding (using new storage)
   useEffect(() => {
-    // Trigger save when status changes from 'streaming' to 'ready' and we have messages
-    if (prevStatusRef.current === 'streaming' && status === 'ready' && messages.length > 0) {
+    // Trigger save when isLoading changes from true to false and we have messages
+    if (prevLoadingRef.current === true && isLoading === false && messages.length > 0) {
       // Save chat using unified storage with AI-generated title
       saveChat(currentSessionId, messages, generatedTitle || undefined);
 
@@ -232,8 +226,8 @@ export default function Home() {
         return updated;
       });
     }
-    prevStatusRef.current = status;
-  }, [status, messages, currentSessionId, generatedTitle]);
+    prevLoadingRef.current = isLoading;
+  }, [isLoading, messages, currentSessionId, generatedTitle]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -336,9 +330,8 @@ export default function Home() {
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim() && status === 'ready') {
-      sendMessage({ text: input });
-      setInput('');
+    if (input.trim() && !isLoading) {
+      submitChat(e);
     }
   };
 
@@ -405,11 +398,14 @@ export default function Home() {
               Nenhuma conversa salva
             </p>
           )}
-          {savedChats.map(chat => (
-            <button
+          {savedChats.map((chat: SavedChat) => (
+            <div
               key={chat.uuid}
               onClick={() => loadSavedChat(chat.uuid)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left mb-1 transition-colors group ${chat.uuid === currentSessionId
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && loadSavedChat(chat.uuid)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left mb-1 transition-colors group cursor-pointer ${chat.uuid === currentSessionId
                 ? 'bg-zinc-800 text-gray-100'
                 : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-gray-200'
                 }`}
@@ -422,7 +418,7 @@ export default function Home() {
               >
                 <Trash2 size={14} />
               </button>
-            </button>
+            </div>
           ))}
         </div>
       </aside>
@@ -558,7 +554,7 @@ export default function Home() {
               <textarea
                 placeholder="Digite sua pergunta sobre programação..."
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -566,7 +562,7 @@ export default function Home() {
                   }
                 }}
                 rows={1}
-                disabled={status !== 'ready'}
+                disabled={isLoading}
                 className="w-full resize-none rounded-xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-gray-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-200 max-h-32 overflow-y-auto disabled:opacity-50"
                 style={{ minHeight: '48px' }}
               />
@@ -574,7 +570,7 @@ export default function Home() {
 
             <button
               type="submit"
-              disabled={status !== 'ready' || !input.trim()}
+              disabled={isLoading || !input.trim()}
               className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all duration-200 hover:scale-105 active:scale-95"
             >
               <Send size={18} />
