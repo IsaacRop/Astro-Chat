@@ -165,11 +165,11 @@ export default function GraphVisualization() {
                     graphData={stableGraphData as any}
                     width={dimensions.width}
                     height={dimensions.height}
-                    backgroundColor="#000000"
+                    backgroundColor="transparent"
                     nodeLabel={(node: any) => node.label}
-                    nodeColor={() => '#8b5cf6'}
+                    nodeColor={() => 'var(--accent-purple)'}
                     nodeRelSize={8}
-                    linkColor={() => '#4b5563'}
+                    linkColor={() => 'var(--border)'}
                     linkWidth={2}
                     linkDirectionalParticles={2}
                     linkDirectionalParticleWidth={2}
@@ -190,7 +190,7 @@ export default function GraphVisualization() {
     return (
         <div className="flex flex-col lg:flex-row h-[calc(100vh-73px)]">
             {/* Graph Container */}
-            <div ref={containerRef} className="flex-1 bg-black relative">                {/* Main Graph/List Content */}
+            <div ref={containerRef} className="flex-1 bg-background relative">                {/* Main Graph/List Content */}
                 {renderError ? (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
                         <AlertCircle size={48} className="text-red-500 mb-4" />
@@ -204,7 +204,7 @@ export default function GraphVisualization() {
                             Grafo Vazio
                         </h2>
                         <p className="text-zinc-600 max-w-md text-sm">
-                            Seu grafo de conhecimento está vazio. Converse com o TEO para começar a construir conexões.
+                            Seu grafo de conhecimento está vazio. Converse com o Astro para começar a construir conexões.
                         </p>
                     </div>
                 ) : useListView ? (

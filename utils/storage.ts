@@ -1,5 +1,5 @@
 /**
- * TEO Unified Storage Utility
+ * Astro Unified Storage Utility
  * 
  * Core Principle: One UUID links Chat, Node, and Notes
  * 
