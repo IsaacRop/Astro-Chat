@@ -1,5 +1,5 @@
 /**
- * TEO Unified Storage Utility
+ * Astro Unified Storage Utility
  * 
  * Core Principle: One UUID links Chat, Node, and Notes
  * 
@@ -9,7 +9,7 @@
  * - Graph: teo-knowledge-graph (contains nodes with id === UUID)
  */
 
-import { UIMessage } from 'ai';
+import type { UIMessage } from 'ai';
 
 // ============================================
 // TYPES

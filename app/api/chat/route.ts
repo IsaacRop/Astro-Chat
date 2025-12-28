@@ -1,4 +1,4 @@
-import { convertToCoreMessages, streamText, Message } from "ai"
+import { streamText } from "ai"
 import { openai } from '@ai-sdk/openai'
 
 // A chave OPENAI_API_KEY é lida automaticamente pelo @ai-sdk/openai
@@ -35,49 +35,38 @@ O USUÁRIO QUER APRENDER AGORA:`;
 // Allow streaming responses up to 60 seconds
 export const maxDuration = 60;
 
+// Define a simple message type for incoming requests
+interface RequestMessage {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+}
+
 export async function POST(request: Request) {
-    const { messages }: { messages: Message[] } = await request.json()
+    const { messages }: { messages: RequestMessage[] } = await request.json()
 
-    // Convert UI messages to core messages
-    const modelMessages = convertToCoreMessages(messages);
-
-    // Find and modify the last user message to include system instructions
-    const modifiedMessages = modelMessages.map((message, index) => {
-        // Only modify the last message if it's from the user
-        const isLastMessage = index === modelMessages.length - 1;
+    // Convert messages and inject system prompt into last user message
+    const coreMessages = messages.map((message, index) => {
+        const isLastMessage = index === messages.length - 1;
         const isUserMessage = message.role === 'user';
 
         if (isLastMessage && isUserMessage) {
-            // Handle different content formats
-            if (typeof message.content === 'string') {
-                return {
-                    ...message,
-                    content: `${SYSTEM_INSTRUCTION}\n${message.content}`
-                };
-            } else if (Array.isArray(message.content)) {
-                // For array content (multimodal), find and modify text parts
-                return {
-                    ...message,
-                    content: message.content.map((part, partIndex) => {
-                        if (partIndex === 0 && part.type === 'text') {
-                            return {
-                                ...part,
-                                text: `${SYSTEM_INSTRUCTION}\n${part.text}`
-                            };
-                        }
-                        return part;
-                    })
-                };
-            }
+            return {
+                role: 'user' as const,
+                content: `${SYSTEM_INSTRUCTION}\n${message.content}`
+            };
         }
-        return message;
+
+        return {
+            role: message.role,
+            content: message.content
+        };
     });
 
     const result = streamText({
         model: openai('gpt-4o-mini'),
-        // Remove system prop since we're injecting into user message
-        messages: modifiedMessages,
+        messages: coreMessages,
     })
 
-    return result.toDataStreamResponse()
+    return result.toUIMessageStreamResponse()
 }
+

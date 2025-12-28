@@ -1,0 +1,74 @@
+"use client";
+
+import { Header } from "@/components/Header";
+import { useTheme } from "next-themes";
+import { Moon, Sun, Monitor, Info } from "lucide-react";
+
+export default function SettingsPage() {
+    const { theme, setTheme } = useTheme();
+
+    return (
+        <div className="min-h-screen bg-background text-foreground flex flex-col">
+            <Header title="Settings" backLink="/" />
+
+            <main className="flex-1 p-6 max-w-2xl mx-auto w-full space-y-8 animate-fade-in-up">
+                {/* Theme Section */}
+                <section className="space-y-4">
+                    <h2 className="text-xl font-serif font-semibold text-foreground border-b border-border pb-2">Appearance</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button
+                            onClick={() => setTheme("light")}
+                            className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === "light"
+                                    ? "border-accent-blue bg-accent-blue/10 text-accent-blue"
+                                    : "border-border hover:border-accent-blue/50 text-muted-foreground"
+                                }`}
+                        >
+                            <Sun size={32} className="mb-3" />
+                            <span className="font-medium">Light</span>
+                        </button>
+
+                        <button
+                            onClick={() => setTheme("dark")}
+                            className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === "dark"
+                                    ? "border-accent-purple bg-accent-purple/10 text-accent-purple"
+                                    : "border-border hover:border-accent-purple/50 text-muted-foreground"
+                                }`}
+                        >
+                            <Moon size={32} className="mb-3" />
+                            <span className="font-medium">Dark</span>
+                        </button>
+
+                        <button
+                            onClick={() => setTheme("system")}
+                            className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${theme === "system"
+                                    ? "border-accent-green bg-accent-green/10 text-accent-green"
+                                    : "border-border hover:border-accent-green/50 text-muted-foreground"
+                                }`}
+                        >
+                            <Monitor size={32} className="mb-3" />
+                            <span className="font-medium">System</span>
+                        </button>
+                    </div>
+                </section>
+
+                {/* About Section */}
+                <section className="space-y-4">
+                    <h2 className="text-xl font-serif font-semibold text-foreground border-b border-border pb-2">About Astro</h2>
+                    <div className="bg-card border border-border rounded-xl p-6 flex flex-col items-center text-center space-y-4">
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center shadow-lg shadow-accent-purple/20">
+                            {/* Abstract Logo */}
+                            <div className="w-8 h-8 bg-background rounded-full opacity-80" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-foreground">Astro AI</h3>
+                            <p className="text-muted-foreground text-sm">Version 1.0.0 (Cosmic)</p>
+                        </div>
+                        <p className="text-muted-foreground max-w-sm">
+                            Next Generation AI Assistant designed for clarity, creativity, and exploration. Built with the latest web technologies.
+                        </p>
+                    </div>
+                </section>
+            </main>
+        </div>
+    );
+}
