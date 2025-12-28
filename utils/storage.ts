@@ -9,7 +9,7 @@
  * - Graph: teo-knowledge-graph (contains nodes with id === UUID)
  */
 
-import { UIMessage } from 'ai';
+import type { UIMessage } from 'ai';
 
 // ============================================
 // TYPES

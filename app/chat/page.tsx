@@ -1,6 +1,6 @@
 'use client'
 
-import { useChat, Message } from "ai/react";
+import { useChat, type Message } from "@ai-sdk/react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Send, Bot, User, Plus, Trash2, MessageSquare, X, Network } from "lucide-react";
 import Link from "next/link";
@@ -162,7 +162,7 @@ export default function ChatPage() {
             if (existingChat) {
                 console.log('[Session] Loading existing chat from URL:', sessionFromUrl);
                 setCurrentSessionId(sessionFromUrl);
-                setMessages(existingChat.messages);
+                setMessages(existingChat.messages as unknown as Message[]);
                 setNodeCreated(true); // Node already exists for loaded chat
             } else {
                 // URL has session but no matching chat - use the UUID anyway (fresh session)
@@ -199,7 +199,7 @@ export default function ChatPage() {
         // Trigger save when isLoading changes from true to false and we have messages
         if (prevLoadingRef.current === true && isLoading === false && messages.length > 0) {
             // Save chat using unified storage with AI-generated title
-            saveChat(currentSessionId, messages, generatedTitle || undefined);
+            saveChat(currentSessionId, messages as unknown as import('ai').UIMessage[], generatedTitle || undefined);
 
             // Update local state for sidebar
             setSavedChats(prev => {
@@ -244,7 +244,7 @@ export default function ChatPage() {
                         addNode(currentSessionId, data.label, data.embedding);
                         // IMPORTANT: Re-save chat with the AI-generated title (fixes timing issue)
                         if (messages.length > 0) {
-                            saveChat(currentSessionId, messages, data.label);
+                            saveChat(currentSessionId, messages as unknown as import('ai').UIMessage[], data.label);
                             // Update sidebar with new title
                             setSavedChats(getAllChats().map(c => ({
                                 uuid: c.uuid,
@@ -279,7 +279,7 @@ export default function ChatPage() {
     const loadSavedChat = useCallback((uuid: string) => {
         const session = loadChat(uuid);
         if (session) {
-            setMessages(session.messages);
+            setMessages(session.messages as unknown as Message[]);
             setCurrentSessionId(uuid);
             setNodeCreated(true); // Node already exists for this chat
             setGeneratedTitle(session.title); // Restore saved title
