@@ -2,7 +2,7 @@ import { OctopusMascot } from "@/components/OctopusMascot";
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-background overflow-hidden relative selection:bg-accent-purple/30 selection:text-foreground">
+    <main className="min-h-screen min-h-[100dvh] w-full flex flex-col items-center justify-center bg-background overflow-hidden relative selection:bg-accent-purple/30 selection:text-foreground px-4 py-8 md:px-8">
 
       {/* Background Decor - Cosmic gradient */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-accent-purple/10 via-accent-blue/5 to-transparent opacity-60 pointer-events-none" />
@@ -17,25 +17,27 @@ export default function Home() {
       </div>
 
       {/* Main Hero Container */}
-      <div className="z-10 flex flex-col items-center justify-center gap-4">
+      <div className="z-10 flex flex-col items-center justify-center gap-2 md:gap-4 w-full max-w-full">
 
-        {/* Title */}
-        <h1 className="font-serif text-5xl md:text-7xl font-bold tracking-tight text-center bg-clip-text text-transparent bg-gradient-to-r from-foreground via-accent-purple to-foreground drop-shadow-sm">
+        {/* Title - Responsive text sizes */}
+        <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight text-center bg-clip-text text-transparent bg-gradient-to-r from-foreground via-accent-purple to-foreground drop-shadow-sm">
           Astro
         </h1>
 
-        <p className="font-sans text-lg md:text-xl text-muted-foreground max-w-md text-center mb-4">
+        <p className="font-sans text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-xs sm:max-w-sm md:max-w-md text-center mb-2 md:mb-4 px-2">
           Next Gen AI Assistant
         </p>
 
-        {/* Octopus Mascot with Interactive Tentacles */}
-        <OctopusMascot />
+        {/* Octopus Mascot with Interactive Tentacles - Responsive container */}
+        <div className="w-full max-w-[95vw] sm:max-w-[85vw] md:max-w-[800px] flex items-center justify-center">
+          <OctopusMascot />
+        </div>
 
       </div>
 
-      {/* Bottom Star Decoration */}
-      <div className="absolute bottom-8 right-8 text-foreground/30">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+      {/* Bottom Star Decoration - Responsive positioning */}
+      <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 text-foreground/30">
+        <svg width="24" height="24" className="md:w-8 md:h-8" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2L14.09 8.26L21 9.27L16 14.14L17.18 21.02L12 17.77L6.82 21.02L8 14.14L3 9.27L9.91 8.26L12 2Z" />
         </svg>
       </div>
