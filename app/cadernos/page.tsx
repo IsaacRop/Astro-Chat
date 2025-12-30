@@ -9,8 +9,8 @@ const GraphVisualization = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div className="flex-1 flex items-center justify-center bg-background">
-                <div className="text-muted-foreground animate-pulse">Loading cosmic graph...</div>
+            <div className="flex-1 flex items-center justify-center bg-background px-4">
+                <div className="text-muted-foreground animate-pulse text-center text-sm md:text-base">Loading cosmic graph...</div>
             </div>
         ),
     }
@@ -18,11 +18,11 @@ const GraphVisualization = dynamic(
 
 export default function CadernosPage() {
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-hidden">
             {/* Shared Header */}
             <Header title="Cadernos" backLink="/" />
 
-            {/* Dynamic Graph Component - Needs to fit remaining height */}
+            {/* Dynamic Graph Component - fits remaining height */}
             <div className="flex-1 relative overflow-hidden bg-background">
                 <GraphVisualization />
             </div>
