@@ -1,7 +1,7 @@
 "use client";
 
 import { Header } from "@/components/Header";
-import { Plus, MoreHorizontal, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2, GripVertical } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -106,24 +106,25 @@ export default function TasksPage() {
         tasks.filter((task) => task.status === status);
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
             <Header title="Tasks" backLink="/" />
 
-            <main className="flex-1 p-6 overflow-x-auto">
-                <div className="flex gap-6 min-w-max">
+            {/* Mobile: Vertical Stack / Desktop: Horizontal Kanban */}
+            <main className="flex-1 p-4 md:p-6 overflow-x-auto">
+                <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:min-w-max">
                     {columns.map((column) => (
                         <div
                             key={column.id}
-                            className="w-80 flex-shrink-0 flex flex-col"
+                            className="w-full md:w-72 lg:w-80 flex-shrink-0 flex flex-col"
                         >
                             {/* Column Header */}
-                            <div className="flex items-center justify-between mb-4 px-1">
+                            <div className="flex items-center justify-between mb-3 md:mb-4 px-1">
                                 <div className="flex items-center gap-2">
                                     <div
-                                        className={`w-3 h-3 rounded-full bg-${column.color}`}
+                                        className="w-3 h-3 rounded-full"
                                         style={{ backgroundColor: `var(--${column.color})` }}
                                     />
-                                    <h2 className="font-serif font-bold text-lg">{column.title}</h2>
+                                    <h2 className="font-serif font-bold text-base md:text-lg">{column.title}</h2>
                                     <span className="text-muted-foreground text-sm ml-1">
                                         ({getTasksByStatus(column.id).length})
                                     </span>
@@ -137,7 +138,7 @@ export default function TasksPage() {
                             </div>
 
                             {/* Column Content */}
-                            <div className="flex-1 bg-card/30 border border-border rounded-xl p-3 space-y-3 min-h-[400px]">
+                            <div className="flex-1 bg-card/30 border border-border rounded-xl p-3 space-y-3 min-h-[200px] md:min-h-[400px]">
                                 {/* Add Task Input */}
                                 <AnimatePresence>
                                     {addingToColumn === column.id && (
@@ -187,37 +188,37 @@ export default function TasksPage() {
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -10 }}
-                                        className="bg-card border border-border rounded-lg p-3 group hover:shadow-md hover:border-accent-purple/30 transition-all cursor-pointer"
+                                        className="bg-card border border-border rounded-lg p-3 group hover:shadow-md hover:border-accent-purple/30 transition-all"
                                     >
                                         <div className="flex items-start gap-2">
-                                            <div className="pt-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-grab">
+                                            <div className="pt-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-grab hidden md:block">
                                                 <GripVertical size={14} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-foreground text-sm font-medium">
+                                                <p className="text-foreground text-sm font-medium break-words">
                                                     {task.title}
                                                 </p>
-                                                <div className="flex items-center gap-2 mt-2">
+                                                <div className="flex items-center gap-2 mt-2 flex-wrap">
                                                     <div
-                                                        className="w-2 h-2 rounded-full"
+                                                        className="w-2 h-2 rounded-full flex-shrink-0"
                                                         style={{ backgroundColor: `var(--accent-${task.color})` }}
                                                     />
-                                                    {/* Move buttons */}
-                                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {/* Move buttons - Always visible on mobile */}
+                                                    <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                         {column.id !== "todo" && (
                                                             <button
                                                                 onClick={() => moveTask(task.id, column.id === "done" ? "inprogress" : "todo")}
-                                                                className="text-xs text-muted-foreground hover:text-foreground"
+                                                                className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition-colors"
                                                             >
-                                                                ←
+                                                                ← Back
                                                             </button>
                                                         )}
                                                         {column.id !== "done" && (
                                                             <button
                                                                 onClick={() => moveTask(task.id, column.id === "todo" ? "inprogress" : "done")}
-                                                                className="text-xs text-muted-foreground hover:text-foreground"
+                                                                className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition-colors"
                                                             >
-                                                                →
+                                                                Next →
                                                             </button>
                                                         )}
                                                     </div>
@@ -225,7 +226,7 @@ export default function TasksPage() {
                                             </div>
                                             <button
                                                 onClick={() => deleteTask(task.id)}
-                                                className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                                                className="p-1 rounded md:opacity-0 md:group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
                                             >
                                                 <Trash2 size={14} />
                                             </button>
@@ -235,7 +236,7 @@ export default function TasksPage() {
 
                                 {/* Empty state */}
                                 {getTasksByStatus(column.id).length === 0 && addingToColumn !== column.id && (
-                                    <div className="text-center py-8 text-muted-foreground text-sm">
+                                    <div className="text-center py-6 md:py-8 text-muted-foreground text-sm">
                                         No tasks
                                     </div>
                                 )}

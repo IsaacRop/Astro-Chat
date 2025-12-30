@@ -178,36 +178,37 @@ export default function NotesPage() {
     const isModalOpen = isCreating || editingNote !== null;
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
             <Header title="Notes" backLink="/" />
 
-            <main className="flex-1 p-6 max-w-4xl mx-auto w-full space-y-6">
+            <main className="flex-1 p-4 md:p-6 max-w-4xl mx-auto w-full space-y-4 md:space-y-6">
                 {/* Actions */}
                 <div className="flex justify-end">
                     <button
                         onClick={openCreate}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-yellow/90 text-background text-sm font-bold hover:bg-accent-yellow transition-all shadow-sm"
+                        className="flex items-center gap-2 px-3 py-2 md:px-4 rounded-lg bg-accent-yellow/90 text-background text-sm font-bold hover:bg-accent-yellow transition-all shadow-sm"
                     >
                         <Plus size={18} />
-                        New Note
+                        <span className="hidden sm:inline">New Note</span>
+                        <span className="sm:hidden">New</span>
                     </button>
                 </div>
 
                 {/* Empty State */}
                 {isClient && notes.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="w-20 h-20 rounded-2xl bg-accent-yellow/10 flex items-center justify-center mb-4">
-                            <FileText size={40} className="text-accent-yellow" />
+                    <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center px-4">
+                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-accent-yellow/10 flex items-center justify-center mb-4">
+                            <FileText size={32} className="md:w-10 md:h-10 text-accent-yellow" />
                         </div>
-                        <h2 className="text-xl font-serif font-bold mb-2">No Notes Yet</h2>
-                        <p className="text-muted-foreground max-w-sm">
+                        <h2 className="text-lg md:text-xl font-serif font-bold mb-2">No Notes Yet</h2>
+                        <p className="text-muted-foreground max-w-sm text-sm md:text-base">
                             Click the &quot;New Note&quot; button to create your first note.
                         </p>
                     </div>
                 )}
 
-                {/* Notes Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Notes Grid - Responsive */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                     {notes.map((note) => (
                         <motion.div
                             key={note.id}
@@ -215,18 +216,18 @@ export default function NotesPage() {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.9 }}
-                            className="bg-card border border-border rounded-xl p-6 hover:shadow-lg hover:border-accent-yellow/50 transition-all cursor-pointer group relative"
+                            className="bg-card border border-border rounded-xl p-4 md:p-6 hover:shadow-lg hover:border-accent-yellow/50 transition-all cursor-pointer group relative"
                             onClick={() => openEdit(note)}
                         >
-                            <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-start justify-between mb-3 md:mb-4">
                                 <div className="p-2 rounded-lg bg-accent-yellow/10 text-accent-yellow group-hover:bg-accent-yellow group-hover:text-background transition-colors">
-                                    <FileText size={20} />
+                                    <FileText size={18} className="md:w-5 md:h-5" />
                                 </div>
                                 <span className="text-xs text-muted-foreground">
                                     {new Date(note.updatedAt).toLocaleDateString()}
                                 </span>
                             </div>
-                            <h3 className="font-serif font-bold text-lg mb-2 group-hover:text-accent-yellow transition-colors truncate">
+                            <h3 className="font-serif font-bold text-base md:text-lg mb-2 group-hover:text-accent-yellow transition-colors truncate">
                                 {note.title}
                             </h3>
                             <p className="text-muted-foreground text-sm line-clamp-3">
@@ -248,7 +249,7 @@ export default function NotesPage() {
                 </div>
             </main>
 
-            {/* Full-Page Editor Modal */}
+            {/* Full-Page Editor Modal - Responsive */}
             <AnimatePresence>
                 {isModalOpen && (
                     <motion.div
@@ -257,12 +258,12 @@ export default function NotesPage() {
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex flex-col"
                     >
-                        {/* Editor Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur-sm">
-                            <div className="flex items-center gap-4">
+                        {/* Editor Header - Responsive */}
+                        <div className="flex items-center justify-between p-3 md:p-4 border-b border-border bg-card/50 backdrop-blur-sm gap-2">
+                            <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                                 <button
                                     onClick={closeModal}
-                                    className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                    className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
                                 >
                                     <X size={20} />
                                 </button>
@@ -271,79 +272,70 @@ export default function NotesPage() {
                                     value={formTitle}
                                     onChange={(e) => setFormTitle(e.target.value)}
                                     placeholder="Note title..."
-                                    className="text-2xl font-serif font-bold bg-transparent border-none outline-none text-foreground placeholder-muted-foreground w-full max-w-md"
+                                    className="text-lg md:text-2xl font-serif font-bold bg-transparent border-none outline-none text-foreground placeholder-muted-foreground flex-1 min-w-0"
                                 />
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                                 <button
                                     onClick={closeModal}
-                                    className="px-4 py-2 rounded-lg border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                                    className="hidden sm:block px-3 py-2 rounded-lg border border-border text-muted-foreground text-sm hover:bg-muted hover:text-foreground transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={isCreating ? handleCreate : handleUpdate}
                                     disabled={!formTitle.trim()}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-accent-yellow/90 text-background font-medium hover:bg-accent-yellow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent-yellow/90 text-background text-sm font-medium hover:bg-accent-yellow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Save size={16} />
-                                    {isCreating ? "Create" : "Save"}
+                                    <span className="hidden sm:inline">{isCreating ? "Create" : "Save"}</span>
                                 </button>
                             </div>
                         </div>
 
-                        {/* Formatting Toolbar */}
-                        <div className="flex items-center gap-1 p-2 px-6 border-b border-border bg-card/30">
+                        {/* Formatting Toolbar - Responsive */}
+                        <div className="flex items-center gap-1 p-2 px-4 md:px-6 border-b border-border bg-card/30 overflow-x-auto">
                             <button
                                 onClick={() => insertFormat("bold")}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                                title="Bold (Ctrl+B)"
+                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                                title="Bold"
                             >
                                 <Bold size={18} />
                             </button>
                             <button
                                 onClick={() => insertFormat("italic")}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                                title="Italic (Ctrl+I)"
+                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                                title="Italic"
                             >
                                 <Italic size={18} />
                             </button>
                             <button
                                 onClick={() => insertFormat("heading")}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
                                 title="Heading"
                             >
                                 <Heading size={18} />
                             </button>
                             <button
                                 onClick={() => insertFormat("list")}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
                                 title="Bullet List"
                             >
                                 <List size={18} />
                             </button>
-                            <div className="h-6 w-px bg-border mx-2" />
-                            <span className="text-xs text-muted-foreground">Markdown supported</span>
+                            <div className="h-6 w-px bg-border mx-2 flex-shrink-0" />
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">Markdown</span>
                         </div>
 
                         {/* Content Editor */}
-                        <div className="flex-1 p-6 overflow-hidden">
+                        <div className="flex-1 p-4 md:p-6 overflow-hidden">
                             <div className="max-w-4xl mx-auto h-full">
                                 <textarea
                                     id="note-content"
                                     value={formContent}
                                     onChange={(e) => setFormContent(e.target.value)}
-                                    placeholder="Start writing your note...
-
-Use Markdown for formatting:
-# Heading 1
-## Heading 2
-**Bold** and *italic*
-- Bullet points
-1. Numbered lists
-> Blockquotes
-`code`"
-                                    className="w-full h-full resize-none bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-lg leading-relaxed font-sans"
+                                    placeholder="Start writing your note..."
+                                    className="w-full h-full resize-none bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-base md:text-lg leading-relaxed font-sans"
                                 />
                             </div>
                         </div>

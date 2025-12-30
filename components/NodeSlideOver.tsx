@@ -37,13 +37,13 @@ function generateNoteId(): string {
 
 interface NodeSlideOverProps {
     node: {
-        id: string;  // This IS the UUID
+        id: string;
         label: string;
-        chatId: string;  // Same as id (unified UUID)
+        chatId: string;
     } | null;
     isOpen: boolean;
     onClose: () => void;
-    onDelete?: () => void; // Callback to refresh graph after deletion
+    onDelete?: () => void;
 }
 
 export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeSlideOverProps) {
@@ -52,7 +52,7 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [noteGenerated, setNoteGenerated] = useState(false);
 
-    // Load notes when node changes (using unified UUID: node.id)
+    // Load notes when node changes
     useEffect(() => {
         if (node) {
             setNotes(loadNote(node.id));
@@ -62,13 +62,11 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
         }
     }, [node]);
 
-    // Handle notes change
     const handleNotesChange = useCallback((value: string) => {
         setNotes(value);
         setSaved(false);
     }, []);
 
-    // Save notes (using unified UUID)
     const handleSave = useCallback(() => {
         if (node) {
             saveNote(node.id, notes);
@@ -76,7 +74,6 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
         }
     }, [node, notes]);
 
-    // Generate note from this node
     const handleGenerateNote = useCallback(() => {
         if (!node) return;
 
@@ -91,23 +88,19 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
 
         saveNotes([newNote, ...allNotes]);
         setNoteGenerated(true);
-
-        // Reset after 2 seconds
         setTimeout(() => setNoteGenerated(false), 2000);
     }, [node, notes]);
 
-    // Delete node AND conversation (bidirectional)
     const handleDelete = useCallback(() => {
         if (node) {
-            console.log('[NodeSlideOver] Deleting session:', node.id);
-            deleteSession(node.id); // Deletes chat, notes, node, and phantom links
+            deleteSession(node.id);
             setShowDeleteConfirm(false);
             onClose();
-            onDelete?.(); // Refresh graph
+            onDelete?.();
         }
     }, [node, onClose, onDelete]);
 
-    // Keyboard shortcut for save (Ctrl+S)
+    // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 's' && isOpen) {
@@ -119,7 +112,6 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleSave, isOpen]);
 
-    // Handle escape key
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && isOpen) {
@@ -143,64 +135,62 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
                 onClick={onClose}
             />
 
-            {/* Slide-over Panel */}
+            {/* Slide-over Panel - Full width on mobile, max-w-md on desktop */}
             <div
-                className={`fixed top-0 right-0 h-full w-full max-w-md bg-card border-l border-border z-50 transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'
+                className={`fixed top-0 right-0 h-full w-full sm:w-[90%] sm:max-w-md bg-card border-l border-border z-50 transform transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'
                     }`}
             >
                 {node && (
                     <div className="flex flex-col h-full">
-                        {/* Header */}
-                        <header className="flex items-center justify-between p-4 border-b border-border">
-                            <div>
-                                <h2 className="font-serif font-semibold text-lg text-foreground">{node.label}</h2>
+                        {/* Header - Responsive */}
+                        <header className="flex items-center justify-between p-3 md:p-4 border-b border-border">
+                            <div className="min-w-0 flex-1">
+                                <h2 className="font-serif font-semibold text-base md:text-lg text-foreground truncate">{node.label}</h2>
                                 <p className="text-muted-foreground text-xs mt-0.5">Node Details</p>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 ml-2"
                             >
                                 <X size={20} />
                             </button>
                         </header>
 
                         {/* Content */}
-                        <div className="flex-1 flex flex-col p-4 space-y-4 overflow-y-auto">
-                            {/* Action Buttons */}
-                            <div className="flex gap-2">
-                                {/* Go to Conversation Button - using UUID */}
+                        <div className="flex-1 flex flex-col p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto">
+                            {/* Action Buttons - Stack on very small screens */}
+                            <div className="flex flex-col sm:flex-row gap-2">
                                 <Link
                                     href={`/chat?session=${node.id}`}
                                     onClick={onClose}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent-blue text-background font-medium hover:bg-accent-blue/90 transition-all shadow-sm"
+                                    className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-lg bg-accent-blue text-background font-medium hover:bg-accent-blue/90 transition-all shadow-sm text-sm"
                                 >
-                                    <MessageSquare size={18} />
+                                    <MessageSquare size={16} className="md:w-[18px] md:h-[18px]" />
                                     Go to Chat
                                 </Link>
 
-                                {/* Generate Note Button */}
                                 <button
                                     onClick={handleGenerateNote}
-                                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all shadow-sm ${noteGenerated
-                                            ? 'bg-accent-green text-background'
-                                            : 'bg-accent-yellow text-background hover:bg-accent-yellow/90'
+                                    className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-lg font-medium transition-all shadow-sm text-sm ${noteGenerated
+                                        ? 'bg-accent-green text-background'
+                                        : 'bg-accent-yellow text-background hover:bg-accent-yellow/90'
                                         }`}
                                 >
-                                    <Plus size={18} />
-                                    {noteGenerated ? 'Note Created!' : 'Generate Note'}
+                                    <Plus size={16} className="md:w-[18px] md:h-[18px]" />
+                                    {noteGenerated ? 'Created!' : 'Generate Note'}
                                 </button>
                             </div>
 
                             {/* Notes Section */}
                             <div className="flex-1 flex flex-col">
-                                <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center justify-between mb-2 md:mb-3">
                                     <div className="flex items-center gap-2 text-muted-foreground">
-                                        <FileText size={16} />
-                                        <span className="text-sm font-medium">Personal Notes</span>
+                                        <FileText size={14} className="md:w-4 md:h-4" />
+                                        <span className="text-xs md:text-sm font-medium">Personal Notes</span>
                                     </div>
                                     <button
                                         onClick={handleSave}
-                                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-colors ${saved
+                                        className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors ${saved
                                             ? 'bg-muted text-muted-foreground cursor-default'
                                             : 'bg-accent-green hover:bg-accent-green/90 text-background'
                                             }`}
@@ -214,47 +204,43 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
                                     value={notes}
                                     onChange={(e) => handleNotesChange(e.target.value)}
                                     onBlur={handleSave}
-                                    placeholder="Write your study notes about this topic...
-
-Use Markdown for formatting:
-# Heading
-- Bullet points
-**Bold** and *italic*"
-                                    className="flex-1 min-h-[200px] p-3 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent-purple/50 resize-none font-mono text-sm leading-relaxed"
+                                    placeholder="Write your study notes about this topic..."
+                                    className="flex-1 min-h-[150px] md:min-h-[200px] p-3 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent-purple/50 resize-none font-mono text-xs md:text-sm leading-relaxed"
                                 />
 
-                                <p className="text-muted-foreground text-xs mt-2">
-                                    Ctrl+S to save • ESC to close
+                                <p className="text-muted-foreground text-[10px] md:text-xs mt-2">
+                                    <span className="hidden sm:inline">Ctrl+S to save • ESC to close</span>
+                                    <span className="sm:hidden">Tap outside to close</span>
                                 </p>
                             </div>
 
                             {/* Delete Section */}
-                            <div className="pt-4 border-t border-border">
+                            <div className="pt-3 md:pt-4 border-t border-border">
                                 {!showDeleteConfirm ? (
                                     <button
                                         onClick={() => setShowDeleteConfirm(true)}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors text-sm"
+                                        className="w-full flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors text-xs md:text-sm"
                                     >
-                                        <Trash2 size={16} />
-                                        Delete Node & Conversation
+                                        <Trash2 size={14} className="md:w-4 md:h-4" />
+                                        Delete Node & Chat
                                     </button>
                                 ) : (
                                     <div className="space-y-2">
-                                        <p className="text-destructive text-xs text-center">
-                                            This will delete the node, conversation, and notes permanently.
+                                        <p className="text-destructive text-[10px] md:text-xs text-center">
+                                            This will delete everything permanently.
                                         </p>
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => setShowDeleteConfirm(false)}
-                                                className="flex-1 px-3 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors text-sm"
+                                                className="flex-1 px-3 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors text-xs md:text-sm"
                                             >
                                                 Cancel
                                             </button>
                                             <button
                                                 onClick={handleDelete}
-                                                className="flex-1 px-3 py-2 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors text-sm font-medium"
+                                                className="flex-1 px-3 py-2 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors text-xs md:text-sm font-medium"
                                             >
-                                                Confirm Delete
+                                                Confirm
                                             </button>
                                         </div>
                                     </div>
@@ -262,9 +248,9 @@ Use Markdown for formatting:
                             </div>
                         </div>
 
-                        {/* Footer with Node ID */}
-                        <footer className="p-4 border-t border-border">
-                            <div className="text-muted-foreground text-xs font-mono truncate">
+                        {/* Footer */}
+                        <footer className="p-3 md:p-4 border-t border-border">
+                            <div className="text-muted-foreground text-[10px] md:text-xs font-mono truncate">
                                 ID: {node.id}
                             </div>
                         </footer>
