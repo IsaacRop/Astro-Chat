@@ -14,6 +14,7 @@ import {
     getAllChats,
     deleteSession,
     addNode,
+    updateNodeMessageCount,
     ChatSummary
 } from "@/utils/storage";
 
@@ -163,10 +164,12 @@ export default function ChatPage() {
         }
     }, [setMessages]);
 
-    // Auto-save chat
+    // Auto-save chat and update node size
     useEffect(() => {
         if (prevLoadingRef.current === true && isLoading === false && messages.length > 0) {
             saveChat(currentSessionId, messages as unknown as import('ai').UIMessage[], generatedTitle || undefined);
+            // Update node size based on new message count
+            updateNodeMessageCount(currentSessionId, messages.length);
             setSavedChats(getAllChats().map(c => ({
                 uuid: c.uuid,
                 title: c.title,
@@ -183,7 +186,7 @@ export default function ChatPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // Real-time node creation
+    // Real-time node creation and update
     useEffect(() => {
         const userMessages = messages.filter(m => m.role === 'user');
         if (userMessages.length > 0 && !nodeCreated && currentSessionId) {
@@ -197,7 +200,8 @@ export default function ChatPage() {
                 .then(data => {
                     if (data.label && data.embedding) {
                         setGeneratedTitle(data.label);
-                        addNode(currentSessionId, data.label, data.embedding);
+                        // Pass messageCount for dynamic node sizing
+                        addNode(currentSessionId, data.label, data.embedding, messages.length);
                         if (messages.length > 0) {
                             saveChat(currentSessionId, messages as unknown as import('ai').UIMessage[], data.label);
                             setSavedChats(getAllChats().map(c => ({
