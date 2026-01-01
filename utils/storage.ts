@@ -35,6 +35,7 @@ export interface GraphNode {
     id: string; // This IS the UUID
     label: string;
     embedding: number[];
+    messageCount: number; // Size of the conversation - affects node size in visualization
     createdAt: number;
 }
 
@@ -46,7 +47,7 @@ export interface GraphLink {
 
 export interface KnowledgeGraph {
     nodes: GraphNode[];
-    links: GraphLink[];
+    links: GraphLink[]; // Will be empty - nodes are isolated
 }
 
 // ============================================
@@ -243,52 +244,37 @@ export function saveGraph(graph: KnowledgeGraph): void {
 }
 
 /**
- * Add a node to the graph with the given UUID
+ * Add or update a node in the graph with the given UUID
  * The node ID === UUID for 1:1 linking
+ * Nodes are ISOLATED (no links between them)
+ * messageCount affects the visual size of the node
  */
-export function addNode(uuid: string, label: string, embedding: number[]): void {
+export function addNode(uuid: string, label: string, embedding: number[], messageCount: number = 1): void {
     const graph = loadGraph();
 
     // Check if node already exists
     const existingIndex = graph.nodes.findIndex(n => n.id === uuid);
     if (existingIndex !== -1) {
-        // Update existing node
+        // Update existing node - preserve embedding if same, update messageCount
         graph.nodes[existingIndex].label = label;
         graph.nodes[existingIndex].embedding = embedding;
-        console.log(`[Storage] Node updated: ${uuid} -> "${label}"`);
+        graph.nodes[existingIndex].messageCount = messageCount;
+        console.log(`[Storage] Node updated: ${uuid} -> "${label}" (${messageCount} messages)`);
     } else {
         // Add new node
         graph.nodes.push({
             id: uuid,
             label,
             embedding,
+            messageCount,
             createdAt: Date.now(),
         });
-        console.log(`[Storage] Node added: ${uuid} -> "${label}"`);
+        console.log(`[Storage] Node added: ${uuid} -> "${label}" (${messageCount} messages)`);
     }
 
-    // Calculate similarity links with existing nodes
-    const similarityThreshold = 0.7;
-    for (const existing of graph.nodes) {
-        if (existing.id === uuid) continue;
-
-        const similarity = cosineSimilarity(embedding, existing.embedding);
-        if (similarity >= similarityThreshold) {
-            // Check if link already exists
-            const linkExists = graph.links.some(
-                l => (l.source === uuid && l.target === existing.id) ||
-                    (l.source === existing.id && l.target === uuid)
-            );
-            if (!linkExists) {
-                graph.links.push({
-                    source: uuid,
-                    target: existing.id,
-                    similarity,
-                });
-                console.log(`[Storage] Link created: ${uuid} <-> ${existing.id} (${similarity.toFixed(3)})`);
-            }
-        }
-    }
+    // NOTE: Links are intentionally NOT created
+    // Nodes are isolated - their size is based on messageCount
+    // This provides a cleaner visualization focused on individual conversations
 
     saveGraph(graph);
 }
@@ -299,6 +285,20 @@ export function addNode(uuid: string, label: string, embedding: number[]): void 
 export function getNode(uuid: string): GraphNode | null {
     const graph = loadGraph();
     return graph.nodes.find(n => n.id === uuid) || null;
+}
+
+/**
+ * Update only the messageCount of an existing node
+ * This is called when the conversation grows
+ */
+export function updateNodeMessageCount(uuid: string, messageCount: number): void {
+    const graph = loadGraph();
+    const node = graph.nodes.find(n => n.id === uuid);
+    if (node) {
+        node.messageCount = messageCount;
+        saveGraph(graph);
+        console.log(`[Storage] Node messageCount updated: ${uuid} -> ${messageCount} messages`);
+    }
 }
 
 // ============================================

@@ -11,6 +11,7 @@ interface GraphNode {
     id: string;
     label: string;
     chatId: string;
+    messageCount: number; // Used for dynamic node sizing
     x?: number;
     y?: number;
 }
@@ -38,16 +39,15 @@ export default function GraphVisualization() {
     const loadGraphData = useCallback(() => {
         try {
             const graph = loadGraph();
+            // Nodes are isolated - no links are used
             const data = {
                 nodes: graph.nodes.map(n => ({
                     id: n.id,
                     label: n.label,
                     chatId: n.id,
+                    messageCount: n.messageCount || 1, // Fallback for legacy nodes
                 })),
-                links: graph.links.map(l => ({
-                    source: l.source,
-                    target: l.target,
-                })),
+                links: [], // Empty - nodes are isolated
             };
             setGraphData(data);
             setRenderError(null);
@@ -157,17 +157,19 @@ export default function GraphVisualization() {
                     width={dimensions.width}
                     height={dimensions.height}
                     backgroundColor="transparent"
-                    nodeLabel={(node: any) => node.label}
+                    nodeLabel={(node: any) => `${node.label} (${node.messageCount} msgs)`}
                     nodeColor={() => 'var(--accent-purple)'}
-                    nodeRelSize={dimensions.width < 640 ? 6 : 8}
-                    linkColor={() => 'var(--border)'}
-                    linkWidth={dimensions.width < 640 ? 1.5 : 2}
-                    linkDirectionalParticles={dimensions.width < 640 ? 1 : 2}
-                    linkDirectionalParticleWidth={dimensions.width < 640 ? 1.5 : 2}
+                    // Dynamic node size based on messageCount
+                    nodeVal={(node: any) => {
+                        const baseSize = dimensions.width < 640 ? 3 : 5;
+                        const msgScale = Math.log2((node.messageCount || 1) + 1);
+                        return baseSize + msgScale * 2;
+                    }}
                     onNodeClick={(node: any) => handleNodeClick(node as GraphNode)}
                     onEngineStop={() => console.log('[Graph] Engine stopped')}
                     cooldownTicks={100}
-                    d3VelocityDecay={0.4}
+                    d3VelocityDecay={0.3}
+                    d3AlphaDecay={0.05}
                 />
                 /* eslint-enable @typescript-eslint/no-explicit-any */
             );
