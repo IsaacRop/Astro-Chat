@@ -17,7 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Astro",
+  title: "Otto",
   description: "Next Gen AI Assistant",
 };
 
@@ -30,6 +30,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${playfair.variable} antialiased font-sans bg-background text-foreground overflow-x-hidden`}
+        suppressHydrationWarning
       >
         <ThemeProvider
           attribute="class"
