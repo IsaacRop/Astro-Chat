@@ -267,11 +267,22 @@ export default function ChatPage() {
     };
 
     const getMessageText = (message: typeof messages[number]) => {
-        return message.parts
-            .filter(part => part.type === 'text')
-            .map(part => (part as { type: 'text'; text: string }).text)
-            .join('');
+        // Handle AI SDK v6 parts array format
+        if (message.parts && Array.isArray(message.parts) && message.parts.length > 0) {
+            return message.parts
+                .filter(part => part.type === 'text')
+                .map(part => (part as { type: 'text'; text: string }).text)
+                .join('');
+        }
+        // Fallback to content field (legacy format or streaming)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((message as any).content) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return String((message as any).content);
+        }
+        return '';
     };
+
 
     return (
         <div className="flex h-screen h-[100dvh] bg-background text-foreground overflow-hidden">

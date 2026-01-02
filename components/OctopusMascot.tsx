@@ -9,23 +9,21 @@ const tentacleItems = [
     { icon: Notebook, label: "Notebooks", href: "/cadernos", color: "var(--accent-purple)" },
     { icon: FileText, label: "Notes", href: "/notes", color: "var(--accent-yellow)" },
     { icon: CheckSquare, label: "Tasks", href: "/tasks", color: "var(--accent-green)" },
-    { icon: Settings, label: "Settings", href: "/settings", color: "var(--accent-orange)" },
     { icon: MessageCircle, label: "Chat", href: "/chat", color: "var(--accent-blue)" },
     { icon: Calendar, label: "Calendar", href: "/calendar", color: "var(--accent-blue)" },
     { icon: Lightbulb, label: "Ideas", href: "/ideas", color: "var(--accent-purple)" },
     { icon: Star, label: "Favorites", href: "/favorites", color: "var(--accent-yellow)" },
 ];
 
-// Responsive icon positions - calculated based on container size
+// Responsive icon positions - calculated based on container size (7 items now)
 const getIconPositions = (scale: number) => [
-    { x: 80 * scale, y: 290 * scale },
-    { x: 180 * scale, y: 340 * scale },
-    { x: 280 * scale, y: 400 * scale },
-    { x: 350 * scale, y: 440 * scale },
-    { x: 450 * scale, y: 440 * scale },
-    { x: 520 * scale, y: 400 * scale },
-    { x: 620 * scale, y: 340 * scale },
-    { x: 720 * scale, y: 290 * scale },
+    { x: 80 * scale, y: 310 * scale },
+    { x: 160 * scale, y: 370 * scale },
+    { x: 280 * scale, y: 420 * scale },
+    { x: 400 * scale, y: 450 * scale },
+    { x: 520 * scale, y: 420 * scale },
+    { x: 640 * scale, y: 370 * scale },
+    { x: 720 * scale, y: 310 * scale },
 ];
 
 // Animated Octopus SVG Component with eye tracking
@@ -109,9 +107,9 @@ const AnimatedOctopus = ({ scale = 1 }: { scale?: number }) => {
                 </linearGradient>
             </defs>
 
-            {/* LAYER 1: Tentacles */}
+            {/* LAYER 1: Tentacles - now 7 */}
             {iconPositions.map((pos, i) => {
-                const startX = centerX + (i - 3.5) * 18 * scale;
+                const startX = centerX + (i - 3) * 20 * scale;
                 const startY = headY + 60 * scale;
                 const endX = pos.x;
                 const endY = pos.y - 30 * scale;
@@ -149,7 +147,7 @@ const AnimatedOctopus = ({ scale = 1 }: { scale?: number }) => {
 
             {/* LAYER 2: Suction cups */}
             {iconPositions.map((pos, i) => {
-                const startX = centerX + (i - 3.5) * 18 * scale;
+                const startX = centerX + (i - 3) * 20 * scale;
                 const startY = headY + 60 * scale;
                 const endX = pos.x;
                 const endY = pos.y - 30 * scale;
@@ -364,6 +362,59 @@ export const OctopusMascot = () => {
                     </Link>
                 );
             })}
+
+            {/* Settings Button - Fixed in Bottom Right Corner (outside tentacles) */}
+            <Link href="/settings" legacyBehavior>
+                <motion.a
+                    className="fixed bottom-6 right-6 md:bottom-8 md:right-8 flex flex-col items-center gap-1 cursor-pointer z-50"
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: hoveredItem === "Settings" ? 1.1 : 1 }}
+                    whileHover={{ scale: 1.15 }}
+                    whileTap={{ scale: 0.95 }}
+                    onMouseEnter={() => setHoveredItem("Settings")}
+                    onMouseLeave={() => setHoveredItem(null)}
+                >
+                    <motion.div
+                        className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center backdrop-blur-sm transition-all duration-300"
+                        style={{
+                            background: hoveredItem === "Settings"
+                                ? 'linear-gradient(135deg, var(--accent-orange)40, var(--accent-orange)20)'
+                                : 'rgba(30, 30, 50, 0.9)',
+                            border: `2px solid ${hoveredItem === "Settings" ? 'var(--accent-orange)' : 'rgba(255,255,255,0.2)'}`,
+                            boxShadow: hoveredItem === "Settings"
+                                ? '0 0 25px var(--accent-orange), 0 0 50px var(--accent-orange)40'
+                                : '0 4px 20px rgba(0,0,0,0.4)',
+                        }}
+                    >
+                        <Settings
+                            className="w-5 h-5 md:w-6 md:h-6"
+                            style={{
+                                color: 'var(--accent-orange)',
+                                filter: hoveredItem === "Settings" ? 'drop-shadow(0 0 6px var(--accent-orange))' : 'none'
+                            }}
+                        />
+                    </motion.div>
+                    <AnimatePresence>
+                        {hoveredItem === "Settings" && (
+                            <motion.span
+                                initial={{ opacity: 0, y: -5, scale: 0.8 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: -5, scale: 0.8 }}
+                                transition={{ duration: 0.15 }}
+                                className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap backdrop-blur-md"
+                                style={{
+                                    color: 'var(--accent-orange)',
+                                    background: 'rgba(30, 30, 50, 0.9)',
+                                    border: '1px solid var(--accent-orange)50',
+                                    boxShadow: '0 0 10px var(--accent-orange)30'
+                                }}
+                            >
+                                Settings
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
+                </motion.a>
+            </Link>
         </div>
     );
 };
