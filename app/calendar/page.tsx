@@ -1,112 +1,87 @@
 "use client";
 
-import { Header } from "@/components/Header";
-import { Calendar as CalendarIcon, Plus, Trash2, Clock, ChevronLeft, ChevronRight, CheckSquare } from "lucide-react";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
+import { X, Plus, Clock, CheckSquare, Trash2 } from "lucide-react";
+import {
+    FullScreenCalendar,
+    CalendarData,
+    CalendarEvent,
+} from "@/components/ui/fullscreen-calendar";
+import { Header } from "@/components/Header";
 
-// ============================================
-// TYPES & STORAGE
-// ============================================
-
-interface Event {
+// Event type stored in localStorage
+interface StoredEvent {
     id: string;
     title: string;
     date: string; // YYYY-MM-DD
-    time: string; // HH:MM
-    color: "blue" | "purple" | "green" | "orange";
+    time?: string;
+    type: "personal" | "work" | "reminder";
     createdAt: number;
 }
 
+// Task type from Kanban board
 interface Task {
     id: string;
     title: string;
-    status: "todo" | "inprogress" | "done";
-    color: "green" | "orange" | "purple" | "blue";
+    status: "todo" | "in-progress" | "done";
+    color: string;
     dueDate?: string;
     createdAt: number;
 }
 
-const EVENTS_STORAGE_KEY = "astro-events";
-const TASKS_STORAGE_KEY = "astro-tasks";
-
-function generateEventId(): string {
-    return `event-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-}
-
-function loadEvents(): Event[] {
+// Load events from localStorage
+const loadEvents = (): StoredEvent[] => {
     if (typeof window === "undefined") return [];
     try {
-        const raw = localStorage.getItem(EVENTS_STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
+        const stored = localStorage.getItem("calendar-events");
+        return stored ? JSON.parse(stored) : [];
     } catch {
         return [];
     }
-}
+};
 
-function saveEvents(events: Event[]): void {
+// Save events to localStorage
+const saveEvents = (events: StoredEvent[]) => {
     if (typeof window === "undefined") return;
-    localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events));
-}
+    localStorage.setItem("calendar-events", JSON.stringify(events));
+};
 
-function loadTasks(): Task[] {
+// Load tasks from Kanban board
+const loadTasks = (): Task[] => {
     if (typeof window === "undefined") return [];
     try {
-        const raw = localStorage.getItem(TASKS_STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
+        const stored = localStorage.getItem("kanban-tasks");
+        return stored ? JSON.parse(stored) : [];
     } catch {
         return [];
     }
-}
-
-// ============================================
-// CALENDAR HELPERS
-// ============================================
-
-function getDaysInMonth(year: number, month: number): number {
-    return new Date(year, month + 1, 0).getDate();
-}
-
-function getFirstDayOfMonth(year: number, month: number): number {
-    return new Date(year, month, 1).getDay();
-}
-
-function formatDateKey(year: number, month: number, day: number): string {
-    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
-// ============================================
-// COMPONENT
-// ============================================
+};
 
 export default function CalendarPage() {
-    const [events, setEvents] = useState<Event[]>([]);
+    const [events, setEvents] = useState<StoredEvent[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
-    const [isClient, setIsClient] = useState(false);
-    const [showAddForm, setShowAddForm] = useState(false);
-    const [selectedDate, setSelectedDate] = useState<string | null>(null);
-    const [newEvent, setNewEvent] = useState({ title: "", time: "12:00" });
-
-    // Current view month/year
-    const [viewDate, setViewDate] = useState(() => new Date());
-    const viewYear = viewDate.getFullYear();
-    const viewMonth = viewDate.getMonth();
-
-    // Get today's date
-    const today = new Date();
-    const todayKey = formatDateKey(today.getFullYear(), today.getMonth(), today.getDate());
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [newEventTitle, setNewEventTitle] = useState("");
+    const [newEventTime, setNewEventTime] = useState("");
+    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+        null
+    );
 
     // Load data on mount
     useEffect(() => {
-        setIsClient(true);
         setEvents(loadEvents());
         setTasks(loadTasks());
 
         // Listen for storage changes (for task sync)
         const handleStorage = () => {
             setTasks(loadTasks());
+            setEvents(loadEvents());
         };
-        window.addEventListener('storage', handleStorage);
+        window.addEventListener("storage", handleStorage);
 
         // Poll for changes every 2 seconds (for same-tab updates)
         const interval = setInterval(() => {
@@ -114,372 +89,283 @@ export default function CalendarPage() {
         }, 2000);
 
         return () => {
-            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener("storage", handleStorage);
             clearInterval(interval);
         };
     }, []);
 
-    // Persist events
-    useEffect(() => {
-        if (isClient) {
-            saveEvents(events);
-        }
-    }, [events, isClient]);
+    // Convert events and tasks to CalendarData format
+    const calendarData: CalendarData[] = useMemo(() => {
+        const dataMap = new Map<string, CalendarEvent[]>();
 
-    // Calculate calendar grid
-    const calendarDays = useMemo(() => {
-        const daysInMonth = getDaysInMonth(viewYear, viewMonth);
-        const firstDay = getFirstDayOfMonth(viewYear, viewMonth);
-        const days: { day: number; isCurrentMonth: boolean; dateKey: string }[] = [];
+        // Add events
+        events.forEach((event) => {
+            const dateKey = event.date;
+            const calendarEvent: CalendarEvent = {
+                id: event.id,
+                name: event.title,
+                time: event.time,
+                datetime: event.date,
+                type: "event",
+            };
 
-        // Previous month days
-        const prevMonth = viewMonth === 0 ? 11 : viewMonth - 1;
-        const prevYear = viewMonth === 0 ? viewYear - 1 : viewYear;
-        const daysInPrevMonth = getDaysInMonth(prevYear, prevMonth);
-        for (let i = firstDay - 1; i >= 0; i--) {
-            const day = daysInPrevMonth - i;
-            days.push({
-                day,
-                isCurrentMonth: false,
-                dateKey: formatDateKey(prevYear, prevMonth, day)
+            if (!dataMap.has(dateKey)) {
+                dataMap.set(dateKey, []);
+            }
+            dataMap.get(dateKey)!.push(calendarEvent);
+        });
+
+        // Add tasks with due dates (exclude completed tasks)
+        tasks
+            .filter((task) => task.dueDate && task.status !== "done")
+            .forEach((task) => {
+                const dateKey = task.dueDate!;
+                const calendarEvent: CalendarEvent = {
+                    id: task.id,
+                    name: task.title,
+                    datetime: task.dueDate!,
+                    type: "task",
+                    status: task.status,
+                };
+
+                if (!dataMap.has(dateKey)) {
+                    dataMap.set(dateKey, []);
+                }
+                dataMap.get(dateKey)!.push(calendarEvent);
             });
-        }
 
-        // Current month days
-        for (let day = 1; day <= daysInMonth; day++) {
-            days.push({
-                day,
-                isCurrentMonth: true,
-                dateKey: formatDateKey(viewYear, viewMonth, day)
-            });
-        }
-
-        // Next month days (fill to 42 cells = 6 rows)
-        const nextMonth = viewMonth === 11 ? 0 : viewMonth + 1;
-        const nextYear = viewMonth === 11 ? viewYear + 1 : viewYear;
-        const remaining = 42 - days.length;
-        for (let day = 1; day <= remaining; day++) {
-            days.push({
-                day,
-                isCurrentMonth: false,
-                dateKey: formatDateKey(nextYear, nextMonth, day)
-            });
-        }
-
-        return days;
-    }, [viewYear, viewMonth]);
-
-    // Get items for a specific date
-    const getItemsForDate = useCallback((dateKey: string) => {
-        const dateEvents = events.filter(e => e.date === dateKey);
-        const dateTasks = tasks.filter(t => t.dueDate === dateKey && t.status !== 'done');
-        return { events: dateEvents, tasks: dateTasks };
+        // Convert to array format
+        return Array.from(dataMap.entries()).map(([dateStr, events]) => ({
+            day: parseISO(dateStr),
+            events,
+        }));
     }, [events, tasks]);
-
-    // Navigation
-    const goToPrevMonth = () => {
-        setViewDate(new Date(viewYear, viewMonth - 1, 1));
-    };
-
-    const goToNextMonth = () => {
-        setViewDate(new Date(viewYear, viewMonth + 1, 1));
-    };
-
-    const goToToday = () => {
-        setViewDate(new Date());
-    };
 
     // Add new event
     const handleAddEvent = useCallback(() => {
-        if (!newEvent.title.trim() || !selectedDate) return;
+        if (!newEventTitle.trim() || !selectedDate) return;
 
-        const colors: Event["color"][] = ["blue", "purple", "green", "orange"];
-        const event: Event = {
-            id: generateEventId(),
-            title: newEvent.title.trim(),
-            date: selectedDate,
-            time: newEvent.time,
-            color: colors[Math.floor(Math.random() * colors.length)],
+        const newEvent: StoredEvent = {
+            id: Date.now().toString(),
+            title: newEventTitle.trim(),
+            date: format(selectedDate, "yyyy-MM-dd"),
+            time: newEventTime || undefined,
+            type: "personal",
             createdAt: Date.now(),
         };
 
-        setEvents((prev) => [...prev, event].sort((a, b) =>
-            new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime()
-        ));
-        setNewEvent({ title: "", time: "12:00" });
-        setShowAddForm(false);
-    }, [newEvent, selectedDate]);
+        const updatedEvents = [...events, newEvent];
+        setEvents(updatedEvents);
+        saveEvents(updatedEvents);
+
+        setNewEventTitle("");
+        setNewEventTime("");
+        setShowAddModal(false);
+    }, [newEventTitle, newEventTime, selectedDate, events]);
 
     // Delete event
-    const deleteEvent = useCallback((id: string) => {
-        setEvents((prev) => prev.filter((e) => e.id !== id));
-    }, []);
+    const handleDeleteEvent = useCallback(
+        (eventId: string) => {
+            const updatedEvents = events.filter((e) => e.id !== eventId);
+            setEvents(updatedEvents);
+            saveEvents(updatedEvents);
+            setSelectedEvent(null);
+        },
+        [events]
+    );
 
-    // Format month name
-    const monthName = viewDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    // Handle adding event from calendar
+    const handleAddFromCalendar = (date: Date) => {
+        setSelectedDate(date);
+        setShowAddModal(true);
+    };
 
-    // Selected date items
-    const selectedItems = selectedDate ? getItemsForDate(selectedDate) : { events: [], tasks: [] };
-    const selectedDateFormatted = selectedDate
-        ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
-        : '';
-
-    const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    // Handle event click
+    const handleEventClick = (event: CalendarEvent) => {
+        setSelectedEvent(event);
+    };
 
     return (
-        <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
-            <Header title="Calendar" backLink="/" />
+        <div className="flex flex-col h-screen h-[100dvh] bg-background text-foreground">
+            <Header title="Calendário" backLink="/" />
 
-            <main className="flex-1 p-4 md:p-6 max-w-4xl mx-auto w-full space-y-4">
-                {/* Calendar Header */}
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg md:text-xl font-serif font-bold capitalize">{monthName}</h2>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={goToToday}
-                            className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border hover:bg-muted transition-colors"
-                        >
-                            Hoje
-                        </button>
-                        <button
-                            onClick={goToPrevMonth}
-                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                        >
-                            <ChevronLeft size={18} />
-                        </button>
-                        <button
-                            onClick={goToNextMonth}
-                            className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                        >
-                            <ChevronRight size={18} />
-                        </button>
-                    </div>
-                </div>
+            <div className="flex-1 overflow-hidden">
+                <FullScreenCalendar
+                    data={calendarData}
+                    onAddEvent={handleAddFromCalendar}
+                    onEventClick={handleEventClick}
+                />
+            </div>
 
-                {/* Calendar Grid */}
-                <div className="bg-card border border-border rounded-xl overflow-hidden">
-                    {/* Week day headers */}
-                    <div className="grid grid-cols-7 border-b border-border">
-                        {weekDays.map((day) => (
-                            <div key={day} className="p-2 text-center text-xs font-medium text-muted-foreground">
-                                {day}
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Calendar days */}
-                    <div className="grid grid-cols-7">
-                        {calendarDays.map((dayInfo, index) => {
-                            const { events: dayEvents, tasks: dayTasks } = getItemsForDate(dayInfo.dateKey);
-                            const hasItems = dayEvents.length > 0 || dayTasks.length > 0;
-                            const isToday = dayInfo.dateKey === todayKey;
-                            const isSelected = dayInfo.dateKey === selectedDate;
-
-                            return (
-                                <button
-                                    key={index}
-                                    onClick={() => setSelectedDate(dayInfo.dateKey)}
-                                    className={`
-                                        relative min-h-[60px] md:min-h-[80px] p-1 md:p-2 border-b border-r border-border text-left transition-colors
-                                        ${!dayInfo.isCurrentMonth ? 'text-muted-foreground/50 bg-muted/20' : 'hover:bg-muted/50'}
-                                        ${isSelected ? 'bg-accent-blue/10 ring-2 ring-accent-blue ring-inset' : ''}
-                                    `}
-                                >
-                                    <span className={`
-                                        inline-flex items-center justify-center w-6 h-6 md:w-7 md:h-7 text-xs md:text-sm rounded-full
-                                        ${isToday ? 'bg-accent-blue text-background font-bold' : ''}
-                                    `}>
-                                        {dayInfo.day}
-                                    </span>
-
-                                    {/* Item indicators */}
-                                    {hasItems && (
-                                        <div className="mt-1 space-y-0.5 hidden md:block">
-                                            {dayEvents.slice(0, 2).map((event) => (
-                                                <div
-                                                    key={event.id}
-                                                    className="text-[10px] px-1 py-0.5 rounded truncate"
-                                                    style={{ backgroundColor: `var(--accent-${event.color})`, color: 'var(--background)' }}
-                                                >
-                                                    {event.title}
-                                                </div>
-                                            ))}
-                                            {dayTasks.slice(0, 2).map((task) => (
-                                                <div
-                                                    key={task.id}
-                                                    className="text-[10px] px-1 py-0.5 rounded truncate bg-muted border border-border flex items-center gap-0.5"
-                                                >
-                                                    <CheckSquare size={8} className="flex-shrink-0" />
-                                                    <span className="truncate">{task.title}</span>
-                                                </div>
-                                            ))}
-                                            {(dayEvents.length + dayTasks.length) > 2 && (
-                                                <div className="text-[10px] text-muted-foreground">
-                                                    +{dayEvents.length + dayTasks.length - 2} mais
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Mobile: dots indicator */}
-                                    {hasItems && (
-                                        <div className="flex gap-0.5 mt-1 md:hidden">
-                                            {dayEvents.length > 0 && (
-                                                <div className="w-1.5 h-1.5 rounded-full bg-accent-blue" />
-                                            )}
-                                            {dayTasks.length > 0 && (
-                                                <div className="w-1.5 h-1.5 rounded-full bg-accent-green" />
-                                            )}
-                                        </div>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Selected Date Panel */}
-                <AnimatePresence>
-                    {selectedDate && (
+            {/* Add Event Modal */}
+            <AnimatePresence>
+                {showAddModal && selectedDate && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                        onClick={() => setShowAddModal(false)}
+                    >
                         <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 20 }}
-                            className="bg-card border border-border rounded-xl p-4 space-y-4"
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="flex items-center justify-between">
-                                <h3 className="font-serif font-bold capitalize">{selectedDateFormatted}</h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-foreground">
+                                    Novo Evento
+                                </h3>
                                 <button
-                                    onClick={() => setShowAddForm(true)}
-                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-accent-blue/90 text-background hover:bg-accent-blue transition-colors"
+                                    onClick={() => setShowAddModal(false)}
+                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                                 >
-                                    <Plus size={14} />
-                                    Evento
+                                    <X size={18} />
                                 </button>
                             </div>
 
-                            {/* Add Event Form */}
-                            <AnimatePresence>
-                                {showAddForm && (
-                                    <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: "auto" }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="overflow-hidden"
+                            <p className="text-sm text-muted-foreground mb-4 capitalize">
+                                {format(selectedDate, "EEEE, d 'de' MMMM 'de' yyyy", {
+                                    locale: ptBR,
+                                })}
+                            </p>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                                        Título
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={newEventTitle}
+                                        onChange={(e) => setNewEventTitle(e.target.value)}
+                                        placeholder="Nome do evento"
+                                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                                        Horário (opcional)
+                                    </label>
+                                    <div className="relative">
+                                        <Clock
+                                            size={16}
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                        />
+                                        <input
+                                            type="time"
+                                            value={newEventTime}
+                                            onChange={(e) => setNewEventTime(e.target.value)}
+                                            className="w-full pl-10 pr-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={() => setShowAddModal(false)}
+                                        className="flex-1 px-4 py-2.5 border border-border rounded-lg text-foreground text-sm font-medium hover:bg-muted transition-colors"
                                     >
-                                        <div className="bg-background border border-border rounded-lg p-3 space-y-2">
-                                            <input
-                                                type="text"
-                                                value={newEvent.title}
-                                                onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') handleAddEvent();
-                                                    if (e.key === 'Escape') setShowAddForm(false);
-                                                }}
-                                                placeholder="Event title..."
-                                                className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent-blue/50"
-                                                autoFocus
-                                            />
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="time"
-                                                    value={newEvent.time}
-                                                    onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
-                                                    className="w-24 px-3 py-2 bg-card border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent-blue/50"
-                                                />
-                                                <button
-                                                    onClick={handleAddEvent}
-                                                    className="flex-1 px-3 py-2 rounded-lg bg-accent-blue/90 text-background text-sm font-medium hover:bg-accent-blue transition-colors"
-                                                >
-                                                    Add
-                                                </button>
-                                                <button
-                                                    onClick={() => setShowAddForm(false)}
-                                                    className="px-3 py-2 rounded-lg border border-border text-muted-foreground text-sm hover:bg-muted transition-colors"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            {/* Events for selected date */}
-                            {selectedItems.events.length > 0 && (
-                                <div className="space-y-2">
-                                    <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                                        <CalendarIcon size={12} />
-                                        Events
-                                    </h4>
-                                    {selectedItems.events.map((event) => (
-                                        <div
-                                            key={event.id}
-                                            className="flex items-center gap-3 p-2 bg-background border border-border rounded-lg group"
-                                        >
-                                            <div
-                                                className="w-1 h-8 rounded-full flex-shrink-0"
-                                                style={{ backgroundColor: `var(--accent-${event.color})` }}
-                                            />
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium truncate">{event.title}</p>
-                                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                                    <Clock size={10} />
-                                                    {event.time}
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => deleteEvent(event.id)}
-                                                className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    ))}
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleAddEvent}
+                                        disabled={!newEventTitle.trim()}
+                                        className="flex-1 px-4 py-2.5 bg-gradient-to-r from-accent-blue to-accent-purple text-background rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        <Plus size={16} />
+                                        Adicionar
+                                    </button>
                                 </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Event Details Modal */}
+            <AnimatePresence>
+                {selectedEvent && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                        onClick={() => setSelectedEvent(null)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className={`p-2 rounded-lg ${selectedEvent.type === "task"
+                                                ? "bg-accent-green/20 text-accent-green"
+                                                : "bg-accent-blue/20 text-accent-blue"
+                                            }`}
+                                    >
+                                        {selectedEvent.type === "task" ? (
+                                            <CheckSquare size={20} />
+                                        ) : (
+                                            <Clock size={20} />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <span
+                                            className={`text-xs font-medium uppercase ${selectedEvent.type === "task"
+                                                    ? "text-accent-green"
+                                                    : "text-accent-blue"
+                                                }`}
+                                        >
+                                            {selectedEvent.type === "task" ? "Tarefa" : "Evento"}
+                                        </span>
+                                        <h3 className="text-lg font-semibold text-foreground">
+                                            {selectedEvent.name}
+                                        </h3>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedEvent(null)}
+                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {selectedEvent.time && (
+                                <p className="text-sm text-muted-foreground mb-4 flex items-center gap-2">
+                                    <Clock size={14} />
+                                    {selectedEvent.time}
+                                </p>
                             )}
 
-                            {/* Tasks for selected date */}
-                            {selectedItems.tasks.length > 0 && (
-                                <div className="space-y-2">
-                                    <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                                        <CheckSquare size={12} />
-                                        Tasks (from Kanban)
-                                    </h4>
-                                    {selectedItems.tasks.map((task) => (
-                                        <div
-                                            key={task.id}
-                                            className="flex items-center gap-3 p-2 bg-background border border-border rounded-lg"
-                                        >
-                                            <div
-                                                className="w-1 h-8 rounded-full flex-shrink-0"
-                                                style={{ backgroundColor: `var(--accent-${task.color})` }}
-                                            />
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium truncate">{task.title}</p>
-                                                <span className={`
-                                                    text-xs px-1.5 py-0.5 rounded
-                                                    ${task.status === 'todo' ? 'bg-accent-blue/20 text-accent-blue' : ''}
-                                                    ${task.status === 'inprogress' ? 'bg-accent-orange/20 text-accent-orange' : ''}
-                                                `}>
-                                                    {task.status === 'todo' ? 'To Do' : 'In Progress'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                            {selectedEvent.type === "event" && (
+                                <button
+                                    onClick={() => handleDeleteEvent(selectedEvent.id)}
+                                    className="w-full px-4 py-2.5 border border-red-500/30 text-red-500 rounded-lg text-sm font-medium hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 size={16} />
+                                    Excluir Evento
+                                </button>
                             )}
 
-                            {/* Empty state for selected date */}
-                            {selectedItems.events.length === 0 && selectedItems.tasks.length === 0 && (
-                                <p className="text-sm text-muted-foreground text-center py-4">
-                                    No events or tasks for this date
+                            {selectedEvent.type === "task" && (
+                                <p className="text-sm text-muted-foreground text-center">
+                                    Gerencie esta tarefa no Kanban
                                 </p>
                             )}
                         </motion.div>
-                    )}
-                </AnimatePresence>
-            </main>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

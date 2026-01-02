@@ -7,6 +7,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Header } from "@/components/Header";
+import { AstroChatInput } from "@/components/ui/astro-chat-input";
 import {
     generateUUID,
     saveChat,
@@ -454,44 +455,15 @@ export default function ChatPage() {
                     </div>
                 </div>
 
-                {/* Input Area - Responsive */}
+                {/* Input Area - Claude-style */}
                 <div className="border-t border-border/50 bg-background/80 backdrop-blur-md px-3 md:px-4 py-4 md:py-6">
-                    <form
+                    <AstroChatInput
+                        value={input}
+                        onChange={handleInputChange}
                         onSubmit={handleSubmit}
-                        className="max-w-4xl mx-auto flex items-end gap-2 md:gap-3"
-                    >
-                        <div className="flex-1 relative group">
-                            <div className="absolute -inset-0.5 bg-gradient-to-r from-accent-blue/20 to-accent-purple/20 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                            <textarea
-                                placeholder="Digite sua pergunta..."
-                                value={input}
-                                onChange={handleInputChange}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSubmit(e);
-                                    }
-                                }}
-                                rows={1}
-                                disabled={isLoading}
-                                className="relative w-full resize-none rounded-xl bg-card border border-border px-4 md:px-5 py-3 md:py-3.5 text-sm md:text-base text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent-purple/50 focus:border-accent-purple/50 transition-all duration-200 max-h-32 overflow-y-auto disabled:opacity-50 shadow-sm"
-                                style={{ minHeight: '48px' }}
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={isLoading || !input.trim()}
-                            className="flex-shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-accent-blue to-accent-purple text-white flex items-center justify-center shadow-lg shadow-accent-purple/20 hover:shadow-accent-purple/30 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none transition-all duration-200 hover:scale-105 active:scale-95"
-                        >
-                            <Send size={18} className="md:w-5 md:h-5" />
-                        </button>
-                    </form>
-
-                    <p className="text-center text-muted-foreground/60 text-xs mt-2 md:mt-3 font-medium">
-                        <span className="hidden sm:inline">Enter para enviar • Shift+Enter para nova linha</span>
-                        <span className="sm:hidden">Enter para enviar</span>
-                    </p>
+                        isLoading={isLoading}
+                        placeholder="Como posso ajudar você hoje?"
+                    />
                 </div>
             </div>
         </div>
