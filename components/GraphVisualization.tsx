@@ -147,7 +147,18 @@ export default function GraphVisualization() {
         </div>
     );
 
-    // Graph view
+    // Color palette for nodes
+    const nodeColors = [
+        '#a78bfa', // purple
+        '#60a5fa', // blue
+        '#4ade80', // green
+        '#fbbf24', // yellow
+        '#f472b6', // pink
+        '#f97316', // orange
+        '#06b6d4', // cyan
+    ];
+
+    // Graph view with custom canvas rendering
     const renderGraphView = () => {
         try {
             return (
@@ -158,18 +169,77 @@ export default function GraphVisualization() {
                     height={dimensions.height}
                     backgroundColor="transparent"
                     nodeLabel={(node: any) => `${node.label} (${node.messageCount} msgs)`}
-                    nodeColor={() => 'var(--accent-purple)'}
-                    // Dynamic node size based on messageCount
-                    nodeVal={(node: any) => {
-                        const baseSize = dimensions.width < 640 ? 3 : 5;
+                    // Custom node canvas painting for glow and color
+                    nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+                        const label = node.label || '';
+                        const nodeIndex = stableGraphData.nodes.findIndex((n: GraphNode) => n.id === node.id);
+                        const color = nodeColors[nodeIndex % nodeColors.length];
+
+                        // Calculate node size based on messageCount
+                        const baseSize = dimensions.width < 640 ? 6 : 10;
                         const msgScale = Math.log2((node.messageCount || 1) + 1);
-                        return baseSize + msgScale * 2;
+                        const nodeSize = baseSize + msgScale * 3;
+
+                        // Draw glow effect
+                        ctx.shadowColor = color;
+                        ctx.shadowBlur = 20;
+                        ctx.shadowOffsetX = 0;
+                        ctx.shadowOffsetY = 0;
+
+                        // Draw outer glow circle
+                        ctx.beginPath();
+                        ctx.arc(node.x, node.y, nodeSize + 4, 0, 2 * Math.PI, false);
+                        ctx.fillStyle = `${color}40`;
+                        ctx.fill();
+
+                        // Draw main node circle
+                        ctx.shadowBlur = 15;
+                        ctx.beginPath();
+                        ctx.arc(node.x, node.y, nodeSize, 0, 2 * Math.PI, false);
+                        ctx.fillStyle = color;
+                        ctx.fill();
+
+                        // Draw inner highlight
+                        ctx.shadowBlur = 0;
+                        ctx.beginPath();
+                        ctx.arc(node.x - nodeSize * 0.3, node.y - nodeSize * 0.3, nodeSize * 0.3, 0, 2 * Math.PI, false);
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                        ctx.fill();
+
+                        // Draw label
+                        const fontSize = Math.max(10, 12 / globalScale);
+                        ctx.font = `${fontSize}px Inter, sans-serif`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'top';
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                        ctx.shadowBlur = 4;
+                        ctx.fillStyle = 'white';
+
+                        // Truncate label if too long
+                        const maxLabelLength = 20;
+                        const displayLabel = label.length > maxLabelLength
+                            ? label.substring(0, maxLabelLength) + '...'
+                            : label;
+                        ctx.fillText(displayLabel, node.x, node.y + nodeSize + 6);
+
+                        // Reset shadow
+                        ctx.shadowBlur = 0;
+                    }}
+                    nodePointerAreaPaint={(node: any, color: string, ctx: CanvasRenderingContext2D) => {
+                        const baseSize = dimensions.width < 640 ? 6 : 10;
+                        const msgScale = Math.log2((node.messageCount || 1) + 1);
+                        const nodeSize = baseSize + msgScale * 3;
+                        ctx.beginPath();
+                        ctx.arc(node.x, node.y, nodeSize + 8, 0, 2 * Math.PI, false);
+                        ctx.fillStyle = color;
+                        ctx.fill();
                     }}
                     onNodeClick={(node: any) => handleNodeClick(node as GraphNode)}
                     onEngineStop={() => console.log('[Graph] Engine stopped')}
                     cooldownTicks={100}
                     d3VelocityDecay={0.3}
                     d3AlphaDecay={0.05}
+                    enableNodeDrag={true}
                 />
                 /* eslint-enable @typescript-eslint/no-explicit-any */
             );
@@ -179,6 +249,7 @@ export default function GraphVisualization() {
             return null;
         }
     };
+
 
     return (
         <div className="flex flex-col lg:flex-row h-[calc(100vh-57px)] md:h-[calc(100vh-73px)]">

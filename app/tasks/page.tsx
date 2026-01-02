@@ -1,7 +1,7 @@
 "use client";
 
 import { Header } from "@/components/Header";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2, GripVertical, Calendar } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,6 +16,7 @@ interface Task {
     title: string;
     status: TaskStatus;
     color: "green" | "orange" | "purple" | "blue";
+    dueDate?: string; // YYYY-MM-DD format for calendar sync
     createdAt: number;
 }
 
@@ -54,7 +55,11 @@ export default function TasksPage() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isClient, setIsClient] = useState(false);
     const [newTaskTitle, setNewTaskTitle] = useState("");
+    const [newTaskDate, setNewTaskDate] = useState("");
     const [addingToColumn, setAddingToColumn] = useState<TaskStatus | null>(null);
+
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split("T")[0];
 
     // Load tasks on mount
     useEffect(() => {
@@ -79,13 +84,15 @@ export default function TasksPage() {
             title: newTaskTitle.trim(),
             status,
             color: colors[Math.floor(Math.random() * colors.length)],
+            dueDate: newTaskDate || undefined,
             createdAt: Date.now(),
         };
 
         setTasks((prev) => [...prev, newTask]);
         setNewTaskTitle("");
+        setNewTaskDate("");
         setAddingToColumn(null);
-    }, [newTaskTitle]);
+    }, [newTaskTitle, newTaskDate]);
 
     // Move task to different column
     const moveTask = useCallback((taskId: string, newStatus: TaskStatus) => {
@@ -161,6 +168,17 @@ export default function TasksPage() {
                                                     autoFocus
                                                     className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent-blue/50"
                                                 />
+                                                <div className="flex items-center gap-2">
+                                                    <Calendar size={14} className="text-muted-foreground flex-shrink-0" />
+                                                    <input
+                                                        type="date"
+                                                        value={newTaskDate}
+                                                        onChange={(e) => setNewTaskDate(e.target.value)}
+                                                        min={today}
+                                                        className="flex-1 px-2 py-1.5 bg-background border border-border rounded-lg text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-accent-blue/50"
+                                                        placeholder="Due date (optional)"
+                                                    />
+                                                </div>
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => handleAddTask(column.id)}
@@ -203,6 +221,12 @@ export default function TasksPage() {
                                                         className="w-2 h-2 rounded-full flex-shrink-0"
                                                         style={{ backgroundColor: `var(--accent-${task.color})` }}
                                                     />
+                                                    {task.dueDate && (
+                                                        <span className="text-xs text-muted-foreground flex items-center gap-1 bg-muted/50 px-1.5 py-0.5 rounded">
+                                                            <Calendar size={10} />
+                                                            {new Date(task.dueDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
+                                                        </span>
+                                                    )}
                                                     {/* Move buttons - Always visible on mobile */}
                                                     <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                         {column.id !== "todo" && (

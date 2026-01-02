@@ -35,38 +35,75 @@ O USUÁRIO QUER APRENDER AGORA:`;
 // Allow streaming responses up to 60 seconds
 export const maxDuration = 60;
 
-// Define a simple message type for incoming requests
-interface RequestMessage {
+// AI SDK v6 UIMessage format with parts array
+interface UIMessagePart {
+    type: 'text' | 'image' | 'file' | 'tool-call' | 'tool-result';
+    text?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+}
+
+interface UIMessage {
+    id: string;
     role: 'user' | 'assistant' | 'system';
-    content: string;
+    content?: string;
+    parts?: UIMessagePart[];
+}
+
+// Helper to extract text content from UIMessage
+function getMessageContent(message: UIMessage): string {
+    // If message has parts array (AI SDK v6 format), extract text from it
+    if (message.parts && Array.isArray(message.parts)) {
+        return message.parts
+            .filter(part => part.type === 'text' && part.text)
+            .map(part => part.text)
+            .join('');
+    }
+    // Fallback to content field (legacy format)
+    return message.content || '';
 }
 
 export async function POST(request: Request) {
-    const { messages }: { messages: RequestMessage[] } = await request.json()
+    try {
+        const { messages }: { messages: UIMessage[] } = await request.json()
 
-    // Convert messages and inject system prompt into last user message
-    const coreMessages = messages.map((message, index) => {
-        const isLastMessage = index === messages.length - 1;
-        const isUserMessage = message.role === 'user';
+        console.log('[Chat API] Received messages:', messages.length);
 
-        if (isLastMessage && isUserMessage) {
+        // Convert UIMessages to CoreMessages for streamText
+        const coreMessages = messages.map((message, index) => {
+            const isLastMessage = index === messages.length - 1;
+            const isUserMessage = message.role === 'user';
+            const content = getMessageContent(message);
+
+            console.log(`[Chat API] Message ${index}: role=${message.role}, content="${content.substring(0, 50)}..."`);
+
+            if (isLastMessage && isUserMessage) {
+                return {
+                    role: 'user' as const,
+                    content: `${SYSTEM_INSTRUCTION}\n${content}`
+                };
+            }
+
             return {
-                role: 'user' as const,
-                content: `${SYSTEM_INSTRUCTION}\n${message.content}`
+                role: message.role,
+                content: content
             };
-        }
+        });
 
-        return {
-            role: message.role,
-            content: message.content
-        };
-    });
+        console.log('[Chat API] Calling OpenAI...');
 
-    const result = streamText({
-        model: openai('gpt-4o-mini'),
-        messages: coreMessages,
-    })
+        const result = streamText({
+            model: openai('gpt-4o-mini'),
+            messages: coreMessages,
+        });
 
-    return result.toUIMessageStreamResponse()
+        console.log('[Chat API] Streaming response...');
+        return result.toUIMessageStreamResponse();
+    } catch (error) {
+        console.error('[Chat API] Error:', error);
+        return new Response(JSON.stringify({ error: 'Failed to process chat' }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
 }
-

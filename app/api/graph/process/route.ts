@@ -1,13 +1,7 @@
 import { generateText, embed } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
+import { openai } from '@ai-sdk/openai';
 
-// Ollama provider for local models
-const ollama = createOpenAI({
-    baseURL: 'http://localhost:11434/v1',
-    apiKey: 'ollama',
-});
-
-// System instruction to generate conversation titles
+// SYSTEM_INSTRUCTION: Mantivemos o teu prompt original, que é excelente.
 const SYSTEM_INSTRUCTION = `Você é um gerador de títulos. Analise a PRIMEIRA MENSAGEM DO USUÁRIO abaixo e crie um título curto e descritivo.
 
 REGRAS OBRIGATÓRIAS:
@@ -37,11 +31,12 @@ export async function POST(request: Request) {
             .map((m: { role: string; content: string }) => `${m.role}: ${m.content}`)
             .join('\n');
 
-        // Step A: Extract topic label using llama3.2
+        // Step A: Extract topic label using OpenAI (GPT-4o Mini)
+        // MUDANÇA: Trocámos o Ollama pelo OpenAI aqui
         console.log('[Graph API] Extracting topic from conversation...');
 
         const topicResult = await generateText({
-            model: ollama.chat('llama3.2'),
+            model: openai('gpt-4o-mini'), // Substitui o Llama 3.2
             prompt: `${SYSTEM_INSTRUCTION}
 ${conversationText}
 
@@ -51,11 +46,12 @@ TÍTULO:`,
         const label = topicResult.text.trim().replace(/^["']|["']$/g, '');
         console.log('[Graph API] Extracted label:', label);
 
-        // Step B: Generate embedding using nomic-embed-text
+        // Step B: Generate embedding using OpenAI (text-embedding-3-small)
+        // MUDANÇA: O 'nomic-embed-text' não funciona sem Ollama, usamos o da OpenAI
         console.log('[Graph API] Generating embedding...');
 
         const embeddingResult = await embed({
-            model: ollama.embedding('nomic-embed-text'),
+            model: openai.embedding('text-embedding-3-small'),
             value: label,
         });
 
