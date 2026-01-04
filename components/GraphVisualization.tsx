@@ -268,7 +268,7 @@ export default function GraphVisualization() {
                             Grafo Vazio
                         </h2>
                         <p className="text-muted-foreground/70 max-w-md text-xs md:text-sm">
-                            Converse com o Astro para começar a construir seu grafo de conhecimento.
+                            Converse com o Otto para começar a construir seu grafo de conhecimento.
                         </p>
                     </div>
                 ) : useListView ? (

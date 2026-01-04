@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { useTheme } from "next-themes";
-import { Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun, Monitor, Star } from "lucide-react";
 
 export default function SettingsPage() {
     const { theme, setTheme } = useTheme();
@@ -53,19 +53,19 @@ export default function SettingsPage() {
 
                 {/* About Section */}
                 <section className="space-y-4">
-                    <h2 className="text-lg md:text-xl font-serif font-semibold text-foreground border-b border-border pb-2">About Astro</h2>
-                    <div className="bg-card border border-border rounded-xl p-4 md:p-6 flex flex-col items-center text-center space-y-3 md:space-y-4">
-                        <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center shadow-lg shadow-accent-purple/20">
-                            <div className="w-7 h-7 md:w-8 md:h-8 bg-background rounded-full opacity-80" />
+                    <h2 className="text-lg md:text-xl font-serif font-semibold text-foreground border-b border-border pb-2">About Otto</h2>
+                    <div className="bg-card border border-border rounded-xl p-4 md:p-6 flex items-center gap-4">
+                        <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-gradient-to-br from-accent-purple/30 to-accent-blue/30 flex items-center justify-center">
+                            <Star className="w-6 h-6 md:w-8 md:h-8 text-accent-purple" />
                         </div>
                         <div>
-                            <h3 className="text-base md:text-lg font-bold text-foreground">Astro AI</h3>
+                            <h3 className="text-base md:text-lg font-bold text-foreground">Otto AI</h3>
                             <p className="text-muted-foreground text-xs md:text-sm">Version 1.0.0 (Cosmic)</p>
                         </div>
-                        <p className="text-muted-foreground max-w-sm text-sm md:text-base">
-                            Next Generation AI Assistant designed for clarity, creativity, and exploration.
-                        </p>
                     </div>
+                    <p className="text-muted-foreground max-w-sm text-sm md:text-base">
+                        Next Generation AI Assistant designed for clarity, creativity, and exploration.
+                    </p>
                 </section>
             </main>
         </div>
