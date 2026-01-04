@@ -143,10 +143,13 @@ export default function ChatPage() {
     const [savedChats, setSavedChats] = useState<SavedChat[]>([]);
     const [currentSessionId, setCurrentSessionId] = useState<string>('');
     const [isClient, setIsClient] = useState(false);
+    const [input, setInput] = useState('');
 
-    const { messages, setMessages, input, handleInputChange, handleSubmit: submitChat, isLoading } = useChat({
-        api: '/api/chat',
-    });
+    // AI SDK v6 useChat hook - uses sendMessage for proper UI message streaming
+    const { messages, setMessages, sendMessage, status } = useChat();
+
+    // Derive loading states from status
+    const isLoading = status !== 'ready';
 
     const [nodeCreated, setNodeCreated] = useState(false);
     const [generatedTitle, setGeneratedTitle] = useState<string | null>(null);
@@ -164,7 +167,7 @@ export default function ChatPage() {
             const existingChat = loadChat(sessionFromUrl);
             if (existingChat) {
                 setCurrentSessionId(sessionFromUrl);
-                setMessages(existingChat.messages as unknown as Message[]);
+                setMessages(existingChat.messages as unknown as import('@ai-sdk/react').Message[]);
                 setNodeCreated(true);
             } else {
                 setCurrentSessionId(sessionFromUrl);
@@ -191,7 +194,7 @@ export default function ChatPage() {
 
     // Auto-save chat and update node size
     useEffect(() => {
-        if (prevLoadingRef.current === true && isLoading === false && messages.length > 0) {
+        if (prevLoadingRef.current === true && !isLoading && messages.length > 0) {
             saveChat(currentSessionId, messages as unknown as import('ai').UIMessage[], generatedTitle || undefined);
             // Update node size based on new message count
             updateNodeMessageCount(currentSessionId, messages.length);
@@ -286,25 +289,39 @@ export default function ChatPage() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (input.trim() && !isLoading) {
-            submitChat(e);
+        if (input.trim() && status === 'ready') {
+            sendMessage({ text: input });
+            setInput('');
         }
     };
 
     const getMessageText = (message: typeof messages[number]) => {
-        // Handle AI SDK v6 parts array format
+        // Handle AI SDK v6 parts array format - this is the primary format for v6
         if (message.parts && Array.isArray(message.parts) && message.parts.length > 0) {
-            return message.parts
-                .filter(part => part.type === 'text')
-                .map(part => (part as { type: 'text'; text: string }).text)
+            const textParts = message.parts
+                .filter((part): part is { type: 'text'; text: string } =>
+                    part.type === 'text' && typeof (part as { text?: string }).text === 'string'
+                )
+                .map(part => part.text)
                 .join('');
+
+            if (textParts) {
+                return textParts;
+            }
         }
-        // Fallback to content field (legacy format or streaming)
+
+        // Fallback to content field (legacy format or during initial streaming)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((message as any).content) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return String((message as any).content);
+        const anyMessage = message as any;
+        if (anyMessage.content) {
+            return String(anyMessage.content);
         }
+
+        // Also check for text property directly on message (some edge cases)
+        if (anyMessage.text) {
+            return String(anyMessage.text);
+        }
+
         return '';
     };
 
@@ -478,7 +495,7 @@ export default function ChatPage() {
                 <div className="border-t border-border/50 bg-background/80 backdrop-blur-md px-3 md:px-4 py-4 md:py-6">
                     <AstroChatInput
                         value={input}
-                        onChange={handleInputChange}
+                        onChange={(e) => setInput(e.target.value)}
                         onSubmit={handleSubmit}
                         isLoading={isLoading}
                         placeholder="Como posso ajudar você hoje?"

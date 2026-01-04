@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { LimelightNav } from "@/components/ui/limelight-nav";
+import { DockTabs } from "@/components/ui/dock-tabs";
 
 interface HeaderProps {
     title?: string;
@@ -61,10 +62,10 @@ export function Header({ title = "Otto", showNav = true }: HeaderProps) {
                 </span>
             </Link>
 
-            {/* Center: Navigation Bar */}
+            {/* Center: Navigation Dock */}
             {showNav && (
-                <div className="flex-1 flex justify-center overflow-x-auto scrollbar-hide">
-                    <LimelightNav />
+                <div className="flex-1 flex justify-center overflow-visible">
+                    <DockTabs />
                 </div>
             )}
 

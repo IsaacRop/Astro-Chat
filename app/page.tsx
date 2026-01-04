@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Header } from "@/components/Header";
+import { SplineScene } from "@/components/ui/splite";
+import { Card } from "@/components/ui/card";
+import { Spotlight } from "@/components/ui/spotlight";
+import { GlowingEffect } from "@/components/ui/glowing-effect";
 import {
   MessageCircle,
   Calendar,
@@ -90,8 +94,16 @@ function NavCard({
   return (
     <Link
       href={href}
-      className={`group relative bg-card/60 backdrop-blur-sm border border-border rounded-xl p-4 flex flex-col overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg ${variant.glow} ${variant.border} ${variant.bg} ${className}`}
+      className={`group relative bg-card/60 backdrop-blur-sm border border-border rounded-2xl p-4 flex flex-col overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] shadow-lg ${variant.glow} ${variant.border} ${variant.bg} ${className}`}
     >
+      <GlowingEffect
+        spread={40}
+        glow={true}
+        disabled={false}
+        proximity={64}
+        inactiveZone={0.01}
+        borderWidth={3}
+      />
       {/* Subtle gradient overlay on hover */}
       <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-transparent via-transparent to-current pointer-events-none ${variant.icon}`} style={{ opacity: 0.03 }} />
 
@@ -132,18 +144,33 @@ export default function Home() {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col flex-1 w-full max-w-6xl mx-auto gap-4 px-4 py-4 md:px-8 md:py-6 overflow-auto">
-        {/* Hero Header - Prominent with glow */}
-        <div className="flex flex-col items-center text-center py-4 md:py-6">
-          <div className="w-20 h-20 md:w-28 md:h-28 rounded-3xl bg-gradient-to-br from-accent-purple/20 to-accent-blue/20 border border-accent-purple/30 flex items-center justify-center shadow-2xl shadow-accent-purple/30 mb-4">
-            <OctopusIcon />
+        {/* Hero Section with 3D Spline Scene */}
+        <Card className="w-full h-[280px] md:h-[350px] bg-background/80 dark:bg-black/50 relative overflow-hidden rounded-2xl border-border/50 mb-4">
+          <Spotlight
+            className="from-accent-purple/30 via-accent-purple/10 to-transparent"
+            size={300}
+          />
+
+          <div className="flex h-full">
+            {/* Left content */}
+            <div className="flex-1 p-6 md:p-8 relative z-10 flex flex-col justify-center">
+              <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-foreground to-muted-foreground">
+                Otto
+              </h1>
+              <p className="mt-2 text-muted-foreground text-sm md:text-base max-w-md">
+                Seu assistente de IA de próxima geração. Organize, crie e explore com inteligência artificial.
+              </p>
+            </div>
+
+            {/* Right content - 3D Scene */}
+            <div className="flex-1 relative hidden sm:block">
+              <SplineScene
+                scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+                className="w-full h-full"
+              />
+            </div>
           </div>
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground via-accent-purple to-foreground drop-shadow-lg">
-            Otto
-          </h1>
-          <p className="text-muted-foreground text-sm md:text-base mt-2">
-            Assistente de IA de Próxima Geração
-          </p>
-        </div>
+        </Card>
 
         {/* Navigation Bento Grid with varied colors */}
         <div className="flex-1 grid grid-cols-2 md:grid-cols-6 gap-3 auto-rows-fr">
