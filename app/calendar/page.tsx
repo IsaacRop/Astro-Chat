@@ -187,7 +187,7 @@ export default function CalendarPage() {
 
     return (
         <div className="flex flex-col h-screen h-[100dvh] bg-background text-foreground">
-            <Header title="Calendário" backLink="/" />
+            <Header title="Calendário" />
 
             <div className="flex-1 overflow-hidden">
                 <FullScreenCalendar
@@ -308,8 +308,8 @@ export default function CalendarPage() {
                                 <div className="flex items-center gap-3">
                                     <div
                                         className={`p-2 rounded-lg ${selectedEvent.type === "task"
-                                                ? "bg-accent-green/20 text-accent-green"
-                                                : "bg-accent-blue/20 text-accent-blue"
+                                            ? "bg-accent-green/20 text-accent-green"
+                                            : "bg-accent-blue/20 text-accent-blue"
                                             }`}
                                     >
                                         {selectedEvent.type === "task" ? (
@@ -321,8 +321,8 @@ export default function CalendarPage() {
                                     <div>
                                         <span
                                             className={`text-xs font-medium uppercase ${selectedEvent.type === "task"
-                                                    ? "text-accent-green"
-                                                    : "text-accent-blue"
+                                                ? "text-accent-green"
+                                                : "text-accent-blue"
                                                 }`}
                                         >
                                             {selectedEvent.type === "task" ? "Tarefa" : "Evento"}

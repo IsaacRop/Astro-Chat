@@ -107,7 +107,7 @@ export default function IdeasPage() {
 
     return (
         <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
-            <Header title="Ideas" backLink="/" />
+            <Header title="Ideas" />
 
             <main className="flex-1 p-4 md:p-6 max-w-4xl mx-auto w-full space-y-4 md:space-y-6">
                 {/* Add Idea Button */}
@@ -224,8 +224,8 @@ export default function IdeasPage() {
                                         key={status}
                                         onClick={() => updateStatus(idea.id, status)}
                                         className={`px-2 py-1 rounded text-xs font-medium transition-colors ${idea.status === status
-                                                ? `bg-${statusColors[status]}/20 text-${statusColors[status]}`
-                                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                            ? `bg-${statusColors[status]}/20 text-${statusColors[status]}`
+                                            : "bg-muted text-muted-foreground hover:bg-muted/80"
                                             }`}
                                         style={idea.status === status ? {
                                             backgroundColor: `var(--${statusColors[status]})20`,

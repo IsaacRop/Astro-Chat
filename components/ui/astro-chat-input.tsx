@@ -285,7 +285,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                             {/* AI Enhancement indicator */}
                             <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent-purple/10 text-accent-purple text-xs font-medium">
                                 <Sparkles className="w-3 h-3" />
-                                <span className="hidden sm:inline">Astro AI</span>
+                                <span className="hidden sm:inline">Otto AI</span>
                             </div>
                         </div>
 

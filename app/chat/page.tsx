@@ -1,8 +1,8 @@
 'use client'
 
-import { useChat, type Message } from "@ai-sdk/react";
+import { useChat } from "@ai-sdk/react";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Send, Bot, User, Plus, Trash2, MessageSquare, X, Network } from "lucide-react";
+import { Send, User, Plus, Trash2, MessageSquare, X, Network } from "lucide-react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -18,6 +18,30 @@ import {
     updateNodeMessageCount,
     ChatSummary
 } from "@/utils/storage";
+
+// Octopus Icon for Otto branding
+const OctopusIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
+    <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+    >
+        <ellipse cx="12" cy="9" rx="5" ry="4" />
+        <circle cx="10" cy="8.5" r="0.5" fill="currentColor" />
+        <circle cx="14" cy="8.5" r="0.5" fill="currentColor" />
+        <path d="M7 12c-1 1.5-1.5 3.5-1 5" />
+        <path d="M9 13c-.5 1.5-.5 3.5 0 5" />
+        <path d="M12 13c0 1.5 0 3.5 0 5" />
+        <path d="M15 13c.5 1.5.5 3.5 0 5" />
+        <path d="M17 12c1 1.5 1.5 3.5 1 5" />
+    </svg>
+);
 
 // Type for sidebar display
 type SavedChat = ChatSummary;
@@ -119,10 +143,13 @@ export default function ChatPage() {
     const [savedChats, setSavedChats] = useState<SavedChat[]>([]);
     const [currentSessionId, setCurrentSessionId] = useState<string>('');
     const [isClient, setIsClient] = useState(false);
+    const [input, setInput] = useState('');
 
-    const { messages, setMessages, input, handleInputChange, handleSubmit: submitChat, isLoading } = useChat({
-        api: '/api/chat',
-    });
+    // AI SDK v6 useChat hook - uses sendMessage for proper UI message streaming
+    const { messages, setMessages, sendMessage, status } = useChat();
+
+    // Derive loading states from status
+    const isLoading = status !== 'ready';
 
     const [nodeCreated, setNodeCreated] = useState(false);
     const [generatedTitle, setGeneratedTitle] = useState<string | null>(null);
@@ -140,7 +167,7 @@ export default function ChatPage() {
             const existingChat = loadChat(sessionFromUrl);
             if (existingChat) {
                 setCurrentSessionId(sessionFromUrl);
-                setMessages(existingChat.messages as unknown as Message[]);
+                setMessages(existingChat.messages as Parameters<typeof setMessages>[0]);
                 setNodeCreated(true);
             } else {
                 setCurrentSessionId(sessionFromUrl);
@@ -167,7 +194,7 @@ export default function ChatPage() {
 
     // Auto-save chat and update node size
     useEffect(() => {
-        if (prevLoadingRef.current === true && isLoading === false && messages.length > 0) {
+        if (prevLoadingRef.current === true && !isLoading && messages.length > 0) {
             saveChat(currentSessionId, messages as unknown as import('ai').UIMessage[], generatedTitle || undefined);
             // Update node size based on new message count
             updateNodeMessageCount(currentSessionId, messages.length);
@@ -234,7 +261,7 @@ export default function ChatPage() {
     const loadSavedChat = useCallback((uuid: string) => {
         const session = loadChat(uuid);
         if (session) {
-            setMessages(session.messages as unknown as Message[]);
+            setMessages(session.messages as Parameters<typeof setMessages>[0]);
             setCurrentSessionId(uuid);
             setNodeCreated(true);
             setGeneratedTitle(session.title);
@@ -262,25 +289,39 @@ export default function ChatPage() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (input.trim() && !isLoading) {
-            submitChat(e);
+        if (input.trim() && status === 'ready') {
+            sendMessage({ text: input });
+            setInput('');
         }
     };
 
     const getMessageText = (message: typeof messages[number]) => {
-        // Handle AI SDK v6 parts array format
+        // Handle AI SDK v6 parts array format - this is the primary format for v6
         if (message.parts && Array.isArray(message.parts) && message.parts.length > 0) {
-            return message.parts
-                .filter(part => part.type === 'text')
-                .map(part => (part as { type: 'text'; text: string }).text)
+            const textParts = message.parts
+                .filter((part): part is { type: 'text'; text: string } =>
+                    part.type === 'text' && typeof (part as { text?: string }).text === 'string'
+                )
+                .map(part => part.text)
                 .join('');
+
+            if (textParts) {
+                return textParts;
+            }
         }
-        // Fallback to content field (legacy format or streaming)
+
+        // Fallback to content field (legacy format or during initial streaming)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((message as any).content) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return String((message as any).content);
+        const anyMessage = message as any;
+        if (anyMessage.content) {
+            return String(anyMessage.content);
         }
+
+        // Also check for text property directly on message (some edge cases)
+        if (anyMessage.text) {
+            return String(anyMessage.text);
+        }
+
         return '';
     };
 
@@ -363,12 +404,7 @@ export default function ChatPage() {
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col min-w-0 bg-background/50 backdrop-blur-3xl">
-                <Header
-                    title="Astro"
-                    backLink="/"
-                    showMenuButton={true}
-                    onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-                />
+                <Header title="Otto" />
 
                 {/* Messages Container */}
                 <div className="flex-1 overflow-y-auto px-3 md:px-4 py-4 md:py-6 scroll-smooth">
@@ -377,10 +413,10 @@ export default function ChatPage() {
                         {messages.length === 0 && (
                             <div className="flex flex-col items-center justify-center h-full min-h-[300px] md:min-h-[400px] text-center px-4">
                                 <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl bg-gradient-to-br from-accent-blue/20 to-accent-purple/20 flex items-center justify-center mb-4 md:mb-6 shadow-none">
-                                    <Bot size={32} className="md:w-12 md:h-12 text-foreground" />
+                                    <OctopusIcon size={32} className="md:w-12 md:h-12 text-accent-purple" />
                                 </div>
                                 <h2 className="text-2xl md:text-3xl font-serif font-bold text-foreground mb-2 md:mb-3">
-                                    Olá! Eu sou o Astro.
+                                    Olá! Eu sou o Otto.
                                 </h2>
                                 <p className="text-muted-foreground max-w-md text-sm md:text-base">
                                     Seu explorador do conhecimento cósmico.
@@ -400,7 +436,7 @@ export default function ChatPage() {
                                 >
                                     {!isUser && (
                                         <div className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-lg bg-card border border-border flex items-center justify-center mr-2 md:mr-3 mt-1 shadow-sm">
-                                            <Bot size={14} className="md:w-4 md:h-4 text-foreground" />
+                                            <OctopusIcon size={14} className="md:w-4 md:h-4 text-accent-purple" />
                                         </div>
                                     )}
 
@@ -439,7 +475,7 @@ export default function ChatPage() {
                         {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
                             <div className="flex justify-start mb-6">
                                 <div className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-lg bg-card border border-border flex items-center justify-center mr-2 md:mr-3">
-                                    <Bot size={14} className="md:w-4 md:h-4 text-muted-foreground" />
+                                    <OctopusIcon size={14} className="md:w-4 md:h-4 text-accent-purple" />
                                 </div>
                                 <div className="bg-card px-4 md:px-5 py-3 md:py-4 rounded-2xl rounded-bl-md border border-border shadow-sm">
                                     <div className="flex space-x-2">
@@ -459,7 +495,7 @@ export default function ChatPage() {
                 <div className="border-t border-border/50 bg-background/80 backdrop-blur-md px-3 md:px-4 py-4 md:py-6">
                     <AstroChatInput
                         value={input}
-                        onChange={handleInputChange}
+                        onChange={(e) => setInput(e.target.value)}
                         onSubmit={handleSubmit}
                         isLoading={isLoading}
                         placeholder="Como posso ajudar você hoje?"
