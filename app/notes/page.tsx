@@ -179,7 +179,7 @@ export default function NotesPage() {
 
     return (
         <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
-            <Header title="Notes" backLink="/" />
+            <Header title="Notes" />
 
             <main className="flex-1 p-4 md:p-6 max-w-4xl mx-auto w-full space-y-4 md:space-y-6">
                 {/* Actions */}

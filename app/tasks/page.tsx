@@ -114,7 +114,7 @@ export default function TasksPage() {
 
     return (
         <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
-            <Header title="Tasks" backLink="/" />
+            <Header title="Tasks" />
 
             {/* Mobile: Vertical Stack / Desktop: Horizontal Kanban */}
             <main className="flex-1 p-4 md:p-6 overflow-x-auto">

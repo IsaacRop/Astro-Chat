@@ -1,6 +1,6 @@
 'use client'
 
-import { useChat, type Message } from "@ai-sdk/react";
+import { useChat } from "@ai-sdk/react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Send, User, Plus, Trash2, MessageSquare, X, Network } from "lucide-react";
 import Link from "next/link";
@@ -167,7 +167,7 @@ export default function ChatPage() {
             const existingChat = loadChat(sessionFromUrl);
             if (existingChat) {
                 setCurrentSessionId(sessionFromUrl);
-                setMessages(existingChat.messages as unknown as import('@ai-sdk/react').Message[]);
+                setMessages(existingChat.messages as Parameters<typeof setMessages>[0]);
                 setNodeCreated(true);
             } else {
                 setCurrentSessionId(sessionFromUrl);
@@ -261,7 +261,7 @@ export default function ChatPage() {
     const loadSavedChat = useCallback((uuid: string) => {
         const session = loadChat(uuid);
         if (session) {
-            setMessages(session.messages as unknown as Message[]);
+            setMessages(session.messages as Parameters<typeof setMessages>[0]);
             setCurrentSessionId(uuid);
             setNodeCreated(true);
             setGeneratedTitle(session.title);
