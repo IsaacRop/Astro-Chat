@@ -327,7 +327,7 @@ export default function ChatPage() {
 
 
     return (
-        <div className="flex h-screen h-[100dvh] bg-background text-foreground overflow-hidden">
+        <div className="flex h-screen h-[100dvh] bg-[#0C0C0D] text-foreground overflow-hidden">
             {/* Mobile sidebar backdrop */}
             {sidebarOpen && (
                 <div
@@ -338,42 +338,40 @@ export default function ChatPage() {
 
             {/* Sidebar */}
             <aside
-                className={`fixed md:relative z-50 h-full bg-card/50 backdrop-blur-xl border-r border-border flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-64' : 'w-0 md:w-64'
+                className={`fixed md:relative z-50 h-full bg-[#1A1A1C] border-r border-white/[0.05] flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-64' : 'w-0 md:w-64'
                     } overflow-hidden`}
             >
-                <div className="flex items-center justify-between p-3 md:p-4 border-b border-border min-w-64">
-                    <h2 className="text-foreground font-semibold text-sm font-serif tracking-wide">Conversas</h2>
+                <div className="flex items-center justify-between p-4 border-b border-white/[0.05] min-w-64">
+                    <h2 className="text-zinc-400 font-medium text-xs font-sans tracking-wider uppercase">Conversas</h2>
                     <button
                         onClick={() => setSidebarOpen(false)}
-                        className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors md:hidden"
+                        className="p-1.5 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-zinc-200 transition-colors md:hidden"
                     >
-                        <X size={18} />
+                        <X size={18} strokeWidth={1.5} />
                     </button>
                 </div>
 
-                <div className="p-3 min-w-64">
+                <div className="p-4 min-w-64 space-y-2">
                     <button
                         onClick={startNewChat}
-                        className="w-full flex items-center gap-2 px-3 md:px-4 py-2.5 rounded-lg bg-accent-blue/90 text-background text-sm font-medium hover:bg-accent-blue transition-all shadow-sm"
+                        className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.08] text-zinc-200 text-sm font-medium transition-all border border-white/[0.05]"
                     >
-                        <Plus size={18} />
+                        <Plus size={16} strokeWidth={1.5} />
                         Nova Conversa
                     </button>
-                </div>
 
-                <div className="px-3 pb-3 min-w-64">
                     <Link
                         href="/cadernos"
-                        className="w-full flex items-center gap-2 px-3 md:px-4 py-2.5 rounded-lg bg-accent-purple/90 text-background text-sm font-medium hover:bg-accent-purple transition-all shadow-sm"
+                        className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl bg-transparent hover:bg-white/[0.03] text-zinc-400 hover:text-zinc-200 text-sm font-medium transition-all border border-transparent hover:border-white/[0.05]"
                     >
-                        <Network size={18} />
+                        <Network size={16} strokeWidth={1.5} />
                         Cadernos
                     </Link>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-2 min-w-64">
                     {isClient && savedChats.length === 0 && (
-                        <p className="text-muted-foreground text-xs text-center py-4">
+                        <p className="text-zinc-600 text-xs text-center py-8 font-sans">
                             Nenhuma conversa salva
                         </p>
                     )}
@@ -385,17 +383,17 @@ export default function ChatPage() {
                             tabIndex={0}
                             onKeyDown={(e) => e.key === 'Enter' && loadSavedChat(chat.uuid)}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left mb-1 transition-colors group cursor-pointer ${chat.uuid === currentSessionId
-                                ? 'bg-muted/80 text-foreground font-medium'
-                                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                                ? 'bg-white/[0.06] text-zinc-100'
+                                : 'text-zinc-500 hover:bg-white/[0.03] hover:text-zinc-300'
                                 }`}
                         >
-                            <MessageSquare size={16} className="flex-shrink-0" />
-                            <span className="flex-1 text-sm truncate">{chat.title}</span>
+                            <MessageSquare size={14} className="flex-shrink-0 opacity-70" strokeWidth={1.5} />
+                            <span className="flex-1 text-sm truncate font-sans">{chat.title}</span>
                             <button
                                 onClick={(e) => deleteChatHandler(chat.uuid, e)}
-                                className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                                className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-zinc-600 hover:text-red-400 transition-all"
                             >
-                                <Trash2 size={14} />
+                                <Trash2 size={13} strokeWidth={1.5} />
                             </button>
                         </div>
                     ))}
@@ -403,23 +401,23 @@ export default function ChatPage() {
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 bg-background/50 backdrop-blur-3xl">
+            <div className="flex-1 flex flex-col min-w-0 bg-[#0C0C0D]">
                 <Header title="Otto" />
 
                 {/* Messages Container */}
-                <div className="flex-1 overflow-y-auto px-3 md:px-4 py-4 md:py-6 scroll-smooth">
-                    <div className="max-w-4xl mx-auto">
+                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-8 scroll-smooth">
+                    <div className="max-w-3xl mx-auto">
                         {/* Welcome message */}
                         {messages.length === 0 && (
-                            <div className="flex flex-col items-center justify-center h-full min-h-[300px] md:min-h-[400px] text-center px-4">
-                                <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-3xl bg-gradient-to-br from-accent-blue/20 to-accent-purple/20 flex items-center justify-center mb-4 md:mb-6 shadow-none">
-                                    <OctopusIcon size={32} className="md:w-12 md:h-12 text-accent-purple" />
+                            <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center px-4">
+                                <div className="w-16 h-16 rounded-full border border-white/[0.05] bg-[#1A1A1C] flex items-center justify-center mb-6">
+                                    <OctopusIcon size={28} className="text-zinc-100" />
                                 </div>
-                                <h2 className="text-2xl md:text-3xl font-serif font-bold text-foreground mb-2 md:mb-3">
-                                    Olá! Eu sou o Otto.
+                                <h2 className="text-3xl md:text-4xl font-serif font-medium text-zinc-100 mb-3 tracking-tight">
+                                    Olá, eu sou o Otto.
                                 </h2>
-                                <p className="text-muted-foreground max-w-md text-sm md:text-base">
-                                    Seu explorador do conhecimento cósmico.
+                                <p className="text-zinc-500 max-w-md text-sm md:text-base font-sans leading-relaxed">
+                                    Seu explorador do conhecimento. Como posso ajudar você hoje?
                                 </p>
                             </div>
                         )}
@@ -432,26 +430,26 @@ export default function ChatPage() {
                             return (
                                 <div
                                     key={message.id}
-                                    className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 md:mb-8 group`}
+                                    className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6 group`}
                                 >
                                     {!isUser && (
-                                        <div className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-lg bg-card border border-border flex items-center justify-center mr-2 md:mr-3 mt-1 shadow-sm">
-                                            <OctopusIcon size={14} className="md:w-4 md:h-4 text-accent-purple" />
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-full border border-white/[0.05] bg-[#1A1A1C] flex items-center justify-center mr-4 mt-1">
+                                            <OctopusIcon size={14} className="text-zinc-100" />
                                         </div>
                                     )}
 
                                     <div
                                         className={`max-w-[90%] md:max-w-[85%] relative ${isUser
-                                            ? 'bg-accent-blue/10 text-foreground rounded-2xl rounded-br-sm px-4 md:px-6 py-3 md:py-4 border border-accent-blue/20'
-                                            : 'bg-card text-foreground rounded-2xl rounded-bl-sm px-4 md:px-6 py-3 md:py-4 border border-border shadow-sm'
+                                            ? 'bg-[#1A1A1C] text-zinc-100 rounded-2xl rounded-tr-sm px-5 py-3 border border-white/[0.05]'
+                                            : 'text-zinc-300 px-0 py-2'
                                             }`}
                                     >
                                         {isUser ? (
-                                            <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words font-medium">
+                                            <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words font-sans">
                                                 {messageText}
                                             </p>
                                         ) : (
-                                            <div className="prose prose-sm max-w-none dark:prose-invert">
+                                            <div className="prose prose-sm prose-invert max-w-none prose-p:text-zinc-400 prose-headings:font-serif prose-headings:text-zinc-200">
                                                 <ReactMarkdown
                                                     remarkPlugins={[remarkGfm]}
                                                     components={MarkdownComponents}
@@ -461,12 +459,6 @@ export default function ChatPage() {
                                             </div>
                                         )}
                                     </div>
-
-                                    {isUser && (
-                                        <div className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-lg bg-accent-blue flex items-center justify-center ml-2 md:ml-3 mt-1 shadow-md shadow-accent-blue/20">
-                                            <User size={14} className="md:w-4 md:h-4 text-background" />
-                                        </div>
-                                    )}
                                 </div>
                             );
                         })}
@@ -474,14 +466,14 @@ export default function ChatPage() {
                         {/* Loading indicator */}
                         {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
                             <div className="flex justify-start mb-6">
-                                <div className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-lg bg-card border border-border flex items-center justify-center mr-2 md:mr-3">
-                                    <OctopusIcon size={14} className="md:w-4 md:h-4 text-accent-purple" />
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full border border-white/[0.05] bg-[#1A1A1C] flex items-center justify-center mr-4">
+                                    <OctopusIcon size={14} className="text-zinc-100" />
                                 </div>
-                                <div className="bg-card px-4 md:px-5 py-3 md:py-4 rounded-2xl rounded-bl-md border border-border shadow-sm">
+                                <div className="px-0 py-2">
                                     <div className="flex space-x-2">
-                                        <div className="w-2 h-2 bg-accent-purple rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                                        <div className="w-2 h-2 bg-accent-purple rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                                        <div className="w-2 h-2 bg-accent-purple rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                        <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                        <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                        <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                                     </div>
                                 </div>
                             </div>
@@ -491,15 +483,18 @@ export default function ChatPage() {
                     </div>
                 </div>
 
-                {/* Input Area - Claude-style */}
-                <div className="border-t border-border/50 bg-background/80 backdrop-blur-md px-3 md:px-4 py-4 md:py-6">
-                    <AstroChatInput
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onSubmit={handleSubmit}
-                        isLoading={isLoading}
-                        placeholder="Como posso ajudar você hoje?"
-                    />
+                {/* Input Area */}
+                <div className="bg-[#0C0C0D] px-4 pb-6 pt-2">
+                    <div className="max-w-3xl mx-auto">
+                        <AstroChatInput
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onSubmit={handleSubmit}
+                            isLoading={isLoading}
+                            placeholder="Pergunte qualquer coisa..."
+                        />
+                        <p className="text-center text-[10px] text-zinc-600 mt-3 font-sans">Otto pode cometer erros. Verifique informações importantes.</p>
+                    </div>
                 </div>
             </div>
         </div>

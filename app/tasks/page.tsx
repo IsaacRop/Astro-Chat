@@ -113,40 +113,42 @@ export default function TasksPage() {
         tasks.filter((task) => task.status === status);
 
     return (
-        <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
-            <Header title="Tasks" />
+        <div className="min-h-screen min-h-[100dvh] bg-[#0C0C0D] text-foreground flex flex-col overflow-x-hidden">
+            <Header title="Tarefas" />
 
             {/* Mobile: Vertical Stack / Desktop: Horizontal Kanban */}
-            <main className="flex-1 p-4 md:p-6 overflow-x-auto">
-                <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:min-w-max">
+            <main className="flex-1 p-4 md:p-8 overflow-x-auto">
+                <div className="flex flex-col md:flex-row gap-6 md:gap-8 md:min-w-max h-full">
                     {columns.map((column) => (
                         <div
                             key={column.id}
-                            className="w-full md:w-72 lg:w-80 flex-shrink-0 flex flex-col"
+                            className="w-full md:w-80 lg:w-96 flex-shrink-0 flex flex-col"
                         >
                             {/* Column Header */}
-                            <div className="flex items-center justify-between mb-3 md:mb-4 px-1">
-                                <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-between mb-4 px-1">
+                                <div className="flex items-center gap-3">
                                     <div
-                                        className="w-3 h-3 rounded-full"
-                                        style={{ backgroundColor: `var(--${column.color})` }}
+                                        className={`w-2 h-2 rounded-full ${column.id === 'done' ? 'bg-emerald-500' :
+                                                column.id === 'inprogress' ? 'bg-amber-500' :
+                                                    'bg-zinc-500'
+                                            }`}
                                     />
-                                    <h2 className="font-serif font-bold text-base md:text-lg">{column.title}</h2>
-                                    <span className="text-muted-foreground text-sm ml-1">
-                                        ({getTasksByStatus(column.id).length})
+                                    <h2 className="font-serif font-medium text-lg text-zinc-200 tracking-tight">{column.title}</h2>
+                                    <span className="text-zinc-600 text-sm font-sans">
+                                        {getTasksByStatus(column.id).length}
                                     </span>
                                 </div>
                                 <button
                                     onClick={() => setAddingToColumn(column.id)}
-                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-zinc-200 transition-colors"
                                 >
-                                    <Plus size={18} />
+                                    <Plus size={18} strokeWidth={1.5} />
                                 </button>
                             </div>
 
                             {/* Column Content */}
-                            <div className="flex-1 bg-card/30 border border-border rounded-xl p-3 space-y-3 min-h-[200px] md:min-h-[400px]">
-                                {/* Add Task Input */}
+                            <div className="flex-1 bg-[#1A1A1C]/50 border border-white/[0.02] rounded-2xl p-3 space-y-3 min-h-[200px] md:min-h-[400px] backdrop-blur-sm">
+                                /* Add Task Input */
                                 <AnimatePresence>
                                     {addingToColumn === column.id && (
                                         <motion.div
@@ -155,7 +157,7 @@ export default function TasksPage() {
                                             exit={{ opacity: 0, height: 0 }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="bg-card border border-border rounded-lg p-3 space-y-2">
+                                            <div className="bg-[#1A1A1C] border border-white/[0.05] rounded-xl p-3 space-y-3 shadow-xl">
                                                 <input
                                                     type="text"
                                                     value={newTaskTitle}
@@ -164,33 +166,33 @@ export default function TasksPage() {
                                                         if (e.key === "Enter") handleAddTask(column.id);
                                                         if (e.key === "Escape") setAddingToColumn(null);
                                                     }}
-                                                    placeholder="Task title..."
+                                                    placeholder="Nova tarefa..."
                                                     autoFocus
-                                                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground text-sm focus:outline-none focus:ring-1 focus:ring-accent-blue/50"
+                                                    className="w-full px-3 py-2 bg-[#0C0C0D] border border-white/[0.05] rounded-lg text-zinc-200 placeholder-zinc-600 text-sm focus:outline-none focus:border-white/[0.2] transition-colors"
                                                 />
                                                 <div className="flex items-center gap-2">
-                                                    <Calendar size={14} className="text-muted-foreground flex-shrink-0" />
+                                                    <Calendar size={14} className="text-zinc-500 flex-shrink-0" strokeWidth={1.5} />
                                                     <input
                                                         type="date"
                                                         value={newTaskDate}
                                                         onChange={(e) => setNewTaskDate(e.target.value)}
                                                         min={today}
-                                                        className="flex-1 px-2 py-1.5 bg-background border border-border rounded-lg text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-accent-blue/50"
-                                                        placeholder="Due date (optional)"
+                                                        className="flex-1 px-2 py-1.5 bg-[#0C0C0D] border border-white/[0.05] rounded-lg text-zinc-400 text-xs focus:outline-none focus:border-white/[0.2] transition-colors"
+                                                        placeholder="Data (opcional)"
                                                     />
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => handleAddTask(column.id)}
-                                                        className="flex-1 px-3 py-1.5 rounded-lg bg-accent-green/90 text-background text-sm font-medium hover:bg-accent-green transition-colors"
+                                                        className="flex-1 px-3 py-1.5 rounded-lg bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-colors"
                                                     >
-                                                        Add
+                                                        Adicionar
                                                     </button>
                                                     <button
                                                         onClick={() => setAddingToColumn(null)}
-                                                        className="px-3 py-1.5 rounded-lg border border-border text-muted-foreground text-sm hover:bg-muted transition-colors"
+                                                        className="px-3 py-1.5 rounded-lg border border-white/[0.05] text-zinc-400 text-sm hover:bg-white/[0.05] hover:text-zinc-200 transition-colors"
                                                     >
-                                                        Cancel
+                                                        Cancelar
                                                     </button>
                                                 </div>
                                             </div>
@@ -206,43 +208,46 @@ export default function TasksPage() {
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -10 }}
-                                        className="bg-card border border-border rounded-lg p-3 group hover:shadow-md hover:border-accent-purple/30 transition-all"
+                                        className="bg-[#1A1A1C] border border-white/[0.05] rounded-xl p-4 group hover:border-white/[0.1] transition-all relative overflow-hidden"
                                     >
-                                        <div className="flex items-start gap-2">
-                                            <div className="pt-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-grab hidden md:block">
-                                                <GripVertical size={14} />
+                                        <div className="flex items-start gap-3">
+                                            <div className="pt-1 text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab hidden md:block">
+                                                <GripVertical size={14} strokeWidth={1.5} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-foreground text-sm font-medium break-words">
+                                                <p className="text-zinc-200 text-sm font-medium break-words leading-relaxed font-sans">
                                                     {task.title}
                                                 </p>
-                                                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                                <div className="flex items-center gap-2 mt-3 flex-wrap">
                                                     <div
-                                                        className="w-2 h-2 rounded-full flex-shrink-0"
-                                                        style={{ backgroundColor: `var(--accent-${task.color})` }}
+                                                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${task.color === 'green' ? 'bg-emerald-500' :
+                                                                task.color === 'orange' ? 'bg-amber-500' :
+                                                                    task.color === 'blue' ? 'bg-blue-500' :
+                                                                        'bg-purple-500'
+                                                            }`}
                                                     />
                                                     {task.dueDate && (
-                                                        <span className="text-xs text-muted-foreground flex items-center gap-1 bg-muted/50 px-1.5 py-0.5 rounded">
-                                                            <Calendar size={10} />
+                                                        <span className="text-[10px] text-zinc-500 flex items-center gap-1 bg-white/[0.03] px-2 py-0.5 rounded-full border border-white/[0.02]">
+                                                            <Calendar size={10} strokeWidth={1.5} />
                                                             {new Date(task.dueDate + 'T00:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
                                                         </span>
                                                     )}
-                                                    {/* Move buttons - Always visible on mobile */}
-                                                    <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                    {/* Move buttons */}
+                                                    <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity ml-auto">
                                                         {column.id !== "todo" && (
                                                             <button
                                                                 onClick={() => moveTask(task.id, column.id === "done" ? "inprogress" : "todo")}
-                                                                className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition-colors"
+                                                                className="text-[10px] uppercase tracking-wider text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded hover:bg-white/[0.05] transition-colors"
                                                             >
-                                                                ← Back
+                                                                ← Voltar
                                                             </button>
                                                         )}
                                                         {column.id !== "done" && (
                                                             <button
                                                                 onClick={() => moveTask(task.id, column.id === "todo" ? "inprogress" : "done")}
-                                                                className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition-colors"
+                                                                className="text-[10px] uppercase tracking-wider text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded hover:bg-white/[0.05] transition-colors"
                                                             >
-                                                                Next →
+                                                                Avançar →
                                                             </button>
                                                         )}
                                                     </div>
@@ -250,9 +255,9 @@ export default function TasksPage() {
                                             </div>
                                             <button
                                                 onClick={() => deleteTask(task.id)}
-                                                className="p-1 rounded md:opacity-0 md:group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
+                                                className="p-1.5 rounded-lg md:opacity-0 md:group-hover:opacity-100 hover:bg-red-500/10 text-zinc-600 hover:text-red-500 transition-all flex-shrink-0 absolute top-2 right-2"
                                             >
-                                                <Trash2 size={14} />
+                                                <Trash2 size={14} strokeWidth={1.5} />
                                             </button>
                                         </div>
                                     </motion.div>
@@ -260,8 +265,8 @@ export default function TasksPage() {
 
                                 {/* Empty state */}
                                 {getTasksByStatus(column.id).length === 0 && addingToColumn !== column.id && (
-                                    <div className="text-center py-6 md:py-8 text-muted-foreground text-sm">
-                                        No tasks
+                                    <div className="text-center py-10 text-zinc-700 text-sm font-serif italic">
+                                        Nenhuma tarefa
                                     </div>
                                 )}
                             </div>

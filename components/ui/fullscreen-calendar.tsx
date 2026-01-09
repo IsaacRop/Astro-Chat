@@ -99,24 +99,24 @@ export function FullScreenCalendar({
     };
 
     return (
-        <div className="flex flex-1 flex-col h-full">
+        <div className="flex flex-1 flex-col h-full bg-[#0C0C0D]">
             {/* Calendar Header */}
-            <div className="flex flex-col space-y-4 p-4 md:flex-row md:items-center md:justify-between md:space-y-0 lg:flex-none border-b border-border">
+            <div className="flex flex-col space-y-4 p-4 md:flex-row md:items-center md:justify-between md:space-y-0 lg:flex-none border-b border-white/[0.05]">
                 <div className="flex flex-auto">
-                    <div className="flex items-center gap-4">
-                        <div className="hidden w-16 flex-col items-center justify-center rounded-lg border border-border bg-muted p-0.5 md:flex">
-                            <h1 className="p-1 text-[10px] uppercase text-muted-foreground font-medium">
+                    <div className="flex items-center gap-6">
+                        <div className="hidden w-16 flex-col items-center justify-center rounded-xl border border-white/[0.05] bg-[#1A1A1C] p-1 md:flex">
+                            <h1 className="text-[10px] uppercase text-zinc-500 font-medium tracking-widest">
                                 {format(today, "MMM", { locale: ptBR })}
                             </h1>
-                            <div className="flex w-full items-center justify-center rounded-md border border-border bg-background p-1 text-lg font-bold text-foreground">
+                            <div className="flex w-full items-center justify-center rounded-lg bg-[#0C0C0D] p-1 text-lg font-serif font-medium text-zinc-200">
                                 <span>{format(today, "d")}</span>
                             </div>
                         </div>
                         <div className="flex flex-col">
-                            <h2 className="text-lg font-semibold text-foreground capitalize">
+                            <h2 className="text-2xl font-serif font-medium text-zinc-100 capitalize tracking-tight">
                                 {format(firstDayCurrentMonth, "MMMM yyyy", { locale: ptBR })}
                             </h2>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-zinc-500 font-sans">
                                 {format(firstDayCurrentMonth, "d MMM", { locale: ptBR })} -{" "}
                                 {format(endOfMonth(firstDayCurrentMonth), "d MMM yyyy", {
                                     locale: ptBR,
@@ -130,39 +130,39 @@ export function FullScreenCalendar({
                     <div className="inline-flex w-full -space-x-px rounded-lg shadow-sm md:w-auto">
                         <Button
                             onClick={previousMonth}
-                            className="rounded-none shadow-none first:rounded-s-lg last:rounded-e-lg focus-visible:z-10"
+                            className="rounded-none shadow-none first:rounded-l-xl last:rounded-r-xl border-white/[0.05] bg-[#1A1A1C] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-200"
                             variant="outline"
                             size="icon"
                             aria-label="Mês anterior"
                         >
-                            <ChevronLeftIcon size={16} strokeWidth={2} />
+                            <ChevronLeftIcon size={16} strokeWidth={1.5} />
                         </Button>
                         <Button
                             onClick={goToToday}
-                            className="w-full rounded-none shadow-none first:rounded-s-lg last:rounded-e-lg focus-visible:z-10 md:w-auto px-4"
+                            className="w-full rounded-none shadow-none first:rounded-l-xl last:rounded-r-xl border-white/[0.05] bg-[#1A1A1C] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-200 md:w-auto px-6 font-sans"
                             variant="outline"
                         >
                             Hoje
                         </Button>
                         <Button
                             onClick={nextMonth}
-                            className="rounded-none shadow-none first:rounded-s-lg last:rounded-e-lg focus-visible:z-10"
+                            className="rounded-none shadow-none first:rounded-l-xl last:rounded-r-xl border-white/[0.05] bg-[#1A1A1C] text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-200"
                             variant="outline"
                             size="icon"
                             aria-label="Próximo mês"
                         >
-                            <ChevronRightIcon size={16} strokeWidth={2} />
+                            <ChevronRightIcon size={16} strokeWidth={1.5} />
                         </Button>
                     </div>
 
-                    <Separator orientation="vertical" className="hidden h-6 md:block" />
+                    <Separator orientation="vertical" className="hidden h-6 md:block bg-zinc-800" />
 
                     {onAddEvent && (
                         <Button
                             onClick={() => onAddEvent(selectedDay)}
-                            className="w-full gap-2 md:w-auto bg-gradient-to-r from-accent-blue to-accent-purple hover:opacity-90 text-background"
+                            className="w-full gap-2 md:w-auto bg-zinc-100 text-zinc-900 hover:bg-white border border-transparent rounded-xl px-4 py-2"
                         >
-                            <PlusCircleIcon size={16} strokeWidth={2} />
+                            <PlusCircleIcon size={16} strokeWidth={1.5} />
                             <span>Novo Evento</span>
                         </Button>
                     )}
@@ -170,13 +170,13 @@ export function FullScreenCalendar({
             </div>
 
             {/* Calendar Grid */}
-            <div className="flex flex-1 flex-col overflow-hidden">
+            <div className="flex flex-1 flex-col overflow-hidden bg-[#0C0C0D]">
                 {/* Week Days Header */}
-                <div className="grid grid-cols-7 border-b border-border text-center text-xs font-semibold leading-6 text-muted-foreground">
+                <div className="grid grid-cols-7 border-b border-white/[0.05] text-center text-[10px] font-medium uppercase tracking-widest leading-6 text-zinc-500">
                     {weekDays.map((day, idx) => (
                         <div
                             key={day}
-                            className={cn("py-2.5", idx < 6 && "border-r border-border")}
+                            className={cn("py-3", idx < 6 && "border-r border-white/[0.05]")}
                         >
                             {day}
                         </div>
@@ -186,7 +186,7 @@ export function FullScreenCalendar({
                 {/* Calendar Days */}
                 <div className="flex flex-1 text-xs leading-6 overflow-auto">
                     {/* Desktop Grid */}
-                    <div className="hidden w-full md:grid md:grid-cols-7 md:auto-rows-fr border-l border-border">
+                    <div className="hidden w-full md:grid md:grid-cols-7 md:auto-rows-fr border-l border-white/[0.05]">
                         {days.map((day, dayIdx) => {
                             const dayEvents = getEventsForDay(day);
                             const isSelected = isEqual(day, selectedDay);
@@ -198,25 +198,25 @@ export function FullScreenCalendar({
                                     onClick={() => setSelectedDay(day)}
                                     className={cn(
                                         dayIdx === 0 && colStartClasses[getDay(day)],
-                                        !isCurrentMonth && "bg-muted/30 text-muted-foreground",
-                                        "relative flex flex-col border-b border-r border-border cursor-pointer transition-colors",
-                                        !isSelected && "hover:bg-muted/50",
-                                        isSelected && "bg-accent-purple/10"
+                                        !isCurrentMonth && "bg-[#09090A] text-zinc-700",
+                                        "relative flex flex-col border-b border-r border-white/[0.05] cursor-pointer transition-colors min-h-[100px]",
+                                        !isSelected && isCurrentMonth && "hover:bg-white/[0.02]",
+                                        isSelected && "bg-[#1A1A1C]"
                                     )}
                                 >
-                                    <header className="flex items-center justify-between p-2">
+                                    <header className="flex items-center justify-between p-3">
                                         <button
                                             type="button"
                                             className={cn(
-                                                "flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium transition-colors",
+                                                "flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium transition-all font-serif",
                                                 isToday(day) &&
-                                                "bg-accent-purple text-background font-bold",
+                                                "bg-zinc-100 text-zinc-900 shadow-sm",
                                                 isSelected &&
                                                 !isToday(day) &&
-                                                "bg-accent-blue text-background",
+                                                "bg-zinc-800 text-zinc-200",
                                                 !isSelected &&
                                                 !isToday(day) &&
-                                                "hover:bg-muted text-foreground"
+                                                "text-zinc-400 group-hover:text-zinc-200"
                                             )}
                                         >
                                             <time dateTime={format(day, "yyyy-MM-dd")}>
@@ -226,8 +226,8 @@ export function FullScreenCalendar({
                                     </header>
 
                                     {/* Events */}
-                                    <div className="flex-1 px-2 pb-2 space-y-1 overflow-hidden">
-                                        {dayEvents.slice(0, 2).map((event) => (
+                                    <div className="flex-1 px-2 pb-2 space-y-1.5 overflow-hidden">
+                                        {dayEvents.slice(0, 3).map((event) => (
                                             <div
                                                 key={event.id}
                                                 onClick={(e) => {
@@ -235,23 +235,23 @@ export function FullScreenCalendar({
                                                     onEventClick?.(event);
                                                 }}
                                                 className={cn(
-                                                    "flex items-center gap-1 rounded-md px-2 py-1 text-[10px] leading-tight truncate cursor-pointer transition-colors",
+                                                    "flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[10px] leading-tight truncate cursor-pointer transition-all border",
                                                     event.type === "task"
-                                                        ? "bg-accent-green/20 text-accent-green border border-accent-green/30 hover:bg-accent-green/30"
-                                                        : "bg-accent-blue/20 text-accent-blue border border-accent-blue/30 hover:bg-accent-blue/30"
+                                                        ? "bg-emerald-500/5 text-emerald-400 border-emerald-500/10 hover:bg-emerald-500/10 hover:border-emerald-500/20"
+                                                        : "bg-blue-500/5 text-blue-400 border-blue-500/10 hover:bg-blue-500/10 hover:border-blue-500/20"
                                                 )}
                                             >
                                                 {event.type === "task" && (
-                                                    <CheckSquare size={10} className="flex-shrink-0" />
+                                                    <CheckSquare size={10} className="flex-shrink-0 opacity-70" strokeWidth={1.5} />
                                                 )}
-                                                <span className="truncate font-medium">
+                                                <span className="truncate font-medium font-sans opacity-90">
                                                     {event.name}
                                                 </span>
                                             </div>
                                         ))}
-                                        {dayEvents.length > 2 && (
-                                            <div className="text-[10px] text-muted-foreground pl-2">
-                                                + {dayEvents.length - 2} mais
+                                        {dayEvents.length > 3 && (
+                                            <div className="text-[10px] text-zinc-600 pl-2 font-medium">
+                                                + {dayEvents.length - 3} mais
                                             </div>
                                         )}
                                     </div>
@@ -261,7 +261,7 @@ export function FullScreenCalendar({
                     </div>
 
                     {/* Mobile Grid */}
-                    <div className="grid w-full grid-cols-7 auto-rows-fr border-l border-border md:hidden">
+                    <div className="grid w-full grid-cols-7 auto-rows-fr border-l border-white/[0.05] md:hidden bg-[#0C0C0D]">
                         {days.map((day, dayIdx) => {
                             const dayEvents = getEventsForDay(day);
                             const isSelected = isEqual(day, selectedDay);
@@ -273,35 +273,36 @@ export function FullScreenCalendar({
                                     key={dayIdx}
                                     type="button"
                                     className={cn(
-                                        !isCurrentMonth && "text-muted-foreground bg-muted/30",
-                                        "flex h-14 flex-col items-center border-b border-r border-border px-1 py-1.5 hover:bg-muted focus:z-10"
+                                        !isCurrentMonth && "text-zinc-700 bg-black/20",
+                                        "flex h-16 flex-col items-center border-b border-r border-white/[0.05] px-1 py-1.5 focus:z-10 relative",
+                                        isSelected ? "bg-[#1A1A1C]" : "bg-transparent"
                                     )}
                                 >
                                     <time
                                         dateTime={format(day, "yyyy-MM-dd")}
                                         className={cn(
-                                            "flex size-6 items-center justify-center rounded-full text-xs",
-                                            isToday(day) && "bg-accent-purple text-background font-bold",
-                                            isSelected && !isToday(day) && "bg-accent-blue text-background"
+                                            "flex h-6 w-6 items-center justify-center rounded-full text-xs font-serif transition-colors",
+                                            isToday(day) && "bg-zinc-100 text-zinc-900 font-medium",
+                                            isSelected && !isToday(day) && "bg-zinc-800 text-zinc-200",
+                                            !isToday(day) && !isSelected && "text-zinc-400"
                                         )}
                                     >
                                         {format(day, "d")}
                                     </time>
-                                    {dayEvents.length > 0 && (
-                                        <div className="mt-1 flex flex-wrap justify-center gap-0.5">
-                                            {dayEvents.slice(0, 3).map((event) => (
-                                                <span
-                                                    key={event.id}
-                                                    className={cn(
-                                                        "h-1.5 w-1.5 rounded-full",
-                                                        event.type === "task"
-                                                            ? "bg-accent-green"
-                                                            : "bg-accent-blue"
-                                                    )}
-                                                />
-                                            ))}
-                                        </div>
-                                    )}
+
+                                    <div className="mt-auto flex flex-wrap justify-center gap-1 w-full px-1">
+                                        {dayEvents.slice(0, 3).map((event) => (
+                                            <span
+                                                key={event.id}
+                                                className={cn(
+                                                    "h-1 w-1 rounded-full",
+                                                    event.type === "task"
+                                                        ? "bg-emerald-500"
+                                                        : "bg-blue-500"
+                                                )}
+                                            />
+                                        ))}
+                                    </div>
                                 </button>
                             );
                         })}
@@ -309,13 +310,13 @@ export function FullScreenCalendar({
                 </div>
 
                 {/* Selected Day Details (Mobile) */}
-                <div className="md:hidden border-t border-border p-4 bg-card">
-                    <h3 className="font-semibold text-foreground mb-3 capitalize">
+                <div className="md:hidden border-t border-white/[0.05] p-5 bg-[#1A1A1C]">
+                    <h3 className="font-serif text-lg text-zinc-100 mb-4 capitalize font-medium">
                         {format(selectedDay, "EEEE, d 'de' MMMM", { locale: ptBR })}
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                         {getEventsForDay(selectedDay).length === 0 ? (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-zinc-500 font-sans italic">
                                 Nenhum evento para este dia
                             </p>
                         ) : (
@@ -324,19 +325,19 @@ export function FullScreenCalendar({
                                     key={event.id}
                                     onClick={() => onEventClick?.(event)}
                                     className={cn(
-                                        "flex items-center gap-2 rounded-lg px-3 py-2 text-sm cursor-pointer",
+                                        "flex items-center gap-3 rounded-xl px-4 py-3 text-sm cursor-pointer border transition-colors",
                                         event.type === "task"
-                                            ? "bg-accent-green/10 text-foreground border border-accent-green/20"
-                                            : "bg-accent-blue/10 text-foreground border border-accent-blue/20"
+                                            ? "bg-emerald-500/5 text-emerald-400 border-emerald-500/10"
+                                            : "bg-blue-500/5 text-blue-400 border-blue-500/10"
                                     )}
                                 >
                                     {event.type === "task" && (
-                                        <CheckSquare size={14} className="text-accent-green" />
+                                        <CheckSquare size={16} className="opacity-80" strokeWidth={1.5} />
                                     )}
                                     <div className="flex-1">
-                                        <p className="font-medium">{event.name}</p>
+                                        <p className="font-medium font-sans">{event.name}</p>
                                         {event.time && (
-                                            <p className="text-xs text-muted-foreground">
+                                            <p className="text-xs text-zinc-500 mt-0.5">
                                                 {event.time}
                                             </p>
                                         )}

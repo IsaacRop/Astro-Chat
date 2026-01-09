@@ -178,31 +178,31 @@ export default function NotesPage() {
     const isModalOpen = isCreating || editingNote !== null;
 
     return (
-        <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
-            <Header title="Notes" />
+        <div className="min-h-screen min-h-[100dvh] bg-[#0C0C0D] text-foreground flex flex-col overflow-x-hidden">
+            <Header title="Notas" />
 
-            <main className="flex-1 p-4 md:p-6 max-w-4xl mx-auto w-full space-y-4 md:space-y-6">
+            <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full space-y-6 md:space-y-8">
                 {/* Actions */}
                 <div className="flex justify-end">
                     <button
                         onClick={openCreate}
-                        className="flex items-center gap-2 px-3 py-2 md:px-4 rounded-lg bg-accent-yellow/90 text-background text-sm font-bold hover:bg-accent-yellow transition-all shadow-sm"
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-all shadow-sm ring-1 ring-white/10"
                     >
-                        <Plus size={18} />
-                        <span className="hidden sm:inline">New Note</span>
-                        <span className="sm:hidden">New</span>
+                        <Plus size={18} strokeWidth={1.5} />
+                        <span className="hidden sm:inline">Nova Nota</span>
+                        <span className="sm:hidden">Nova</span>
                     </button>
                 </div>
 
                 {/* Empty State */}
                 {isClient && notes.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center px-4">
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-accent-yellow/10 flex items-center justify-center mb-4">
-                            <FileText size={32} className="md:w-10 md:h-10 text-accent-yellow" />
+                    <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center px-4">
+                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#1A1A1C] border border-white/[0.05] flex items-center justify-center mb-6">
+                            <FileText size={32} className="md:w-10 md:h-10 text-zinc-500" strokeWidth={1.2} />
                         </div>
-                        <h2 className="text-lg md:text-xl font-serif font-bold mb-2">No Notes Yet</h2>
-                        <p className="text-muted-foreground max-w-sm text-sm md:text-base">
-                            Click the &quot;New Note&quot; button to create your first note.
+                        <h2 className="text-xl md:text-2xl font-serif font-medium text-zinc-200 mb-3">Nenhuma nota ainda</h2>
+                        <p className="text-zinc-500 max-w-sm text-sm md:text-base font-sans leading-relaxed">
+                            Clique no botão "Nova Nota" para criar seu primeiro pensamento.
                         </p>
                     </div>
                 )}
@@ -213,25 +213,25 @@ export default function NotesPage() {
                         <motion.div
                             key={note.id}
                             layout
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="bg-card border border-border rounded-xl p-4 md:p-6 hover:shadow-lg hover:border-accent-yellow/50 transition-all cursor-pointer group relative"
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-[#1A1A1C] border border-white/[0.05] rounded-2xl p-5 md:p-6 hover:border-white/[0.1] transition-all cursor-pointer group relative flex flex-col h-[280px]"
                             onClick={() => openEdit(note)}
                         >
-                            <div className="flex items-start justify-between mb-3 md:mb-4">
-                                <div className="p-2 rounded-lg bg-accent-yellow/10 text-accent-yellow group-hover:bg-accent-yellow group-hover:text-background transition-colors">
-                                    <FileText size={18} className="md:w-5 md:h-5" />
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="p-2.5 rounded-xl bg-white/[0.03] text-zinc-400 group-hover:text-zinc-200 transition-colors border border-white/[0.02]">
+                                    <FileText size={18} className="md:w-5 md:h-5" strokeWidth={1.5} />
                                 </div>
-                                <span className="text-xs text-muted-foreground">
-                                    {new Date(note.updatedAt).toLocaleDateString()}
+                                <span className="text-[10px] uppercase tracking-wider text-zinc-600 font-medium">
+                                    {new Date(note.updatedAt).toLocaleDateString('pt-BR')}
                                 </span>
                             </div>
-                            <h3 className="font-serif font-bold text-base md:text-lg mb-2 group-hover:text-accent-yellow transition-colors truncate">
+                            <h3 className="font-serif font-medium text-lg md:text-xl text-zinc-200 mb-3 line-clamp-2 leading-tight">
                                 {note.title}
                             </h3>
-                            <p className="text-muted-foreground text-sm line-clamp-3">
-                                {note.content || "No content"}
+                            <p className="text-zinc-500 text-sm leading-relaxed line-clamp-4 font-sans flex-1">
+                                {note.content || "Sem conteúdo"}
                             </p>
 
                             {/* Delete button */}
@@ -240,9 +240,9 @@ export default function NotesPage() {
                                     e.stopPropagation();
                                     handleDelete(note.id);
                                 }}
-                                className="absolute top-3 right-3 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                                className="absolute top-4 right-4 p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-zinc-600 hover:text-red-500 transition-all"
                             >
-                                <Trash2 size={16} />
+                                <Trash2 size={16} strokeWidth={1.5} />
                             </button>
                         </motion.div>
                     ))}
@@ -256,86 +256,87 @@ export default function NotesPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex flex-col"
+                        className="fixed inset-0 bg-[#0C0C0D]/95 backdrop-blur-xl z-50 flex flex-col"
                     >
                         {/* Editor Header - Responsive */}
-                        <div className="flex items-center justify-between p-3 md:p-4 border-b border-border bg-card/50 backdrop-blur-sm gap-2">
-                            <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+                        <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/[0.05] bg-[#0C0C0D]">
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
                                 <button
                                     onClick={closeModal}
-                                    className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                                    className="p-2 rounded-xl hover:bg-white/[0.03] text-zinc-500 hover:text-zinc-200 transition-colors flex-shrink-0"
                                 >
-                                    <X size={20} />
+                                    <X size={20} strokeWidth={1.5} />
                                 </button>
                                 <input
                                     type="text"
                                     value={formTitle}
                                     onChange={(e) => setFormTitle(e.target.value)}
-                                    placeholder="Note title..."
-                                    className="text-lg md:text-2xl font-serif font-bold bg-transparent border-none outline-none text-foreground placeholder-muted-foreground flex-1 min-w-0"
+                                    placeholder="Título da nota..."
+                                    className="text-xl md:text-3xl font-serif font-medium bg-transparent border-none outline-none text-zinc-100 placeholder-zinc-700 flex-1 min-w-0"
                                 />
                             </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-3 flex-shrink-0 pl-4">
                                 <button
                                     onClick={closeModal}
-                                    className="hidden sm:block px-3 py-2 rounded-lg border border-border text-muted-foreground text-sm hover:bg-muted hover:text-foreground transition-colors"
+                                    className="hidden sm:block px-4 py-2 rounded-xl border border-white/[0.05] text-zinc-400 text-sm hover:bg-white/[0.03] hover:text-zinc-200 transition-colors"
                                 >
-                                    Cancel
+                                    Cancelar
                                 </button>
                                 <button
                                     onClick={isCreating ? handleCreate : handleUpdate}
                                     disabled={!formTitle.trim()}
-                                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent-yellow/90 text-background text-sm font-medium hover:bg-accent-yellow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <Save size={16} />
-                                    <span className="hidden sm:inline">{isCreating ? "Create" : "Save"}</span>
+                                    <Save size={16} strokeWidth={1.5} />
+                                    <span className="hidden sm:inline">{isCreating ? "Criar" : "Salvar"}</span>
                                 </button>
                             </div>
                         </div>
 
                         {/* Formatting Toolbar - Responsive */}
-                        <div className="flex items-center gap-1 p-2 px-4 md:px-6 border-b border-border bg-card/30 overflow-x-auto">
+                        <div className="flex items-center gap-1 p-2 px-4 md:px-8 border-b border-white/[0.05] bg-[#0C0C0D] overflow-x-auto no-scrollbar">
                             <button
                                 onClick={() => insertFormat("bold")}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                                title="Bold"
+                                className="p-2 rounded-lg hover:bg-white/[0.03] text-zinc-500 hover:text-zinc-200 transition-colors flex-shrink-0"
+                                title="Negrito"
                             >
-                                <Bold size={18} />
+                                <Bold size={18} strokeWidth={1.5} />
                             </button>
                             <button
                                 onClick={() => insertFormat("italic")}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                                title="Italic"
+                                className="p-2 rounded-lg hover:bg-white/[0.03] text-zinc-500 hover:text-zinc-200 transition-colors flex-shrink-0"
+                                title="Itálico"
                             >
-                                <Italic size={18} />
+                                <Italic size={18} strokeWidth={1.5} />
                             </button>
                             <button
                                 onClick={() => insertFormat("heading")}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                                title="Heading"
+                                className="p-2 rounded-lg hover:bg-white/[0.03] text-zinc-500 hover:text-zinc-200 transition-colors flex-shrink-0"
+                                title="Título"
                             >
-                                <Heading size={18} />
+                                <Heading size={18} strokeWidth={1.5} />
                             </button>
                             <button
                                 onClick={() => insertFormat("list")}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                                title="Bullet List"
+                                className="p-2 rounded-lg hover:bg-white/[0.03] text-zinc-500 hover:text-zinc-200 transition-colors flex-shrink-0"
+                                title="Lista"
                             >
-                                <List size={18} />
+                                <List size={18} strokeWidth={1.5} />
                             </button>
-                            <div className="h-6 w-px bg-border mx-2 flex-shrink-0" />
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">Markdown</span>
+                            <div className="h-4 w-px bg-white/[0.05] mx-2 flex-shrink-0" />
+                            <span className="text-[10px] uppercase tracking-wider text-zinc-600 font-medium whitespace-nowrap">Markdown Suportado</span>
                         </div>
 
                         {/* Content Editor */}
-                        <div className="flex-1 p-4 md:p-6 overflow-hidden">
-                            <div className="max-w-4xl mx-auto h-full">
+                        <div className="flex-1 p-4 md:p-8 overflow-hidden bg-[#0C0C0D]">
+                            <div className="max-w-3xl mx-auto h-full">
                                 <textarea
                                     id="note-content"
                                     value={formContent}
                                     onChange={(e) => setFormContent(e.target.value)}
-                                    placeholder="Start writing your note..."
-                                    className="w-full h-full resize-none bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-base md:text-lg leading-relaxed font-sans"
+                                    placeholder="Comece a escrever..."
+                                    className="w-full h-full resize-none bg-transparent border-none outline-none text-zinc-300 placeholder-zinc-800 text-base md:text-lg leading-relaxed font-sans selection:bg-zinc-800 selection:text-zinc-100"
+                                    spellCheck={false}
                                 />
                             </div>
                         </div>

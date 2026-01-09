@@ -186,7 +186,7 @@ export default function CalendarPage() {
     };
 
     return (
-        <div className="flex flex-col h-screen h-[100dvh] bg-background text-foreground">
+        <div className="flex flex-col h-screen h-[100dvh] bg-[#0C0C0D] text-foreground">
             <Header title="Calendário" />
 
             <div className="flex-1 overflow-hidden">
@@ -204,37 +204,37 @@ export default function CalendarPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
                         onClick={() => setShowAddModal(false)}
                     >
                         <motion.div
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl"
+                            className="bg-[#1A1A1C] border border-white/[0.05] rounded-2xl p-6 w-full max-w-md shadow-2xl"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-foreground">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-lg font-serif font-medium text-zinc-100">
                                     Novo Evento
                                 </h3>
                                 <button
                                     onClick={() => setShowAddModal(false)}
-                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-zinc-200 transition-colors"
                                 >
-                                    <X size={18} />
+                                    <X size={18} strokeWidth={1.5} />
                                 </button>
                             </div>
 
-                            <p className="text-sm text-muted-foreground mb-4 capitalize">
-                                {format(selectedDate, "EEEE, d 'de' MMMM 'de' yyyy", {
+                            <p className="text-sm text-zinc-400 mb-6 capitalize font-serif italic">
+                                {format(selectedDate, "EEEE, d 'de' MMMM", {
                                     locale: ptBR,
                                 })}
                             </p>
 
-                            <div className="space-y-4">
+                            <div className="space-y-5">
                                 <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                                    <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">
                                         Título
                                     </label>
                                     <input
@@ -242,42 +242,43 @@ export default function CalendarPage() {
                                         value={newEventTitle}
                                         onChange={(e) => setNewEventTitle(e.target.value)}
                                         placeholder="Nome do evento"
-                                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+                                        className="w-full px-4 py-3 bg-[#0C0C0D] border border-white/[0.05] rounded-xl text-zinc-200 text-sm focus:outline-none focus:border-white/[0.2] transition-colors placeholder:text-zinc-600"
                                         autoFocus
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                                    <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">
                                         Horário (opcional)
                                     </label>
                                     <div className="relative">
                                         <Clock
                                             size={16}
-                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                            strokeWidth={1.5}
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
                                         />
                                         <input
                                             type="time"
                                             value={newEventTime}
                                             onChange={(e) => setNewEventTime(e.target.value)}
-                                            className="w-full pl-10 pr-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+                                            className="w-full pl-10 pr-4 py-3 bg-[#0C0C0D] border border-white/[0.05] rounded-xl text-zinc-200 text-sm focus:outline-none focus:border-white/[0.2] transition-colors"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 pt-2">
+                                <div className="flex gap-3 pt-4">
                                     <button
                                         onClick={() => setShowAddModal(false)}
-                                        className="flex-1 px-4 py-2.5 border border-border rounded-lg text-foreground text-sm font-medium hover:bg-muted transition-colors"
+                                        className="flex-1 px-4 py-2.5 border border-white/[0.05] rounded-xl text-zinc-400 text-sm font-medium hover:bg-white/[0.03] hover:text-zinc-200 transition-colors"
                                     >
                                         Cancelar
                                     </button>
                                     <button
                                         onClick={handleAddEvent}
                                         disabled={!newEventTitle.trim()}
-                                        className="flex-1 px-4 py-2.5 bg-gradient-to-r from-accent-blue to-accent-purple text-background rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        className="flex-1 px-4 py-2.5 bg-zinc-100 text-zinc-900 rounded-xl text-sm font-medium hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
-                                        <Plus size={16} />
+                                        <Plus size={16} strokeWidth={1.5} />
                                         Adicionar
                                     </button>
                                 </div>
@@ -294,55 +295,55 @@ export default function CalendarPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
                         onClick={() => setSelectedEvent(null)}
                     >
                         <motion.div
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl"
+                            className="bg-[#1A1A1C] border border-white/[0.05] rounded-2xl p-6 w-full max-w-md shadow-2xl"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-3">
+                            <div className="flex items-start justify-between mb-6">
+                                <div className="flex items-center gap-4">
                                     <div
-                                        className={`p-2 rounded-lg ${selectedEvent.type === "task"
-                                            ? "bg-accent-green/20 text-accent-green"
-                                            : "bg-accent-blue/20 text-accent-blue"
+                                        className={`p-3 rounded-xl border ${selectedEvent.type === "task"
+                                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                            : "bg-blue-500/10 text-blue-500 border-blue-500/20"
                                             }`}
                                     >
                                         {selectedEvent.type === "task" ? (
-                                            <CheckSquare size={20} />
+                                            <CheckSquare size={20} strokeWidth={1.5} />
                                         ) : (
-                                            <Clock size={20} />
+                                            <Clock size={20} strokeWidth={1.5} />
                                         )}
                                     </div>
                                     <div>
                                         <span
-                                            className={`text-xs font-medium uppercase ${selectedEvent.type === "task"
-                                                ? "text-accent-green"
-                                                : "text-accent-blue"
+                                            className={`text-[10px] font-medium uppercase tracking-widest ${selectedEvent.type === "task"
+                                                ? "text-emerald-500"
+                                                : "text-blue-500"
                                                 }`}
                                         >
                                             {selectedEvent.type === "task" ? "Tarefa" : "Evento"}
                                         </span>
-                                        <h3 className="text-lg font-semibold text-foreground">
+                                        <h3 className="text-xl font-serif font-medium text-zinc-100 mt-0.5">
                                             {selectedEvent.name}
                                         </h3>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setSelectedEvent(null)}
-                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-zinc-200 transition-colors"
                                 >
-                                    <X size={18} />
+                                    <X size={18} strokeWidth={1.5} />
                                 </button>
                             </div>
 
                             {selectedEvent.time && (
-                                <p className="text-sm text-muted-foreground mb-4 flex items-center gap-2">
-                                    <Clock size={14} />
+                                <p className="text-sm text-zinc-400 mb-6 flex items-center gap-2 font-sans bg-[#0C0C0D] p-3 rounded-xl border border-white/[0.05]">
+                                    <Clock size={16} strokeWidth={1.5} />
                                     {selectedEvent.time}
                                 </p>
                             )}
@@ -350,15 +351,15 @@ export default function CalendarPage() {
                             {selectedEvent.type === "event" && (
                                 <button
                                     onClick={() => handleDeleteEvent(selectedEvent.id)}
-                                    className="w-full px-4 py-2.5 border border-red-500/30 text-red-500 rounded-lg text-sm font-medium hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
+                                    className="w-full px-4 py-2.5 border border-red-500/20 text-red-500 rounded-xl text-sm font-medium hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
                                 >
-                                    <Trash2 size={16} />
+                                    <Trash2 size={16} strokeWidth={1.5} />
                                     Excluir Evento
                                 </button>
                             )}
 
                             {selectedEvent.type === "task" && (
-                                <p className="text-sm text-muted-foreground text-center">
+                                <p className="text-sm text-zinc-500 text-center font-sans">
                                     Gerencie esta tarefa no Kanban
                                 </p>
                             )}
