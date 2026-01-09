@@ -1,122 +1,219 @@
 "use client";
 
 import { Header } from "@/components/Header";
-import { FileText, Plus, X, Trash2, Save, Bold, Italic, List, Heading } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { FileText, Plus, X, Trash2, Bold, Italic, List, Heading, Loader2, Check, Cloud } from "lucide-react";
+import { useEffect, useState, useCallback, useRef, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import {
+    getUserNotes,
+    getNote,
+    createNote,
+    saveNote,
+    deleteNote,
+    type Note
+} from "@/app/actions/study";
+import { createClient } from "@/utils/supabase/client";
 
 // ============================================
-// TYPES & STORAGE
+// SAVE STATUS COMPONENT
 // ============================================
 
-interface Note {
-    id: string;
-    title: string;
-    content: string;
-    createdAt: number;
-    updatedAt: number;
-}
+type SaveStatus = "idle" | "saving" | "saved" | "error";
 
-const NOTES_STORAGE_KEY = "astro-notes";
+function SaveIndicator({ status }: { status: SaveStatus }) {
+    if (status === "idle") return null;
 
-function generateNoteId(): string {
-    return `note-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-}
-
-function loadNotes(): Note[] {
-    if (typeof window === "undefined") return [];
-    try {
-        const raw = localStorage.getItem(NOTES_STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
-    } catch {
-        return [];
-    }
-}
-
-function saveNotes(notes: Note[]): void {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+    return (
+        <div className="flex items-center gap-1.5 text-xs">
+            {status === "saving" && (
+                <>
+                    <Loader2 size={12} className="animate-spin text-amber-500" />
+                    <span className="text-amber-500">Salvando...</span>
+                </>
+            )}
+            {status === "saved" && (
+                <>
+                    <Check size={12} className="text-emerald-500" />
+                    <span className="text-emerald-500">Salvo</span>
+                </>
+            )}
+            {status === "error" && (
+                <>
+                    <Cloud size={12} className="text-red-500" />
+                    <span className="text-red-500">Erro ao salvar</span>
+                </>
+            )}
+        </div>
+    );
 }
 
 // ============================================
-// COMPONENT
+// DEBOUNCE HOOK
+// ============================================
+
+function useDebounce<T>(value: T, delay: number): T {
+    const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+
+    return debouncedValue;
+}
+
+// ============================================
+// MAIN COMPONENT
 // ============================================
 
 export default function NotesPage() {
+    const router = useRouter();
     const [notes, setNotes] = useState<Note[]>([]);
-    const [isClient, setIsClient] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [editingNote, setEditingNote] = useState<Note | null>(null);
     const [isCreating, setIsCreating] = useState(false);
+    const [isPending, startTransition] = useTransition();
 
     // Form state
     const [formTitle, setFormTitle] = useState("");
     const [formContent, setFormContent] = useState("");
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
 
-    // Load notes on mount
-    useEffect(() => {
-        setIsClient(true);
-        setNotes(loadNotes());
-    }, []);
+    // Debounced values for auto-save
+    const debouncedTitle = useDebounce(formTitle, 1000);
+    const debouncedContent = useDebounce(formContent, 1000);
+    const initialLoadRef = useRef(true);
 
-    // Persist notes whenever they change
+    // Check authentication and load notes on mount
     useEffect(() => {
-        if (isClient && notes.length >= 0) {
-            saveNotes(notes);
+        async function checkAuthAndLoadNotes() {
+            try {
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
+
+                if (!user) {
+                    setIsAuthenticated(false);
+                    router.replace("/?redirect=notes");
+                    return;
+                }
+
+                setIsAuthenticated(true);
+                const data = await getUserNotes();
+                setNotes(data);
+            } catch (error) {
+                console.error("[Notes] Failed to load:", error);
+            } finally {
+                setIsLoading(false);
+            }
         }
-    }, [notes, isClient]);
+        checkAuthAndLoadNotes();
+    }, [router]);
+
+    // Auto-save when debounced values change (only for editing, not creating)
+    useEffect(() => {
+        // Skip initial load
+        if (initialLoadRef.current) {
+            initialLoadRef.current = false;
+            return;
+        }
+
+        // Only auto-save when editing an existing note
+        if (!editingNote || isCreating) return;
+
+        // Don't save if nothing changed
+        if (debouncedTitle === editingNote.title && debouncedContent === editingNote.content) {
+            return;
+        }
+
+        async function autoSave() {
+            if (!editingNote) return;
+
+            setSaveStatus("saving");
+            try {
+                await saveNote(editingNote.id, debouncedTitle, debouncedContent);
+                setSaveStatus("saved");
+
+                // Update local state
+                setNotes((prev) =>
+                    prev.map((n) =>
+                        n.id === editingNote.id
+                            ? { ...n, title: debouncedTitle, content: debouncedContent, updated_at: new Date().toISOString() }
+                            : n
+                    )
+                );
+
+                // Clear saved status after 2s
+                setTimeout(() => setSaveStatus("idle"), 2000);
+            } catch (error) {
+                console.error("[Notes] Auto-save failed:", error);
+                setSaveStatus("error");
+            }
+        }
+
+        autoSave();
+    }, [debouncedTitle, debouncedContent, editingNote, isCreating]);
 
     // Create new note
-    const handleCreate = useCallback(() => {
+    const handleCreate = useCallback(async () => {
         if (!formTitle.trim()) return;
 
-        const newNote: Note = {
-            id: generateNoteId(),
-            title: formTitle.trim(),
-            content: formContent.trim(),
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-        };
+        startTransition(async () => {
+            try {
+                const result = await createNote(formTitle.trim());
+                if (result) {
+                    // Save content if provided
+                    if (formContent.trim()) {
+                        await saveNote(result.id, formTitle.trim(), formContent.trim());
+                    }
 
-        setNotes((prev) => [newNote, ...prev]);
-        setFormTitle("");
-        setFormContent("");
-        setIsCreating(false);
+                    // Reload notes list
+                    const updatedNotes = await getUserNotes();
+                    setNotes(updatedNotes);
+
+                    setFormTitle("");
+                    setFormContent("");
+                    setIsCreating(false);
+                }
+            } catch (error) {
+                console.error("[Notes] Create failed:", error);
+            }
+        });
     }, [formTitle, formContent]);
 
-    // Update existing note
-    const handleUpdate = useCallback(() => {
-        if (!editingNote || !formTitle.trim()) return;
-
-        setNotes((prev) =>
-            prev.map((note) =>
-                note.id === editingNote.id
-                    ? { ...note, title: formTitle.trim(), content: formContent.trim(), updatedAt: Date.now() }
-                    : note
-            )
-        );
-
-        setEditingNote(null);
-        setFormTitle("");
-        setFormContent("");
-    }, [editingNote, formTitle, formContent]);
-
     // Delete note
-    const handleDelete = useCallback((id: string) => {
-        setNotes((prev) => prev.filter((note) => note.id !== id));
-        if (editingNote?.id === id) {
-            setEditingNote(null);
-            setFormTitle("");
-            setFormContent("");
-        }
+    const handleDelete = useCallback(async (id: string) => {
+        startTransition(async () => {
+            try {
+                await deleteNote(id);
+                setNotes((prev) => prev.filter((note) => note.id !== id));
+
+                if (editingNote?.id === id) {
+                    setEditingNote(null);
+                    setFormTitle("");
+                    setFormContent("");
+                }
+            } catch (error) {
+                console.error("[Notes] Delete failed:", error);
+            }
+        });
     }, [editingNote]);
 
     // Open edit modal
-    const openEdit = (note: Note) => {
+    const openEdit = useCallback(async (note: Note) => {
         setEditingNote(note);
         setFormTitle(note.title);
         setFormContent(note.content);
         setIsCreating(false);
-    };
+        setSaveStatus("idle");
+        initialLoadRef.current = true; // Reset to prevent immediate auto-save
+    }, []);
 
     // Open create modal
     const openCreate = () => {
@@ -124,6 +221,7 @@ export default function NotesPage() {
         setEditingNote(null);
         setFormTitle("");
         setFormContent("");
+        setSaveStatus("idle");
     };
 
     // Close modal
@@ -132,6 +230,7 @@ export default function NotesPage() {
         setEditingNote(null);
         setFormTitle("");
         setFormContent("");
+        setSaveStatus("idle");
     };
 
     // Format helpers
@@ -194,8 +293,16 @@ export default function NotesPage() {
                     </button>
                 </div>
 
+                {/* Loading State */}
+                {isLoading && (
+                    <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center px-4">
+                        <Loader2 size={32} className="text-zinc-500 animate-spin mb-4" />
+                        <p className="text-zinc-500 text-sm">Carregando notas...</p>
+                    </div>
+                )}
+
                 {/* Empty State */}
-                {isClient && notes.length === 0 && (
+                {!isLoading && notes.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center px-4">
                         <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#1A1A1C] border border-white/[0.05] flex items-center justify-center mb-6">
                             <FileText size={32} className="md:w-10 md:h-10 text-zinc-500" strokeWidth={1.2} />
@@ -208,45 +315,48 @@ export default function NotesPage() {
                 )}
 
                 {/* Notes Grid - Responsive */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                    {notes.map((note) => (
-                        <motion.div
-                            key={note.id}
-                            layout
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-[#1A1A1C] border border-white/[0.05] rounded-2xl p-5 md:p-6 hover:border-white/[0.1] transition-all cursor-pointer group relative flex flex-col h-[280px]"
-                            onClick={() => openEdit(note)}
-                        >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="p-2.5 rounded-xl bg-white/[0.03] text-zinc-400 group-hover:text-zinc-200 transition-colors border border-white/[0.02]">
-                                    <FileText size={18} className="md:w-5 md:h-5" strokeWidth={1.5} />
-                                </div>
-                                <span className="text-[10px] uppercase tracking-wider text-zinc-600 font-medium">
-                                    {new Date(note.updatedAt).toLocaleDateString('pt-BR')}
-                                </span>
-                            </div>
-                            <h3 className="font-serif font-medium text-lg md:text-xl text-zinc-200 mb-3 line-clamp-2 leading-tight">
-                                {note.title}
-                            </h3>
-                            <p className="text-zinc-500 text-sm leading-relaxed line-clamp-4 font-sans flex-1">
-                                {note.content || "Sem conteúdo"}
-                            </p>
-
-                            {/* Delete button */}
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(note.id);
-                                }}
-                                className="absolute top-4 right-4 p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-zinc-600 hover:text-red-500 transition-all"
+                {!isLoading && notes.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        {notes.map((note) => (
+                            <motion.div
+                                key={note.id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="bg-[#1A1A1C] border border-white/[0.05] rounded-2xl p-5 md:p-6 hover:border-white/[0.1] transition-all cursor-pointer group relative flex flex-col h-[280px]"
+                                onClick={() => openEdit(note)}
                             >
-                                <Trash2 size={16} strokeWidth={1.5} />
-                            </button>
-                        </motion.div>
-                    ))}
-                </div>
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="p-2.5 rounded-xl bg-white/[0.03] text-zinc-400 group-hover:text-zinc-200 transition-colors border border-white/[0.02]">
+                                        <FileText size={18} className="md:w-5 md:h-5" strokeWidth={1.5} />
+                                    </div>
+                                    <span className="text-[10px] uppercase tracking-wider text-zinc-600 font-medium">
+                                        {new Date(note.updated_at).toLocaleDateString('pt-BR')}
+                                    </span>
+                                </div>
+                                <h3 className="font-serif font-medium text-lg md:text-xl text-zinc-200 mb-3 line-clamp-2 leading-tight">
+                                    {note.title}
+                                </h3>
+                                <p className="text-zinc-500 text-sm leading-relaxed line-clamp-4 font-sans flex-1">
+                                    {note.content || "Sem conteúdo"}
+                                </p>
+
+                                {/* Delete button */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(note.id);
+                                    }}
+                                    disabled={isPending}
+                                    className="absolute top-4 right-4 p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-zinc-600 hover:text-red-500 transition-all disabled:opacity-50"
+                                >
+                                    <Trash2 size={16} strokeWidth={1.5} />
+                                </button>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
             </main>
 
             {/* Full-Page Editor Modal - Responsive */}
@@ -276,20 +386,27 @@ export default function NotesPage() {
                                 />
                             </div>
                             <div className="flex items-center gap-3 flex-shrink-0 pl-4">
+                                <SaveIndicator status={saveStatus} />
                                 <button
                                     onClick={closeModal}
                                     className="hidden sm:block px-4 py-2 rounded-xl border border-white/[0.05] text-zinc-400 text-sm hover:bg-white/[0.03] hover:text-zinc-200 transition-colors"
                                 >
-                                    Cancelar
+                                    Fechar
                                 </button>
-                                <button
-                                    onClick={isCreating ? handleCreate : handleUpdate}
-                                    disabled={!formTitle.trim()}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Save size={16} strokeWidth={1.5} />
-                                    <span className="hidden sm:inline">{isCreating ? "Criar" : "Salvar"}</span>
-                                </button>
+                                {isCreating && (
+                                    <button
+                                        onClick={handleCreate}
+                                        disabled={!formTitle.trim() || isPending}
+                                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isPending ? (
+                                            <Loader2 size={16} className="animate-spin" />
+                                        ) : (
+                                            <Plus size={16} strokeWidth={1.5} />
+                                        )}
+                                        <span className="hidden sm:inline">Criar</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
 

@@ -2,16 +2,17 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
-import { loadGraph, GRAPH_STORAGE_KEY } from '@/utils/storage';
-import { Network, AlertCircle, Bug, X, List } from 'lucide-react';
+import { Network, AlertCircle, Bug, X, List, Loader2, MessageCircle } from 'lucide-react';
 import GraphDebug from '@/components/GraphDebug';
 import NodeSlideOver from '@/components/NodeSlideOver';
+import { getKnowledgeGraph, type GraphNode as ServerGraphNode } from '@/app/actions/study';
+import Link from 'next/link';
 
 interface GraphNode {
     id: string;
     label: string;
     chatId: string;
-    messageCount: number; // Used for dynamic node sizing
+    messageCount: number;
     x?: number;
     y?: number;
 }
@@ -27,7 +28,8 @@ export default function GraphVisualization() {
         links: [],
     });
     const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-    const [renderError, setRenderError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [useListView, setUseListView] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -35,41 +37,35 @@ export default function GraphVisualization() {
     const [slideOverOpen, setSlideOverOpen] = useState(false);
     const [debugOpen, setDebugOpen] = useState(false);
 
-    // Load graph data
-    const loadGraphData = useCallback(() => {
+    // Load graph data from Supabase
+    const loadGraphData = useCallback(async () => {
+        setIsLoading(true);
+        setLoadError(null);
+
         try {
-            const graph = loadGraph();
-            // Nodes are isolated - no links are used
+            const graph = await getKnowledgeGraph();
+
             const data = {
-                nodes: graph.nodes.map(n => ({
+                nodes: graph.nodes.map((n: ServerGraphNode) => ({
                     id: n.id,
                     label: n.label,
                     chatId: n.id,
-                    messageCount: n.messageCount || 1, // Fallback for legacy nodes
+                    messageCount: n.val || 1,
                 })),
-                links: [], // Empty - nodes are isolated
+                links: [] as GraphLink[],
             };
+
             setGraphData(data);
-            setRenderError(null);
         } catch (e) {
             console.error('[GraphVisualization] Error loading graph data:', e);
-            setRenderError('Failed to load graph data');
+            setLoadError('Falha ao carregar dados do grafo. Tente novamente.');
+        } finally {
+            setIsLoading(false);
         }
     }, []);
 
     useEffect(() => {
         loadGraphData();
-    }, [loadGraphData]);
-
-    // Cross-tab sync
-    useEffect(() => {
-        const handleStorageChange = (e: StorageEvent) => {
-            if (e.key === GRAPH_STORAGE_KEY) {
-                loadGraphData();
-            }
-        };
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
     }, [loadGraphData]);
 
     // Responsive dimensions
@@ -122,28 +118,10 @@ export default function GraphVisualization() {
                         onClick={() => handleNodeClick(node)}
                     >
                         <div className="text-foreground font-medium text-sm md:text-base truncate">{node.label}</div>
-                        <div className="text-muted-foreground text-[10px] md:text-xs mt-1 truncate">{node.id}</div>
+                        <div className="text-muted-foreground text-[10px] md:text-xs mt-1 truncate">{node.messageCount} mensagens</div>
                     </div>
                 ))}
             </div>
-            {graphData.links.length > 0 && (
-                <div className="mt-4">
-                    <h3 className="text-xs md:text-sm font-semibold text-muted-foreground mb-2">Connections ({graphData.links.length})</h3>
-                    <div className="text-[10px] md:text-xs text-muted-foreground space-y-1 max-h-[150px] overflow-y-auto">
-                        {graphData.links.slice(0, 10).map((link, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                                <span className="text-accent-purple">•</span>
-                                <span className="truncate">{typeof link.source === 'string' ? link.source : link.source.label || link.source.id}</span>
-                                <span className="text-muted-foreground/50">↔</span>
-                                <span className="truncate">{typeof link.target === 'string' ? link.target : link.target.label || link.target.id}</span>
-                            </div>
-                        ))}
-                        {graphData.links.length > 10 && (
-                            <div className="text-muted-foreground">...and {graphData.links.length - 10} more</div>
-                        )}
-                    </div>
-                </div>
-            )}
         </div>
     );
 
@@ -167,42 +145,35 @@ export default function GraphVisualization() {
                     height={dimensions.height}
                     backgroundColor="transparent"
                     nodeLabel={(node: any) => `${node.label} (${node.messageCount} msgs)`}
-                    // Custom node canvas painting for glow and color
                     nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
                         const label = node.label || '';
                         const nodeIndex = stableGraphData.nodes.findIndex((n: GraphNode) => n.id === node.id);
                         const color = nodeColors[nodeIndex % nodeColors.length];
 
-                        // Calculate node size based on messageCount
                         const baseSize = dimensions.width < 640 ? 6 : 8;
                         const msgScale = Math.log2((node.messageCount || 1) + 1);
                         const nodeSize = baseSize + msgScale * 2;
 
-                        // Minimalist Node Drawing
                         ctx.beginPath();
                         ctx.arc(node.x, node.y, nodeSize, 0, 2 * Math.PI, false);
                         ctx.fillStyle = color;
                         ctx.fill();
 
-                        // Thin border
                         ctx.strokeStyle = '#0C0C0D';
                         ctx.lineWidth = 1 / globalScale * 4;
                         ctx.stroke();
 
-                        // Draw label
                         const fontSize = Math.max(10, 11 / globalScale);
                         ctx.font = `${fontSize}px Inter, sans-serif`;
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'top';
-                        ctx.fillStyle = '#E5E7EB'; // zinc-200
+                        ctx.fillStyle = '#E5E7EB';
 
-                        // Truncate label if too long
                         const maxLabelLength = 20;
                         const displayLabel = label.length > maxLabelLength
                             ? label.substring(0, maxLabelLength) + '...'
                             : label;
 
-                        // Only draw label if zoomed in enough or node is large
                         if (globalScale > 1.5 || nodeSize > 12) {
                             ctx.fillText(displayLabel, node.x, node.y + nodeSize + 4);
                         }
@@ -237,29 +208,57 @@ export default function GraphVisualization() {
         <div className="flex flex-col lg:flex-row h-[calc(100vh-57px)] md:h-[calc(100vh-73px)]">
             {/* Graph Container */}
             <div ref={containerRef} className="flex-1 bg-[#0C0C0D] relative min-h-0">
-                {renderError ? (
+                {/* Loading State */}
+                {isLoading && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8">
-                        <AlertCircle size={36} className="md:w-12 md:h-12 text-red-500 mb-3 md:mb-4" strokeWidth={1.5} />
-                        <h2 className="text-lg md:text-xl font-serif text-zinc-200 mb-2">Error</h2>
-                        <p className="text-zinc-500 max-w-md text-xs md:text-sm font-sans">{renderError}</p>
+                        <Loader2 size={36} className="md:w-12 md:h-12 text-zinc-500 animate-spin mb-3 md:mb-4" />
+                        <p className="text-zinc-500 text-sm md:text-base">Carregando grafo...</p>
                     </div>
-                ) : graphData.nodes.length === 0 ? (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8">
-                        <Network size={36} className="md:w-12 md:h-12 text-zinc-700 mb-3 md:mb-4" strokeWidth={1} />
-                        <h2 className="text-lg md:text-xl font-serif text-zinc-400 mb-2">
-                            Grafo Vazio
-                        </h2>
-                        <p className="text-zinc-600 max-w-md text-xs md:text-sm font-sans">
-                            Converse com o Otto para começar a construir seu grafo de conhecimento.
-                        </p>
-                    </div>
-                ) : useListView ? (
-                    renderListView()
-                ) : (
-                    renderGraphView()
                 )}
 
-                {/* Debug Toggle - Responsive positioning */}
+                {/* Error State */}
+                {!isLoading && loadError && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8">
+                        <AlertCircle size={36} className="md:w-12 md:h-12 text-red-500 mb-3 md:mb-4" strokeWidth={1.5} />
+                        <h2 className="text-lg md:text-xl font-serif text-zinc-200 mb-2">Erro</h2>
+                        <p className="text-zinc-500 max-w-md text-xs md:text-sm font-sans">{loadError}</p>
+                        <button
+                            onClick={loadGraphData}
+                            className="mt-4 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-sm transition-colors"
+                        >
+                            Tentar Novamente
+                        </button>
+                    </div>
+                )}
+
+                {/* Empty State */}
+                {!isLoading && !loadError && graphData.nodes.length === 0 && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8">
+                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#1A1A1C] border border-white/[0.05] flex items-center justify-center mb-6">
+                            <Network size={32} className="md:w-10 md:h-10 text-zinc-600" strokeWidth={1} />
+                        </div>
+                        <h2 className="text-lg md:text-xl font-serif text-zinc-300 mb-2">
+                            Grafo Vazio
+                        </h2>
+                        <p className="text-zinc-500 max-w-md text-xs md:text-sm font-sans mb-6">
+                            Nenhuma conversa encontrada. Inicie uma conversa com o Otto para criar seu primeiro nó.
+                        </p>
+                        <Link
+                            href="/dashboard/chat"
+                            className="flex items-center gap-2 px-4 py-2.5 bg-zinc-100 hover:bg-white text-zinc-900 rounded-xl text-sm font-medium transition-colors"
+                        >
+                            <MessageCircle size={16} strokeWidth={1.5} />
+                            Iniciar Conversa
+                        </Link>
+                    </div>
+                )}
+
+                {/* Graph Content */}
+                {!isLoading && !loadError && graphData.nodes.length > 0 && (
+                    useListView ? renderListView() : renderGraphView()
+                )}
+
+                {/* Debug Toggle */}
                 <button
                     onClick={() => setDebugOpen(!debugOpen)}
                     className={`absolute bottom-3 right-3 md:bottom-4 md:right-4 z-10 p-2 md:p-2.5 rounded-lg border transition-all ${debugOpen
@@ -272,7 +271,7 @@ export default function GraphVisualization() {
                 </button>
 
                 {/* View Toggle */}
-                {graphData.nodes.length > 0 && (
+                {!isLoading && !loadError && graphData.nodes.length > 0 && (
                     <button
                         onClick={() => setUseListView(!useListView)}
                         className="absolute bottom-3 left-3 md:bottom-4 md:left-4 z-10 flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 md:py-2 bg-[#1A1A1C]/80 backdrop-blur-md border border-white/[0.05] hover:border-white/[0.1] text-zinc-400 hover:text-zinc-200 text-[10px] md:text-xs rounded-lg transition-colors font-sans"
@@ -292,7 +291,7 @@ export default function GraphVisualization() {
                 )}
             </div>
 
-            {/* Debug Panel - Full width on mobile when open */}
+            {/* Debug Panel */}
             <div
                 className={`bg-[#1A1A1C] border-t md:border-t-0 md:border-l border-white/[0.05] overflow-hidden transition-all duration-300 ease-in-out ${debugOpen ? 'h-64 md:h-auto w-full md:w-72 lg:w-80' : 'h-0 md:h-auto md:w-0'
                     }`}

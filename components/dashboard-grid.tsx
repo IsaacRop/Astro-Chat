@@ -13,7 +13,7 @@ import {
     Settings,
 } from "lucide-react";
 import { BentoGrid, BentoItem } from "@/components/ui/bento-grid";
-import { createNewChat, createNewNote } from "@/app/actions/dashboard";
+import { createNewChat } from "@/app/actions/dashboard";
 
 interface DashboardGridProps {
     isLoggedIn: boolean;
@@ -46,23 +46,7 @@ export function DashboardGrid({ isLoggedIn }: DashboardGridProps) {
     };
 
     const handleNotesClick = () => {
-        if (!isLoggedIn) {
-            router.push("/notes");
-            return;
-        }
-
-        setLoadingItem("notes");
-        startTransition(async () => {
-            try {
-                const { id } = await createNewNote();
-                router.push(`/dashboard/notes/${id}`);
-            } catch (error) {
-                console.error("Failed to create note:", error);
-                router.push("/notes");
-            } finally {
-                setLoadingItem(null);
-            }
-        });
+        router.push("/notes");
     };
 
     const bentoItems: BentoItem[] = [

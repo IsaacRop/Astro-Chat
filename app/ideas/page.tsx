@@ -1,54 +1,27 @@
 "use client";
 
 import { Header } from "@/components/Header";
-import { Lightbulb, Plus, Trash2, Sparkles } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { Lightbulb, Trash2, Sparkles, Loader2 } from "lucide-react";
+import { useEffect, useState, useCallback, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import {
+    getIdeas,
+    createIdea,
+    deleteIdea as deleteIdeaAction,
+    type Idea,
+    type IdeaStatus,
+} from "@/app/actions/productivity";
 
 // ============================================
-// TYPES & STORAGE
+// STATUS CONFIG
 // ============================================
 
-interface Idea {
-    id: string;
-    title: string;
-    description: string;
-    status: "new" | "exploring" | "implemented";
-    color: "purple" | "yellow" | "blue" | "green";
-    createdAt: number;
-}
-
-const IDEAS_STORAGE_KEY = "astro-ideas";
-
-function generateIdeaId(): string {
-    return `idea-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-}
-
-function loadIdeas(): Idea[] {
-    if (typeof window === "undefined") return [];
-    try {
-        const raw = localStorage.getItem(IDEAS_STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
-    } catch {
-        return [];
-    }
-}
-
-function saveIdeas(ideas: Idea[]): void {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(IDEAS_STORAGE_KEY, JSON.stringify(ideas));
-}
-
-const statusLabels = {
-    new: "New",
-    exploring: "Exploring",
-    implemented: "Implemented",
-};
-
-const statusColors = {
-    new: "accent-yellow",
-    exploring: "accent-purple",
-    implemented: "accent-green",
+const statusLabels: Record<IdeaStatus, string> = {
+    new: "Novo",
+    exploring: "Explorando",
+    implemented: "Implementado",
 };
 
 // ============================================
@@ -56,54 +29,91 @@ const statusColors = {
 // ============================================
 
 export default function IdeasPage() {
+    const router = useRouter();
     const [ideas, setIdeas] = useState<Idea[]>([]);
-    const [isClient, setIsClient] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+    const [isPending, startTransition] = useTransition();
     const [showAddForm, setShowAddForm] = useState(false);
     const [newIdea, setNewIdea] = useState({ title: "", description: "" });
 
-    // Load ideas on mount
+    // Check auth and load ideas on mount
     useEffect(() => {
-        setIsClient(true);
-        setIdeas(loadIdeas());
-    }, []);
+        async function checkAuthAndLoadIdeas() {
+            try {
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
 
-    // Persist ideas
-    useEffect(() => {
-        if (isClient) {
-            saveIdeas(ideas);
+                if (!user) {
+                    setIsAuthenticated(false);
+                    router.replace("/?redirect=ideas");
+                    return;
+                }
+
+                setIsAuthenticated(true);
+                const data = await getIdeas();
+                setIdeas(data);
+            } catch (error) {
+                console.error("[Ideas] Failed to load:", error);
+            } finally {
+                setIsLoading(false);
+            }
         }
-    }, [ideas, isClient]);
+        checkAuthAndLoadIdeas();
+    }, [router]);
 
     // Add new idea
     const handleAddIdea = useCallback(() => {
         if (!newIdea.title.trim()) return;
 
-        const colors: Idea["color"][] = ["purple", "yellow", "blue", "green"];
-        const idea: Idea = {
-            id: generateIdeaId(),
-            title: newIdea.title.trim(),
-            description: newIdea.description.trim(),
-            status: "new",
-            color: colors[Math.floor(Math.random() * colors.length)],
-            createdAt: Date.now(),
-        };
+        startTransition(async () => {
+            try {
+                await createIdea(
+                    newIdea.description.trim() || newIdea.title.trim(),
+                    newIdea.title.trim(),
+                    "new"
+                );
 
-        setIdeas((prev) => [idea, ...prev]);
-        setNewIdea({ title: "", description: "" });
-        setShowAddForm(false);
+                // Reload ideas
+                const data = await getIdeas();
+                setIdeas(data);
+
+                setNewIdea({ title: "", description: "" });
+                setShowAddForm(false);
+            } catch (error) {
+                console.error("[Ideas] Create failed:", error);
+            }
+        });
     }, [newIdea]);
 
-    // Update idea status
-    const updateStatus = useCallback((id: string, status: Idea["status"]) => {
-        setIdeas((prev) =>
-            prev.map((idea) => (idea.id === id ? { ...idea, status } : idea))
-        );
+    // Delete idea
+    const handleDeleteIdea = useCallback((id: string) => {
+        // Optimistic update
+        setIdeas((prev) => prev.filter((idea) => idea.id !== id));
+
+        startTransition(async () => {
+            try {
+                await deleteIdeaAction(id);
+            } catch (error) {
+                console.error("[Ideas] Delete failed:", error);
+                // Revert on error
+                const data = await getIdeas();
+                setIdeas(data);
+            }
+        });
     }, []);
 
-    // Delete idea
-    const deleteIdea = useCallback((id: string) => {
-        setIdeas((prev) => prev.filter((idea) => idea.id !== id));
-    }, []);
+    // Loading state
+    if (isLoading || isAuthenticated === null) {
+        return (
+            <div className="min-h-screen min-h-[100dvh] bg-[#0C0C0D] text-foreground flex flex-col">
+                <Header title="Ideias" />
+                <div className="flex-1 flex items-center justify-center">
+                    <Loader2 size={32} className="text-zinc-500 animate-spin" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen min-h-[100dvh] bg-[#0C0C0D] text-foreground flex flex-col overflow-x-hidden">
@@ -114,7 +124,8 @@ export default function IdeasPage() {
                 <div className="flex justify-end">
                     <button
                         onClick={() => setShowAddForm(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-all shadow-sm ring-1 ring-white/10"
+                        disabled={isPending}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-all shadow-sm ring-1 ring-white/10 disabled:opacity-50"
                     >
                         <Sparkles size={18} strokeWidth={1.5} />
                         <span className="hidden sm:inline">Nova Ideia</span>
@@ -136,6 +147,10 @@ export default function IdeasPage() {
                                     type="text"
                                     value={newIdea.title}
                                     onChange={(e) => setNewIdea({ ...newIdea, title: e.target.value })}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" && newIdea.title.trim()) handleAddIdea();
+                                        if (e.key === "Escape") setShowAddForm(false);
+                                    }}
                                     placeholder="Qual é a sua ideia?"
                                     className="w-full px-4 py-3 bg-[#0C0C0D] border border-white/[0.05] rounded-xl text-zinc-200 placeholder-zinc-600 text-sm focus:outline-none focus:border-white/[0.2] transition-colors"
                                     autoFocus
@@ -150,9 +165,10 @@ export default function IdeasPage() {
                                 <div className="flex gap-3 pt-2">
                                     <button
                                         onClick={handleAddIdea}
-                                        className="flex-1 px-4 py-2.5 rounded-xl bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-colors border border-transparent"
+                                        disabled={isPending || !newIdea.title.trim()}
+                                        className="flex-1 px-4 py-2.5 rounded-xl bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-colors border border-transparent disabled:opacity-50"
                                     >
-                                        Salvar Ideia
+                                        {isPending ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Salvar Ideia"}
                                     </button>
                                     <button
                                         onClick={() => setShowAddForm(false)}
@@ -167,7 +183,7 @@ export default function IdeasPage() {
                 </AnimatePresence>
 
                 {/* Empty State */}
-                {isClient && ideas.length === 0 && (
+                {ideas.length === 0 && !isLoading && (
                     <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center px-4">
                         <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#1A1A1C] border border-white/[0.05] flex items-center justify-center mb-6">
                             <Lightbulb size={32} className="md:w-10 md:h-10 text-zinc-500" strokeWidth={1.2} />
@@ -194,9 +210,8 @@ export default function IdeasPage() {
                                 className="absolute top-0 left-0 w-full h-1 rounded-t-2xl opacity-50"
                                 style={{
                                     backgroundColor:
-                                        idea.color === 'purple' ? '#a855f7' :
-                                            idea.color === 'yellow' ? '#eab308' :
-                                                idea.color === 'blue' ? '#3b82f6' : '#22c55e'
+                                        idea.status === 'new' ? '#eab308' :
+                                            idea.status === 'exploring' ? '#a855f7' : '#22c55e'
                                 }}
                             />
 
@@ -205,39 +220,34 @@ export default function IdeasPage() {
                                     <Lightbulb size={18} strokeWidth={1.5} />
                                 </div>
                                 <button
-                                    onClick={() => deleteIdea(idea.id)}
-                                    className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-zinc-600 hover:text-red-500 transition-all"
+                                    onClick={() => handleDeleteIdea(idea.id)}
+                                    disabled={isPending}
+                                    className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-zinc-600 hover:text-red-500 transition-all disabled:opacity-50"
                                 >
                                     <Trash2 size={16} strokeWidth={1.5} />
                                 </button>
                             </div>
 
                             <h3 className="font-serif font-medium text-lg md:text-xl text-zinc-100 mb-2 leading-tight">
-                                {idea.title}
+                                {idea.title || idea.content?.slice(0, 50)}
                             </h3>
 
-                            {idea.description && (
+                            {idea.content && (
                                 <p className="text-zinc-500 text-sm leading-relaxed mb-4 line-clamp-3 font-sans flex-1">
-                                    {idea.description}
+                                    {idea.content}
                                 </p>
                             )}
 
-                            {/* Status Selector */}
+                            {/* Status Badge */}
                             <div className="flex gap-1.5 flex-wrap mt-auto pt-2">
-                                {(Object.keys(statusLabels) as Idea["status"][]).map((status) => (
-                                    <button
-                                        key={status}
-                                        onClick={() => updateStatus(idea.id, status)}
-                                        className={`px-2.5 py-1 rounded-lg text-[10px] uppercase tracking-wider font-medium transition-colors border ${idea.status === status
-                                            ? status === 'new' ? "bg-zinc-800 text-zinc-300 border-zinc-700" :
-                                                status === 'exploring' ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" :
-                                                    "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                            : "bg-transparent text-zinc-600 border-transparent hover:bg-white/[0.02] hover:text-zinc-500"
-                                            }`}
-                                    >
-                                        {status === 'new' ? 'Novo' : status === 'exploring' ? 'Explorando' : 'Implementado'}
-                                    </button>
-                                ))}
+                                <span
+                                    className={`px-2.5 py-1 rounded-lg text-[10px] uppercase tracking-wider font-medium border ${idea.status === 'new' ? "bg-zinc-800 text-zinc-300 border-zinc-700" :
+                                        idea.status === 'exploring' ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" :
+                                            "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                        }`}
+                                >
+                                    {statusLabels[idea.status as IdeaStatus] || idea.status}
+                                </span>
                             </div>
                         </motion.div>
                     ))}
