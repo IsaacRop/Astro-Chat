@@ -1,9 +1,6 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { openai } from '@ai-sdk/openai'
 
-// A chave OPENAI_API_KEY é lida automaticamente pelo @ai-sdk/openai
-// A variável de ambiente está definida em .env.local (protegida pelo .gitignore)
-
 // System prompt for Otto - the educational AI assistant (optimized for conciseness)
 const SYSTEM_PROMPT = `Você é o Otto, um assistente de inteligência artificial especializado em tutoria educacional.
 
@@ -30,37 +27,39 @@ RESTRIÇÃO CRÍTICA:
 - Nunca forneça respostas prontas sem explicar o raciocínio.`;
 
 // Safety & Cost Configuration
-const MAX_CONTEXT_MESSAGES = 6; // Limit context window to prevent token explosion
-const MAX_OUTPUT_TOKENS = 500;  // Limit response length
+const MAX_CONTEXT_MESSAGES = 6;
+const MAX_OUTPUT_TOKENS = 500;
 
 // Allow streaming responses up to 60 seconds
 export const maxDuration = 60;
 
+/**
+ * Chat API Route - Handles AI message generation
+ * Note: Message persistence is handled by /api/chat/save endpoint
+ */
 export async function POST(request: Request) {
+    console.log('[Chat API] === REQUEST STARTED ===');
+
     try {
         const body = await request.json();
         const rawMessages = body.messages || [];
 
-        console.log('[Chat API] Received messages:', rawMessages.length);
+        console.log('[Chat API] Received', rawMessages.length, 'messages');
 
-        // Safety: Truncate context to last N messages to reduce token costs
+        // Safety: Truncate context to last N messages
         const truncatedMessages = rawMessages.slice(-MAX_CONTEXT_MESSAGES);
-        console.log('[Chat API] Truncated to last', truncatedMessages.length, 'messages');
+        console.log('[Chat API] Using last', truncatedMessages.length, 'messages for context');
 
-        // Normalize messages to ensure they have the parts array format
-        // This handles both legacy (content field) and new (parts array) formats
+        // Normalize messages to parts array format
         const normalizedMessages: UIMessage[] = truncatedMessages.map((message: {
             id: string;
             role: 'user' | 'assistant' | 'system';
             content?: string;
             parts?: Array<{ type: string; text?: string }>;
         }) => {
-            // If message already has parts, use it as is
             if (message.parts && Array.isArray(message.parts) && message.parts.length > 0) {
                 return message as UIMessage;
             }
-
-            // Convert legacy content field to parts array
             const textContent = message.content || '';
             return {
                 id: message.id,
@@ -69,26 +68,21 @@ export async function POST(request: Request) {
             } as UIMessage;
         });
 
-        console.log('[Chat API] Normalized messages:', normalizedMessages.length);
-
-        // Convert UIMessages to ModelMessages using the official AI SDK v6 helper
+        // Convert to model messages
         const modelMessages = await convertToModelMessages(normalizedMessages);
-
-        console.log('[Chat API] Converted to model messages:', modelMessages.length);
-        console.log('[Chat API] Calling OpenAI with maxTokens:', MAX_OUTPUT_TOKENS);
+        console.log('[Chat API] Calling OpenAI with', modelMessages.length, 'messages');
 
         const result = streamText({
             model: openai('gpt-4o-mini'),
             system: SYSTEM_PROMPT,
             messages: modelMessages,
-            maxOutputTokens: MAX_OUTPUT_TOKENS, // Limit output to prevent runaway responses
+            maxOutputTokens: MAX_OUTPUT_TOKENS,
         });
 
         console.log('[Chat API] Streaming response...');
         return result.toUIMessageStreamResponse();
     } catch (error) {
         console.error('[Chat API] Error:', error);
-        console.error('[Chat API] Error details:', error instanceof Error ? error.stack : String(error));
         return new Response(JSON.stringify({
             error: 'Failed to process chat',
             details: error instanceof Error ? error.message : String(error)

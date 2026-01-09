@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ReactNode } from "react";
+import { Loader2 } from "lucide-react";
 
 export interface BentoItem {
     title: string;
@@ -15,6 +16,8 @@ export interface BentoItem {
     colSpan?: number;
     hasPersistentHover?: boolean;
     href?: string;
+    onClick?: () => void;
+    isLoading?: boolean;
 }
 
 interface BentoGridProps {
@@ -48,8 +51,15 @@ export function BentoGrid({ items }: BentoGridProps) {
 
                         <div className="relative flex flex-col h-full z-10 p-5 md:p-6">
                             <div className="flex items-start justify-between mb-4">
-                                <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] text-zinc-400 group-hover:text-zinc-100 transition-colors duration-300">
-                                    {item.icon}
+                                <div className={cn(
+                                    "p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] transition-colors duration-300",
+                                    item.isLoading ? "text-zinc-100" : "text-zinc-400 group-hover:text-zinc-100"
+                                )}>
+                                    {item.isLoading ? (
+                                        <Loader2 size={22} className="animate-spin" />
+                                    ) : (
+                                        item.icon
+                                    )}
                                 </div>
                                 {item.status && (
                                     <span
@@ -74,7 +84,7 @@ export function BentoGrid({ items }: BentoGridProps) {
                                     )}
                                 </h3>
                                 <p className="text-xs md:text-sm text-zinc-500 group-hover:text-zinc-400 leading-relaxed font-sans transition-colors duration-300 line-clamp-2">
-                                    {item.description}
+                                    {item.isLoading ? "Criando..." : item.description}
                                 </p>
                             </div>
 
@@ -109,9 +119,25 @@ export function BentoGrid({ items }: BentoGridProps) {
                     colSpanClasses[item.colSpan || 1] || "md:col-span-1",
                     {
                         "shadow-xl border-white/[0.1]": item.hasPersistentHover,
+                        "opacity-70 pointer-events-none": item.isLoading,
                     }
                 );
 
+                // If onClick is provided, use a button
+                if (item.onClick) {
+                    return (
+                        <button
+                            key={index}
+                            onClick={item.onClick}
+                            disabled={item.isLoading}
+                            className={cn(containerClasses, "text-left cursor-pointer")}
+                        >
+                            <Content />
+                        </button>
+                    );
+                }
+
+                // If href is provided, use Link
                 if (item.href) {
                     return (
                         <Link key={index} href={item.href} className={containerClasses}>
@@ -120,6 +146,7 @@ export function BentoGrid({ items }: BentoGridProps) {
                     );
                 }
 
+                // Default: just a div
                 return (
                     <div key={index} className={containerClasses}>
                         <Content />

@@ -1,96 +1,11 @@
-import {
-  MessageCircle,
-  Calendar,
-  CheckSquare,
-  FileText,
-  Lightbulb,
-  Star,
-  Network,
-  Settings,
-  ArrowRight,
-} from "lucide-react";
-import { BentoGrid, BentoItem } from "@/components/ui/bento-grid";
 import { LoginButton } from "@/components/LoginButton";
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
+import { DashboardGrid } from "@/components/dashboard-grid";
 
 export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
-  const bentoItems: BentoItem[] = [
-    // Row 1
-    {
-      title: "Chat",
-      description: "Converse com Otto, assistente inteligente",
-      icon: <MessageCircle size={22} />,
-      status: "Online",
-      href: "/chat",
-      colSpan: 3,
-      hasPersistentHover: true,
-      tags: ["AI", "GPT-4"],
-      cta: "Conversar"
-    },
-    {
-      title: "Cadernos",
-      description: "Grafo de conhecimento",
-      icon: <Network size={22} />,
-      href: "/cadernos",
-      colSpan: 3,
-      tags: ["Grafo"],
-    },
-
-    // Row 2
-    {
-      title: "Notas",
-      description: "Editor Markdown",
-      icon: <FileText size={22} />,
-      href: "/notes",
-      colSpan: 2,
-      tags: ["Editor"],
-    },
-    {
-      title: "Ideias",
-      description: "Capture inspirações",
-      icon: <Lightbulb size={22} />,
-      href: "/ideas",
-      colSpan: 2,
-    },
-    {
-      title: "Favoritos",
-      description: "Itens salvos",
-      icon: <Star size={22} />,
-      href: "/favorites",
-      colSpan: 2,
-    },
-
-    // Row 3
-    {
-      title: "Tarefas",
-      description: "Kanban Board",
-      icon: <CheckSquare size={22} />,
-      href: "/tasks",
-      colSpan: 3,
-      tags: ["Produtividade"],
-    },
-    {
-      title: "Calendário",
-      description: "Eventos e prazos",
-      icon: <Calendar size={22} />,
-      href: "/calendar",
-      colSpan: 3,
-      tags: ["Agenda"],
-    },
-
-    // Row 4
-    {
-      title: "Configurações",
-      description: "Personalização",
-      icon: <Settings size={22} />,
-      href: "/settings",
-      colSpan: 6,
-    },
-  ];
 
   return (
     <div className="h-screen md:h-screen w-full bg-[#0C0C0D] flex flex-col p-4 md:p-6 overflow-hidden">
@@ -113,10 +28,24 @@ export default async function Home() {
             ) : (
               <Link
                 href="/dashboard"
-                className="group flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] hover:border-indigo-500/30 hover:shadow-[0_0_15px_rgba(99,102,241,0.15)] transition-all duration-300"
+                className="group flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] hover:border-indigo-500/30 transition-all duration-300"
               >
-                <span className="text-sm font-medium text-zinc-200 group-hover:text-white">Ir para meu Painel</span>
-                <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-indigo-400 transition-colors" />
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 relative">
+                  {user.user_metadata.avatar_url ? (
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt="User ID"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-indigo-500/20 flex items-center justify-center text-xs font-serif text-indigo-300">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <span className="text-sm font-medium text-zinc-300 group-hover:text-white">
+                  {user.user_metadata.full_name?.split(" ")[0] || "Perfil"}
+                </span>
               </Link>
             )}
           </div>
@@ -124,7 +53,7 @@ export default async function Home() {
 
         {/* Bento Grid - Fills remaining space */}
         <div className="flex-1 min-h-0">
-          <BentoGrid items={bentoItems} />
+          <DashboardGrid isLoggedIn={!!user} />
         </div>
       </div>
     </div>

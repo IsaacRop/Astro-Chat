@@ -25,8 +25,8 @@ export async function submitFeedback(formData: FormData) {
     });
 
     if (error) {
-        console.error("Erro ao salvar feedback:", error);
-        return { success: false, message: "Erro ao enviar. Tente novamente." };
+        console.error("SUPABASE ERROR - submitFeedback:", error);
+        return { success: false, message: `Erro: ${error.message} (Code: ${error.code})` };
     }
 
     return { success: true, message: "Obrigado! Feedback recebido." };

@@ -18,6 +18,8 @@ import {
     updateNodeMessageCount,
     ChatSummary
 } from "@/utils/storage";
+import { createClient } from "@/utils/supabase/client";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 // Octopus Icon for Otto branding
 const OctopusIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
@@ -144,8 +146,9 @@ export default function ChatPage() {
     const [currentSessionId, setCurrentSessionId] = useState<string>('');
     const [isClient, setIsClient] = useState(false);
     const [input, setInput] = useState('');
+    const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
 
-    // AI SDK v6 useChat hook - uses sendMessage for proper UI message streaming
+    // AI SDK v6 useChat hook
     const { messages, setMessages, sendMessage, status } = useChat();
 
     // Derive loading states from status
@@ -157,9 +160,21 @@ export default function ChatPage() {
     const prevLoadingRef = useRef(isLoading);
     const isStreaming = isLoading;
 
-    // Load saved chats
+    // Load saved chats and check auth
     useEffect(() => {
         setIsClient(true);
+
+        // Check if user is authenticated - redirect to dashboard chat
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+                // Logged in users go to the Supabase-backed chat
+                window.location.href = '/dashboard/chat';
+                return;
+            }
+            setSupabaseUser(user);
+        });
+
         const urlParams = new URLSearchParams(window.location.search);
         const sessionFromUrl = urlParams.get('session');
 

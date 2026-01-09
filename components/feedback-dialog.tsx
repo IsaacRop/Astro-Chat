@@ -20,7 +20,7 @@ interface FeedbackDialogProps {
 
 export function FeedbackDialog({ children }: FeedbackDialogProps) {
     const [open, setOpen] = useState(false);
-    const [type, setType] = useState("idea");
+    const [type, setType] = useState("feature");
     const [isPending, startTransition] = useTransition();
 
     const handleSubmit = (formData: FormData) => {
@@ -61,7 +61,7 @@ export function FeedbackDialog({ children }: FeedbackDialogProps) {
                         {/* Type Selection */}
                         <div className="grid grid-cols-3 gap-3">
                             {[
-                                { id: "idea", label: "Ideia", icon: Lightbulb },
+                                { id: "feature", label: "Ideia", icon: Lightbulb },
                                 { id: "bug", label: "Bug", icon: Bug },
                                 { id: "other", label: "Outro", icon: HelpCircle },
                             ].map((item) => (
@@ -92,7 +92,7 @@ export function FeedbackDialog({ children }: FeedbackDialogProps) {
                                 name="message"
                                 required
                                 placeholder={
-                                    type === "idea" ? "Eu adoraria se..." :
+                                    type === "feature" ? "Eu adoraria se..." :
                                         type === "bug" ? "Quando eu clico em..." :
                                             "Sobre..."
                                 }
@@ -113,7 +113,7 @@ export function FeedbackDialog({ children }: FeedbackDialogProps) {
                                     Enviando...
                                 </>
                             ) : (
-                                "Enviar Contribuição"
+                                "Enviar Feedback"
                             )}
                         </button>
                     </div>
