@@ -218,9 +218,8 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
             <div
                 className={cn(
                     "flex flex-col items-stretch transition-all duration-200 relative z-10",
-                    "rounded-2xl cursor-text border border-border",
-                    "shadow-sm hover:shadow-md focus-within:shadow-lg",
-                    "bg-card backdrop-blur-sm"
+                    "rounded-2xl cursor-text border border-white/[0.05]",
+                    "shadow-sm bg-[#1A1A1C] backdrop-blur-xl"
                 )}
             >
                 <div className="flex flex-col px-3 pt-3 pb-2 gap-2">
@@ -252,8 +251,8 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 disabled={isLoading}
                                 className={cn(
                                     "w-full bg-transparent border-0 outline-none",
-                                    "text-foreground text-sm md:text-base",
-                                    "placeholder:text-muted-foreground",
+                                    "text-zinc-200 text-sm md:text-base font-sans",
+                                    "placeholder:text-zinc-500",
                                     "resize-none overflow-hidden py-1 leading-relaxed",
                                     "disabled:opacity-50"
                                 )}
@@ -265,59 +264,61 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                     </div>
 
                     {/* Action Bar */}
-                    <div className="flex gap-2 w-full items-center">
+                    <div className="flex gap-2 w-full items-center justify-between">
                         {/* Left Tools */}
-                        <div className="flex-1 flex items-center gap-1">
+                        <div className="flex items-center gap-1">
                             {/* Attach Button */}
                             <button
                                 onClick={() => fileInputRef.current?.click()}
                                 className={cn(
                                     "inline-flex items-center justify-center",
                                     "h-8 w-8 rounded-lg transition-colors",
-                                    "text-muted-foreground hover:text-foreground hover:bg-muted"
+                                    "text-zinc-500 hover:text-zinc-200 hover:bg-white/5"
                                 )}
                                 type="button"
                                 aria-label="Anexar arquivo"
                             >
-                                <Plus className="w-5 h-5" />
+                                <Plus className="w-5 h-5" strokeWidth={1.5} />
                             </button>
 
                             {/* AI Enhancement indicator */}
-                            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent-purple/10 text-accent-purple text-xs font-medium">
+                            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/[0.03] text-zinc-400 text-xs font-medium border border-white/[0.05]">
                                 <Sparkles className="w-3 h-3" />
                                 <span className="hidden sm:inline">Otto AI</span>
                             </div>
                         </div>
 
                         {/* Send Button */}
-                        <button
-                            onClick={handleSubmit}
-                            disabled={!hasContent || isLoading}
-                            className={cn(
-                                "inline-flex items-center justify-center",
-                                "h-9 w-9 rounded-xl transition-all duration-200",
-                                hasContent && !isLoading
-                                    ? "bg-gradient-to-br from-accent-blue to-accent-purple text-background shadow-md hover:shadow-lg hover:scale-105 active:scale-95"
-                                    : "bg-muted text-muted-foreground cursor-not-allowed"
-                            )}
-                            type="button"
-                            aria-label="Enviar mensagem"
-                        >
-                            {isLoading ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                                <ArrowUp className="w-4 h-4" />
-                            )}
-                        </button>
+                        <div className="flex items-center">
+                            <button
+                                onClick={handleSubmit}
+                                disabled={!hasContent || isLoading}
+                                className={cn(
+                                    "inline-flex items-center justify-center",
+                                    "h-8 w-8 rounded-lg transition-all duration-200",
+                                    hasContent && !isLoading
+                                        ? "bg-zinc-100 text-zinc-900 shadow-sm hover:bg-white"
+                                        : "bg-white/[0.05] text-zinc-600 cursor-not-allowed"
+                                )}
+                                type="button"
+                                aria-label="Enviar mensagem"
+                            >
+                                {isLoading ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <ArrowUp className="w-4 h-4" />
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Drag Overlay */}
             {isDragging && (
-                <div className="absolute inset-0 bg-accent-purple/10 border-2 border-dashed border-accent-purple rounded-2xl z-50 flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none">
-                    <Archive className="w-8 h-8 text-accent-purple mb-2 animate-bounce" />
-                    <p className="text-accent-purple font-medium text-sm">
+                <div className="absolute inset-0 bg-[#1A1A1C]/90 border border-white/[0.1] rounded-2xl z-50 flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none">
+                    <Archive className="w-8 h-8 text-zinc-300 mb-2 animate-bounce" strokeWidth={1.5} />
+                    <p className="text-zinc-300 font-medium text-sm font-sans">
                         Solte os arquivos aqui
                     </p>
                 </div>
@@ -334,14 +335,6 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                     e.target.value = "";
                 }}
             />
-
-            {/* Helper Text */}
-            <p className="text-center text-muted-foreground/60 text-xs mt-3">
-                <span className="hidden sm:inline">
-                    Enter para enviar • Shift+Enter para nova linha
-                </span>
-                <span className="sm:hidden">Enter para enviar</span>
-            </p>
         </div>
     );
 };

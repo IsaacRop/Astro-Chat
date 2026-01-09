@@ -1,122 +1,219 @@
 "use client";
 
 import { Header } from "@/components/Header";
-import { FileText, Plus, X, Trash2, Save, Bold, Italic, List, Heading } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { FileText, Plus, X, Trash2, Bold, Italic, List, Heading, Loader2, Check, Cloud } from "lucide-react";
+import { useEffect, useState, useCallback, useRef, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import {
+    getUserNotes,
+    getNote,
+    createNote,
+    saveNote,
+    deleteNote,
+    type Note
+} from "@/app/actions/study";
+import { createClient } from "@/utils/supabase/client";
 
 // ============================================
-// TYPES & STORAGE
+// SAVE STATUS COMPONENT
 // ============================================
 
-interface Note {
-    id: string;
-    title: string;
-    content: string;
-    createdAt: number;
-    updatedAt: number;
-}
+type SaveStatus = "idle" | "saving" | "saved" | "error";
 
-const NOTES_STORAGE_KEY = "astro-notes";
+function SaveIndicator({ status }: { status: SaveStatus }) {
+    if (status === "idle") return null;
 
-function generateNoteId(): string {
-    return `note-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-}
-
-function loadNotes(): Note[] {
-    if (typeof window === "undefined") return [];
-    try {
-        const raw = localStorage.getItem(NOTES_STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
-    } catch {
-        return [];
-    }
-}
-
-function saveNotes(notes: Note[]): void {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
+    return (
+        <div className="flex items-center gap-1.5 text-xs">
+            {status === "saving" && (
+                <>
+                    <Loader2 size={12} className="animate-spin text-amber-500" />
+                    <span className="text-amber-500">Salvando...</span>
+                </>
+            )}
+            {status === "saved" && (
+                <>
+                    <Check size={12} className="text-emerald-500" />
+                    <span className="text-emerald-500">Salvo</span>
+                </>
+            )}
+            {status === "error" && (
+                <>
+                    <Cloud size={12} className="text-red-500" />
+                    <span className="text-red-500">Erro ao salvar</span>
+                </>
+            )}
+        </div>
+    );
 }
 
 // ============================================
-// COMPONENT
+// DEBOUNCE HOOK
+// ============================================
+
+function useDebounce<T>(value: T, delay: number): T {
+    const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+
+    return debouncedValue;
+}
+
+// ============================================
+// MAIN COMPONENT
 // ============================================
 
 export default function NotesPage() {
+    const router = useRouter();
     const [notes, setNotes] = useState<Note[]>([]);
-    const [isClient, setIsClient] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [editingNote, setEditingNote] = useState<Note | null>(null);
     const [isCreating, setIsCreating] = useState(false);
+    const [isPending, startTransition] = useTransition();
 
     // Form state
     const [formTitle, setFormTitle] = useState("");
     const [formContent, setFormContent] = useState("");
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
 
-    // Load notes on mount
-    useEffect(() => {
-        setIsClient(true);
-        setNotes(loadNotes());
-    }, []);
+    // Debounced values for auto-save
+    const debouncedTitle = useDebounce(formTitle, 1000);
+    const debouncedContent = useDebounce(formContent, 1000);
+    const initialLoadRef = useRef(true);
 
-    // Persist notes whenever they change
+    // Check authentication and load notes on mount
     useEffect(() => {
-        if (isClient && notes.length >= 0) {
-            saveNotes(notes);
+        async function checkAuthAndLoadNotes() {
+            try {
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
+
+                if (!user) {
+                    setIsAuthenticated(false);
+                    router.replace("/?redirect=notes");
+                    return;
+                }
+
+                setIsAuthenticated(true);
+                const data = await getUserNotes();
+                setNotes(data);
+            } catch (error) {
+                console.error("[Notes] Failed to load:", error);
+            } finally {
+                setIsLoading(false);
+            }
         }
-    }, [notes, isClient]);
+        checkAuthAndLoadNotes();
+    }, [router]);
+
+    // Auto-save when debounced values change (only for editing, not creating)
+    useEffect(() => {
+        // Skip initial load
+        if (initialLoadRef.current) {
+            initialLoadRef.current = false;
+            return;
+        }
+
+        // Only auto-save when editing an existing note
+        if (!editingNote || isCreating) return;
+
+        // Don't save if nothing changed
+        if (debouncedTitle === editingNote.title && debouncedContent === editingNote.content) {
+            return;
+        }
+
+        async function autoSave() {
+            if (!editingNote) return;
+
+            setSaveStatus("saving");
+            try {
+                await saveNote(editingNote.id, debouncedTitle, debouncedContent);
+                setSaveStatus("saved");
+
+                // Update local state
+                setNotes((prev) =>
+                    prev.map((n) =>
+                        n.id === editingNote.id
+                            ? { ...n, title: debouncedTitle, content: debouncedContent, updated_at: new Date().toISOString() }
+                            : n
+                    )
+                );
+
+                // Clear saved status after 2s
+                setTimeout(() => setSaveStatus("idle"), 2000);
+            } catch (error) {
+                console.error("[Notes] Auto-save failed:", error);
+                setSaveStatus("error");
+            }
+        }
+
+        autoSave();
+    }, [debouncedTitle, debouncedContent, editingNote, isCreating]);
 
     // Create new note
-    const handleCreate = useCallback(() => {
+    const handleCreate = useCallback(async () => {
         if (!formTitle.trim()) return;
 
-        const newNote: Note = {
-            id: generateNoteId(),
-            title: formTitle.trim(),
-            content: formContent.trim(),
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-        };
+        startTransition(async () => {
+            try {
+                const result = await createNote(formTitle.trim());
+                if (result) {
+                    // Save content if provided
+                    if (formContent.trim()) {
+                        await saveNote(result.id, formTitle.trim(), formContent.trim());
+                    }
 
-        setNotes((prev) => [newNote, ...prev]);
-        setFormTitle("");
-        setFormContent("");
-        setIsCreating(false);
+                    // Reload notes list
+                    const updatedNotes = await getUserNotes();
+                    setNotes(updatedNotes);
+
+                    setFormTitle("");
+                    setFormContent("");
+                    setIsCreating(false);
+                }
+            } catch (error) {
+                console.error("[Notes] Create failed:", error);
+            }
+        });
     }, [formTitle, formContent]);
 
-    // Update existing note
-    const handleUpdate = useCallback(() => {
-        if (!editingNote || !formTitle.trim()) return;
-
-        setNotes((prev) =>
-            prev.map((note) =>
-                note.id === editingNote.id
-                    ? { ...note, title: formTitle.trim(), content: formContent.trim(), updatedAt: Date.now() }
-                    : note
-            )
-        );
-
-        setEditingNote(null);
-        setFormTitle("");
-        setFormContent("");
-    }, [editingNote, formTitle, formContent]);
-
     // Delete note
-    const handleDelete = useCallback((id: string) => {
-        setNotes((prev) => prev.filter((note) => note.id !== id));
-        if (editingNote?.id === id) {
-            setEditingNote(null);
-            setFormTitle("");
-            setFormContent("");
-        }
+    const handleDelete = useCallback(async (id: string) => {
+        startTransition(async () => {
+            try {
+                await deleteNote(id);
+                setNotes((prev) => prev.filter((note) => note.id !== id));
+
+                if (editingNote?.id === id) {
+                    setEditingNote(null);
+                    setFormTitle("");
+                    setFormContent("");
+                }
+            } catch (error) {
+                console.error("[Notes] Delete failed:", error);
+            }
+        });
     }, [editingNote]);
 
     // Open edit modal
-    const openEdit = (note: Note) => {
+    const openEdit = useCallback(async (note: Note) => {
         setEditingNote(note);
         setFormTitle(note.title);
         setFormContent(note.content);
         setIsCreating(false);
-    };
+        setSaveStatus("idle");
+        initialLoadRef.current = true; // Reset to prevent immediate auto-save
+    }, []);
 
     // Open create modal
     const openCreate = () => {
@@ -124,6 +221,7 @@ export default function NotesPage() {
         setEditingNote(null);
         setFormTitle("");
         setFormContent("");
+        setSaveStatus("idle");
     };
 
     // Close modal
@@ -132,6 +230,7 @@ export default function NotesPage() {
         setEditingNote(null);
         setFormTitle("");
         setFormContent("");
+        setSaveStatus("idle");
     };
 
     // Format helpers
@@ -178,75 +277,86 @@ export default function NotesPage() {
     const isModalOpen = isCreating || editingNote !== null;
 
     return (
-        <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
-            <Header title="Notes" />
+        <div className="min-h-screen min-h-[100dvh] bg-[#0C0C0D] text-foreground flex flex-col overflow-x-hidden">
+            <Header title="Notas" />
 
-            <main className="flex-1 p-4 md:p-6 max-w-4xl mx-auto w-full space-y-4 md:space-y-6">
+            <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full space-y-6 md:space-y-8">
                 {/* Actions */}
                 <div className="flex justify-end">
                     <button
                         onClick={openCreate}
-                        className="flex items-center gap-2 px-3 py-2 md:px-4 rounded-lg bg-accent-yellow/90 text-background text-sm font-bold hover:bg-accent-yellow transition-all shadow-sm"
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-all shadow-sm ring-1 ring-white/10"
                     >
-                        <Plus size={18} />
-                        <span className="hidden sm:inline">New Note</span>
-                        <span className="sm:hidden">New</span>
+                        <Plus size={18} strokeWidth={1.5} />
+                        <span className="hidden sm:inline">Nova Nota</span>
+                        <span className="sm:hidden">Nova</span>
                     </button>
                 </div>
 
+                {/* Loading State */}
+                {isLoading && (
+                    <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center px-4">
+                        <Loader2 size={32} className="text-zinc-500 animate-spin mb-4" />
+                        <p className="text-zinc-500 text-sm">Carregando notas...</p>
+                    </div>
+                )}
+
                 {/* Empty State */}
-                {isClient && notes.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center px-4">
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-accent-yellow/10 flex items-center justify-center mb-4">
-                            <FileText size={32} className="md:w-10 md:h-10 text-accent-yellow" />
+                {!isLoading && notes.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center px-4">
+                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#1A1A1C] border border-white/[0.05] flex items-center justify-center mb-6">
+                            <FileText size={32} className="md:w-10 md:h-10 text-zinc-500" strokeWidth={1.2} />
                         </div>
-                        <h2 className="text-lg md:text-xl font-serif font-bold mb-2">No Notes Yet</h2>
-                        <p className="text-muted-foreground max-w-sm text-sm md:text-base">
-                            Click the &quot;New Note&quot; button to create your first note.
+                        <h2 className="text-xl md:text-2xl font-serif font-medium text-zinc-200 mb-3">Nenhuma nota ainda</h2>
+                        <p className="text-zinc-500 max-w-sm text-sm md:text-base font-sans leading-relaxed">
+                            Clique no botão "Nova Nota" para criar seu primeiro pensamento.
                         </p>
                     </div>
                 )}
 
                 {/* Notes Grid - Responsive */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                    {notes.map((note) => (
-                        <motion.div
-                            key={note.id}
-                            layout
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="bg-card border border-border rounded-xl p-4 md:p-6 hover:shadow-lg hover:border-accent-yellow/50 transition-all cursor-pointer group relative"
-                            onClick={() => openEdit(note)}
-                        >
-                            <div className="flex items-start justify-between mb-3 md:mb-4">
-                                <div className="p-2 rounded-lg bg-accent-yellow/10 text-accent-yellow group-hover:bg-accent-yellow group-hover:text-background transition-colors">
-                                    <FileText size={18} className="md:w-5 md:h-5" />
-                                </div>
-                                <span className="text-xs text-muted-foreground">
-                                    {new Date(note.updatedAt).toLocaleDateString()}
-                                </span>
-                            </div>
-                            <h3 className="font-serif font-bold text-base md:text-lg mb-2 group-hover:text-accent-yellow transition-colors truncate">
-                                {note.title}
-                            </h3>
-                            <p className="text-muted-foreground text-sm line-clamp-3">
-                                {note.content || "No content"}
-                            </p>
-
-                            {/* Delete button */}
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(note.id);
-                                }}
-                                className="absolute top-3 right-3 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                {!isLoading && notes.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                        {notes.map((note) => (
+                            <motion.div
+                                key={note.id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="bg-[#1A1A1C] border border-white/[0.05] rounded-2xl p-5 md:p-6 hover:border-white/[0.1] transition-all cursor-pointer group relative flex flex-col h-[280px]"
+                                onClick={() => openEdit(note)}
                             >
-                                <Trash2 size={16} />
-                            </button>
-                        </motion.div>
-                    ))}
-                </div>
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="p-2.5 rounded-xl bg-white/[0.03] text-zinc-400 group-hover:text-zinc-200 transition-colors border border-white/[0.02]">
+                                        <FileText size={18} className="md:w-5 md:h-5" strokeWidth={1.5} />
+                                    </div>
+                                    <span className="text-[10px] uppercase tracking-wider text-zinc-600 font-medium">
+                                        {new Date(note.updated_at).toLocaleDateString('pt-BR')}
+                                    </span>
+                                </div>
+                                <h3 className="font-serif font-medium text-lg md:text-xl text-zinc-200 mb-3 line-clamp-2 leading-tight">
+                                    {note.title}
+                                </h3>
+                                <p className="text-zinc-500 text-sm leading-relaxed line-clamp-4 font-sans flex-1">
+                                    {note.content || "Sem conteúdo"}
+                                </p>
+
+                                {/* Delete button */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(note.id);
+                                    }}
+                                    disabled={isPending}
+                                    className="absolute top-4 right-4 p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-zinc-600 hover:text-red-500 transition-all disabled:opacity-50"
+                                >
+                                    <Trash2 size={16} strokeWidth={1.5} />
+                                </button>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
             </main>
 
             {/* Full-Page Editor Modal - Responsive */}
@@ -256,86 +366,94 @@ export default function NotesPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex flex-col"
+                        className="fixed inset-0 bg-[#0C0C0D]/95 backdrop-blur-xl z-50 flex flex-col"
                     >
                         {/* Editor Header - Responsive */}
-                        <div className="flex items-center justify-between p-3 md:p-4 border-b border-border bg-card/50 backdrop-blur-sm gap-2">
-                            <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+                        <div className="flex items-center justify-between p-4 md:p-6 border-b border-white/[0.05] bg-[#0C0C0D]">
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
                                 <button
                                     onClick={closeModal}
-                                    className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                                    className="p-2 rounded-xl hover:bg-white/[0.03] text-zinc-500 hover:text-zinc-200 transition-colors flex-shrink-0"
                                 >
-                                    <X size={20} />
+                                    <X size={20} strokeWidth={1.5} />
                                 </button>
                                 <input
                                     type="text"
                                     value={formTitle}
                                     onChange={(e) => setFormTitle(e.target.value)}
-                                    placeholder="Note title..."
-                                    className="text-lg md:text-2xl font-serif font-bold bg-transparent border-none outline-none text-foreground placeholder-muted-foreground flex-1 min-w-0"
+                                    placeholder="Título da nota..."
+                                    className="text-xl md:text-3xl font-serif font-medium bg-transparent border-none outline-none text-zinc-100 placeholder-zinc-700 flex-1 min-w-0"
                                 />
                             </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-3 flex-shrink-0 pl-4">
+                                <SaveIndicator status={saveStatus} />
                                 <button
                                     onClick={closeModal}
-                                    className="hidden sm:block px-3 py-2 rounded-lg border border-border text-muted-foreground text-sm hover:bg-muted hover:text-foreground transition-colors"
+                                    className="hidden sm:block px-4 py-2 rounded-xl border border-white/[0.05] text-zinc-400 text-sm hover:bg-white/[0.03] hover:text-zinc-200 transition-colors"
                                 >
-                                    Cancel
+                                    Fechar
                                 </button>
-                                <button
-                                    onClick={isCreating ? handleCreate : handleUpdate}
-                                    disabled={!formTitle.trim()}
-                                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent-yellow/90 text-background text-sm font-medium hover:bg-accent-yellow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Save size={16} />
-                                    <span className="hidden sm:inline">{isCreating ? "Create" : "Save"}</span>
-                                </button>
+                                {isCreating && (
+                                    <button
+                                        onClick={handleCreate}
+                                        disabled={!formTitle.trim() || isPending}
+                                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isPending ? (
+                                            <Loader2 size={16} className="animate-spin" />
+                                        ) : (
+                                            <Plus size={16} strokeWidth={1.5} />
+                                        )}
+                                        <span className="hidden sm:inline">Criar</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
 
                         {/* Formatting Toolbar - Responsive */}
-                        <div className="flex items-center gap-1 p-2 px-4 md:px-6 border-b border-border bg-card/30 overflow-x-auto">
+                        <div className="flex items-center gap-1 p-2 px-4 md:px-8 border-b border-white/[0.05] bg-[#0C0C0D] overflow-x-auto no-scrollbar">
                             <button
                                 onClick={() => insertFormat("bold")}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                                title="Bold"
+                                className="p-2 rounded-lg hover:bg-white/[0.03] text-zinc-500 hover:text-zinc-200 transition-colors flex-shrink-0"
+                                title="Negrito"
                             >
-                                <Bold size={18} />
+                                <Bold size={18} strokeWidth={1.5} />
                             </button>
                             <button
                                 onClick={() => insertFormat("italic")}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                                title="Italic"
+                                className="p-2 rounded-lg hover:bg-white/[0.03] text-zinc-500 hover:text-zinc-200 transition-colors flex-shrink-0"
+                                title="Itálico"
                             >
-                                <Italic size={18} />
+                                <Italic size={18} strokeWidth={1.5} />
                             </button>
                             <button
                                 onClick={() => insertFormat("heading")}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                                title="Heading"
+                                className="p-2 rounded-lg hover:bg-white/[0.03] text-zinc-500 hover:text-zinc-200 transition-colors flex-shrink-0"
+                                title="Título"
                             >
-                                <Heading size={18} />
+                                <Heading size={18} strokeWidth={1.5} />
                             </button>
                             <button
                                 onClick={() => insertFormat("list")}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                                title="Bullet List"
+                                className="p-2 rounded-lg hover:bg-white/[0.03] text-zinc-500 hover:text-zinc-200 transition-colors flex-shrink-0"
+                                title="Lista"
                             >
-                                <List size={18} />
+                                <List size={18} strokeWidth={1.5} />
                             </button>
-                            <div className="h-6 w-px bg-border mx-2 flex-shrink-0" />
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">Markdown</span>
+                            <div className="h-4 w-px bg-white/[0.05] mx-2 flex-shrink-0" />
+                            <span className="text-[10px] uppercase tracking-wider text-zinc-600 font-medium whitespace-nowrap">Markdown Suportado</span>
                         </div>
 
                         {/* Content Editor */}
-                        <div className="flex-1 p-4 md:p-6 overflow-hidden">
-                            <div className="max-w-4xl mx-auto h-full">
+                        <div className="flex-1 p-4 md:p-8 overflow-hidden bg-[#0C0C0D]">
+                            <div className="max-w-3xl mx-auto h-full">
                                 <textarea
                                     id="note-content"
                                     value={formContent}
                                     onChange={(e) => setFormContent(e.target.value)}
-                                    placeholder="Start writing your note..."
-                                    className="w-full h-full resize-none bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-base md:text-lg leading-relaxed font-sans"
+                                    placeholder="Comece a escrever..."
+                                    className="w-full h-full resize-none bg-transparent border-none outline-none text-zinc-300 placeholder-zinc-800 text-base md:text-lg leading-relaxed font-sans selection:bg-zinc-800 selection:text-zinc-100"
+                                    spellCheck={false}
                                 />
                             </div>
                         </div>

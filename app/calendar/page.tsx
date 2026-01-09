@@ -1,98 +1,72 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useTransition } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Clock, CheckSquare, Trash2 } from "lucide-react";
+import { X, Plus, Clock, CheckSquare, Trash2, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import {
     FullScreenCalendar,
     CalendarData,
     CalendarEvent,
 } from "@/components/ui/fullscreen-calendar";
 import { Header } from "@/components/Header";
-
-// Event type stored in localStorage
-interface StoredEvent {
-    id: string;
-    title: string;
-    date: string; // YYYY-MM-DD
-    time?: string;
-    type: "personal" | "work" | "reminder";
-    createdAt: number;
-}
-
-// Task type from Kanban board
-interface Task {
-    id: string;
-    title: string;
-    status: "todo" | "in-progress" | "done";
-    color: string;
-    dueDate?: string;
-    createdAt: number;
-}
-
-// Load events from localStorage
-const loadEvents = (): StoredEvent[] => {
-    if (typeof window === "undefined") return [];
-    try {
-        const stored = localStorage.getItem("calendar-events");
-        return stored ? JSON.parse(stored) : [];
-    } catch {
-        return [];
-    }
-};
-
-// Save events to localStorage
-const saveEvents = (events: StoredEvent[]) => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem("calendar-events", JSON.stringify(events));
-};
-
-// Load tasks from Kanban board
-const loadTasks = (): Task[] => {
-    if (typeof window === "undefined") return [];
-    try {
-        const stored = localStorage.getItem("kanban-tasks");
-        return stored ? JSON.parse(stored) : [];
-    } catch {
-        return [];
-    }
-};
+import { createClient } from "@/utils/supabase/client";
+import {
+    getCalendarEvents,
+    createEvent,
+    deleteEvent as deleteEventAction,
+    getTasks,
+    type CalendarEvent as DBCalendarEvent,
+    type Task,
+} from "@/app/actions/productivity";
 
 export default function CalendarPage() {
-    const [events, setEvents] = useState<StoredEvent[]>([]);
+    const router = useRouter();
+    const [events, setEvents] = useState<DBCalendarEvent[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+    const [isPending, startTransition] = useTransition();
+
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [newEventTitle, setNewEventTitle] = useState("");
     const [newEventTime, setNewEventTime] = useState("");
-    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
-        null
-    );
+    const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
-    // Load data on mount
+    // Check auth and load data on mount
     useEffect(() => {
-        setEvents(loadEvents());
-        setTasks(loadTasks());
+        async function checkAuthAndLoadData() {
+            try {
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
 
-        // Listen for storage changes (for task sync)
-        const handleStorage = () => {
-            setTasks(loadTasks());
-            setEvents(loadEvents());
-        };
-        window.addEventListener("storage", handleStorage);
+                if (!user) {
+                    setIsAuthenticated(false);
+                    router.replace("/?redirect=calendar");
+                    return;
+                }
 
-        // Poll for changes every 2 seconds (for same-tab updates)
-        const interval = setInterval(() => {
-            setTasks(loadTasks());
-        }, 2000);
+                setIsAuthenticated(true);
 
-        return () => {
-            window.removeEventListener("storage", handleStorage);
-            clearInterval(interval);
-        };
-    }, []);
+                // Load both events and tasks
+                const [eventsData, tasksData] = await Promise.all([
+                    getCalendarEvents(),
+                    getTasks(),
+                ]);
+
+                setEvents(eventsData);
+                setTasks(tasksData);
+            } catch (error) {
+                console.error("[Calendar] Failed to load:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        checkAuthAndLoadData();
+    }, [router]);
 
     // Convert events and tasks to CalendarData format
     const calendarData: CalendarData[] = useMemo(() => {
@@ -100,12 +74,17 @@ export default function CalendarPage() {
 
         // Add events
         events.forEach((event) => {
-            const dateKey = event.date;
+            // Extract date from start_time
+            const dateKey = event.start_time.split("T")[0];
+            const timeMatch = event.start_time.includes("T")
+                ? event.start_time.split("T")[1]?.slice(0, 5)
+                : undefined;
+
             const calendarEvent: CalendarEvent = {
                 id: event.id,
                 name: event.title,
-                time: event.time,
-                datetime: event.date,
+                time: timeMatch,
+                datetime: dateKey,
                 type: "event",
             };
 
@@ -117,13 +96,13 @@ export default function CalendarPage() {
 
         // Add tasks with due dates (exclude completed tasks)
         tasks
-            .filter((task) => task.dueDate && task.status !== "done")
+            .filter((task) => task.due_date && task.status !== "done")
             .forEach((task) => {
-                const dateKey = task.dueDate!;
+                const dateKey = task.due_date!;
                 const calendarEvent: CalendarEvent = {
                     id: task.id,
                     name: task.title,
-                    datetime: task.dueDate!,
+                    datetime: task.due_date!,
                     type: "task",
                     status: task.status,
                 };
@@ -145,34 +124,52 @@ export default function CalendarPage() {
     const handleAddEvent = useCallback(() => {
         if (!newEventTitle.trim() || !selectedDate) return;
 
-        const newEvent: StoredEvent = {
-            id: Date.now().toString(),
-            title: newEventTitle.trim(),
-            date: format(selectedDate, "yyyy-MM-dd"),
-            time: newEventTime || undefined,
-            type: "personal",
-            createdAt: Date.now(),
-        };
+        startTransition(async () => {
+            try {
+                const dateStr = format(selectedDate, "yyyy-MM-dd");
+                const startTime = newEventTime
+                    ? `${dateStr}T${newEventTime}:00`
+                    : `${dateStr}T00:00:00`;
 
-        const updatedEvents = [...events, newEvent];
-        setEvents(updatedEvents);
-        saveEvents(updatedEvents);
+                await createEvent(
+                    newEventTitle.trim(),
+                    startTime,
+                    undefined,
+                    undefined,
+                    !newEventTime, // is_all_day if no time specified
+                    "personal"
+                );
 
-        setNewEventTitle("");
-        setNewEventTime("");
-        setShowAddModal(false);
-    }, [newEventTitle, newEventTime, selectedDate, events]);
+                // Reload events
+                const eventsData = await getCalendarEvents();
+                setEvents(eventsData);
+
+                setNewEventTitle("");
+                setNewEventTime("");
+                setShowAddModal(false);
+            } catch (error) {
+                console.error("[Calendar] Create failed:", error);
+            }
+        });
+    }, [newEventTitle, newEventTime, selectedDate]);
 
     // Delete event
-    const handleDeleteEvent = useCallback(
-        (eventId: string) => {
-            const updatedEvents = events.filter((e) => e.id !== eventId);
-            setEvents(updatedEvents);
-            saveEvents(updatedEvents);
-            setSelectedEvent(null);
-        },
-        [events]
-    );
+    const handleDeleteEvent = useCallback((eventId: string) => {
+        // Optimistic update
+        setEvents((prev) => prev.filter((e) => e.id !== eventId));
+        setSelectedEvent(null);
+
+        startTransition(async () => {
+            try {
+                await deleteEventAction(eventId);
+            } catch (error) {
+                console.error("[Calendar] Delete failed:", error);
+                // Revert on error
+                const eventsData = await getCalendarEvents();
+                setEvents(eventsData);
+            }
+        });
+    }, []);
 
     // Handle adding event from calendar
     const handleAddFromCalendar = (date: Date) => {
@@ -185,8 +182,20 @@ export default function CalendarPage() {
         setSelectedEvent(event);
     };
 
+    // Loading state
+    if (isLoading || isAuthenticated === null) {
+        return (
+            <div className="flex flex-col h-screen h-[100dvh] bg-[#0C0C0D] text-foreground">
+                <Header title="Calendário" />
+                <div className="flex-1 flex items-center justify-center">
+                    <Loader2 size={32} className="text-zinc-500 animate-spin" />
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="flex flex-col h-screen h-[100dvh] bg-background text-foreground">
+        <div className="flex flex-col h-screen h-[100dvh] bg-[#0C0C0D] text-foreground">
             <Header title="Calendário" />
 
             <div className="flex-1 overflow-hidden">
@@ -204,81 +213,92 @@ export default function CalendarPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
                         onClick={() => setShowAddModal(false)}
                     >
                         <motion.div
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl"
+                            className="bg-[#1A1A1C] border border-white/[0.05] rounded-2xl p-6 w-full max-w-md shadow-2xl"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-foreground">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-lg font-serif font-medium text-zinc-100">
                                     Novo Evento
                                 </h3>
                                 <button
                                     onClick={() => setShowAddModal(false)}
-                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-zinc-200 transition-colors"
                                 >
-                                    <X size={18} />
+                                    <X size={18} strokeWidth={1.5} />
                                 </button>
                             </div>
 
-                            <p className="text-sm text-muted-foreground mb-4 capitalize">
-                                {format(selectedDate, "EEEE, d 'de' MMMM 'de' yyyy", {
+                            <p className="text-sm text-zinc-400 mb-6 capitalize font-serif italic">
+                                {format(selectedDate, "EEEE, d 'de' MMMM", {
                                     locale: ptBR,
                                 })}
                             </p>
 
-                            <div className="space-y-4">
+                            <div className="space-y-5">
                                 <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                                    <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">
                                         Título
                                     </label>
                                     <input
                                         type="text"
                                         value={newEventTitle}
                                         onChange={(e) => setNewEventTitle(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" && newEventTitle.trim()) handleAddEvent();
+                                            if (e.key === "Escape") setShowAddModal(false);
+                                        }}
                                         placeholder="Nome do evento"
-                                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+                                        className="w-full px-4 py-3 bg-[#0C0C0D] border border-white/[0.05] rounded-xl text-zinc-200 text-sm focus:outline-none focus:border-white/[0.2] transition-colors placeholder:text-zinc-600"
                                         autoFocus
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                                    <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">
                                         Horário (opcional)
                                     </label>
                                     <div className="relative">
                                         <Clock
                                             size={16}
-                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                                            strokeWidth={1.5}
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
                                         />
                                         <input
                                             type="time"
                                             value={newEventTime}
                                             onChange={(e) => setNewEventTime(e.target.value)}
-                                            className="w-full pl-10 pr-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent-purple/50"
+                                            className="w-full pl-10 pr-4 py-3 bg-[#0C0C0D] border border-white/[0.05] rounded-xl text-zinc-200 text-sm focus:outline-none focus:border-white/[0.2] transition-colors"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 pt-2">
+                                <div className="flex gap-3 pt-4">
                                     <button
                                         onClick={() => setShowAddModal(false)}
-                                        className="flex-1 px-4 py-2.5 border border-border rounded-lg text-foreground text-sm font-medium hover:bg-muted transition-colors"
+                                        className="flex-1 px-4 py-2.5 border border-white/[0.05] rounded-xl text-zinc-400 text-sm font-medium hover:bg-white/[0.03] hover:text-zinc-200 transition-colors"
                                     >
                                         Cancelar
                                     </button>
                                     <button
                                         onClick={handleAddEvent}
-                                        disabled={!newEventTitle.trim()}
-                                        className="flex-1 px-4 py-2.5 bg-gradient-to-r from-accent-blue to-accent-purple text-background rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        disabled={!newEventTitle.trim() || isPending}
+                                        className="flex-1 px-4 py-2.5 bg-zinc-100 text-zinc-900 rounded-xl text-sm font-medium hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
-                                        <Plus size={16} />
-                                        Adicionar
+                                        {isPending ? (
+                                            <Loader2 size={16} className="animate-spin" />
+                                        ) : (
+                                            <>
+                                                <Plus size={16} strokeWidth={1.5} />
+                                                Adicionar
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -294,55 +314,55 @@ export default function CalendarPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
                         onClick={() => setSelectedEvent(null)}
                     >
                         <motion.div
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-card border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl"
+                            className="bg-[#1A1A1C] border border-white/[0.05] rounded-2xl p-6 w-full max-w-md shadow-2xl"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="flex items-center gap-3">
+                            <div className="flex items-start justify-between mb-6">
+                                <div className="flex items-center gap-4">
                                     <div
-                                        className={`p-2 rounded-lg ${selectedEvent.type === "task"
-                                            ? "bg-accent-green/20 text-accent-green"
-                                            : "bg-accent-blue/20 text-accent-blue"
+                                        className={`p-3 rounded-xl border ${selectedEvent.type === "task"
+                                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                            : "bg-blue-500/10 text-blue-500 border-blue-500/20"
                                             }`}
                                     >
                                         {selectedEvent.type === "task" ? (
-                                            <CheckSquare size={20} />
+                                            <CheckSquare size={20} strokeWidth={1.5} />
                                         ) : (
-                                            <Clock size={20} />
+                                            <Clock size={20} strokeWidth={1.5} />
                                         )}
                                     </div>
                                     <div>
                                         <span
-                                            className={`text-xs font-medium uppercase ${selectedEvent.type === "task"
-                                                ? "text-accent-green"
-                                                : "text-accent-blue"
+                                            className={`text-[10px] font-medium uppercase tracking-widest ${selectedEvent.type === "task"
+                                                ? "text-emerald-500"
+                                                : "text-blue-500"
                                                 }`}
                                         >
                                             {selectedEvent.type === "task" ? "Tarefa" : "Evento"}
                                         </span>
-                                        <h3 className="text-lg font-semibold text-foreground">
+                                        <h3 className="text-xl font-serif font-medium text-zinc-100 mt-0.5">
                                             {selectedEvent.name}
                                         </h3>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setSelectedEvent(null)}
-                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-zinc-200 transition-colors"
                                 >
-                                    <X size={18} />
+                                    <X size={18} strokeWidth={1.5} />
                                 </button>
                             </div>
 
                             {selectedEvent.time && (
-                                <p className="text-sm text-muted-foreground mb-4 flex items-center gap-2">
-                                    <Clock size={14} />
+                                <p className="text-sm text-zinc-400 mb-6 flex items-center gap-2 font-sans bg-[#0C0C0D] p-3 rounded-xl border border-white/[0.05]">
+                                    <Clock size={16} strokeWidth={1.5} />
                                     {selectedEvent.time}
                                 </p>
                             )}
@@ -350,15 +370,22 @@ export default function CalendarPage() {
                             {selectedEvent.type === "event" && (
                                 <button
                                     onClick={() => handleDeleteEvent(selectedEvent.id)}
-                                    className="w-full px-4 py-2.5 border border-red-500/30 text-red-500 rounded-lg text-sm font-medium hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
+                                    disabled={isPending}
+                                    className="w-full px-4 py-2.5 border border-red-500/20 text-red-500 rounded-xl text-sm font-medium hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
-                                    <Trash2 size={16} />
-                                    Excluir Evento
+                                    {isPending ? (
+                                        <Loader2 size={16} className="animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Trash2 size={16} strokeWidth={1.5} />
+                                            Excluir Evento
+                                        </>
+                                    )}
                                 </button>
                             )}
 
                             {selectedEvent.type === "task" && (
-                                <p className="text-sm text-muted-foreground text-center">
+                                <p className="text-sm text-zinc-500 text-center font-sans">
                                     Gerencie esta tarefa no Kanban
                                 </p>
                             )}

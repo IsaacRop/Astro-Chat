@@ -25,7 +25,7 @@ type NavItem = {
 // Navigation items for Otto app
 const navItems: NavItem[] = [
     { id: 'home', icon: <Home />, label: 'Início', href: '/' },
-    { id: 'chat', icon: <MessageCircle />, label: 'Chat', href: '/chat' },
+    { id: 'chat', icon: <MessageCircle />, label: 'Chat', href: '/dashboard/chat' },
     { id: 'calendar', icon: <Calendar />, label: 'Calendário', href: '/calendar' },
     { id: 'tasks', icon: <CheckSquare />, label: 'Tarefas', href: '/tasks' },
     { id: 'notes', icon: <FileText />, label: 'Notas', href: '/notes' },

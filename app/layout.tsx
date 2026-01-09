@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "sonner";
 
 const playfair = Playfair_Display({
   variable: "--font-serif",
@@ -36,11 +37,11 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
         >
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
-    </html>
+    </html >
   );
 }

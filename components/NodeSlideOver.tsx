@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { X, MessageSquare, FileText, Save, Trash2, Plus } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { X, MessageSquare, FileText, Trash2, Plus, Check, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { loadNote, saveNote, deleteSession } from '@/utils/storage';
 
@@ -46,17 +46,21 @@ interface NodeSlideOverProps {
     onDelete?: () => void;
 }
 
+type SaveStatus = 'saved' | 'unsaved' | 'saving';
+
 export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeSlideOverProps) {
     const [notes, setNotes] = useState('');
-    const [saved, setSaved] = useState(true);
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
+    const [isSaving, setIsSaving] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [noteGenerated, setNoteGenerated] = useState(false);
+    const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Load notes when node changes
     useEffect(() => {
         if (node) {
             setNotes(loadNote(node.id));
-            setSaved(true);
+            setSaveStatus('saved');
             setShowDeleteConfirm(false);
             setNoteGenerated(false);
         }
@@ -64,15 +68,39 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
 
     const handleNotesChange = useCallback((value: string) => {
         setNotes(value);
-        setSaved(false);
-    }, []);
+        setSaveStatus('unsaved');
+
+        // Auto-save with debounce
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+        saveTimeoutRef.current = setTimeout(() => {
+            if (node) {
+                setIsSaving(true);
+                setSaveStatus('saving');
+                // Small delay for visual feedback
+                setTimeout(() => {
+                    saveNote(node.id, value);
+                    setIsSaving(false);
+                    setSaveStatus('saved');
+                }, 300);
+            }
+        }, 1000); // Auto-save after 1 second of inactivity
+    }, [node]);
 
     const handleSave = useCallback(() => {
-        if (node) {
-            saveNote(node.id, notes);
-            setSaved(true);
+        if (node && !isSaving) {
+            setIsSaving(true);
+            setSaveStatus('saving');
+
+            // Small delay for visual feedback
+            setTimeout(() => {
+                saveNote(node.id, notes);
+                setIsSaving(false);
+                setSaveStatus('saved');
+            }, 300);
         }
-    }, [node, notes]);
+    }, [node, notes, isSaving]);
 
     const handleGenerateNote = useCallback(() => {
         if (!node) return;
@@ -126,6 +154,42 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose, showDeleteConfirm]);
 
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    // Status indicator component
+    const StatusIndicator = () => {
+        switch (saveStatus) {
+            case 'saving':
+                return (
+                    <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                        <Loader2 size={12} className="animate-spin" />
+                        <span>Saving...</span>
+                    </div>
+                );
+            case 'saved':
+                return (
+                    <div className="flex items-center gap-1.5 text-accent-green text-xs">
+                        <Check size={12} />
+                        <span>Saved</span>
+                    </div>
+                );
+            case 'unsaved':
+                return (
+                    <div className="flex items-center gap-1.5 text-accent-yellow text-xs">
+                        <span className="w-2 h-2 rounded-full bg-accent-yellow animate-pulse" />
+                        <span>Not saved</span>
+                    </div>
+                );
+        }
+    };
+
     return (
         <>
             {/* Backdrop */}
@@ -142,15 +206,18 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
             >
                 {node && (
                     <div className="flex flex-col h-full">
-                        {/* Header - Responsive */}
-                        <header className="flex items-center justify-between p-3 md:p-4 border-b border-border">
+                        {/* Header - Glassmorphism Effect */}
+                        <header className="flex items-center justify-between p-3 md:p-4 border-b border-border/50 bg-background/60 backdrop-blur-xl sticky top-0 z-10">
                             <div className="min-w-0 flex-1">
                                 <h2 className="font-serif font-semibold text-base md:text-lg text-foreground truncate">{node.label}</h2>
-                                <p className="text-muted-foreground text-xs mt-0.5">Node Details</p>
+                                <div className="flex items-center gap-3 mt-1">
+                                    <p className="text-muted-foreground text-xs">Node Details</p>
+                                    <StatusIndicator />
+                                </div>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 ml-2"
+                                className="p-2 rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 ml-2"
                             >
                                 <X size={20} />
                             </button>
@@ -161,11 +228,11 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
                             {/* Action Buttons - Stack on very small screens */}
                             <div className="flex flex-col sm:flex-row gap-2">
                                 <Link
-                                    href={`/chat?session=${node.id}`}
+                                    href={`/chat?session=${node.id}&chatId=${node.chatId}`}
                                     onClick={onClose}
-                                    className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-lg bg-accent-blue text-background font-medium hover:bg-accent-blue/90 transition-all shadow-sm text-sm"
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 md:px-5 py-3 md:py-3.5 rounded-full bg-gradient-to-r from-accent-blue to-accent-purple text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-accent-blue/25 text-sm"
                                 >
-                                    <MessageSquare size={16} className="md:w-[18px] md:h-[18px]" />
+                                    <MessageSquare size={18} />
                                     Go to Chat
                                 </Link>
 
@@ -181,38 +248,43 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
                                 </button>
                             </div>
 
-                            {/* Notes Section */}
-                            <div className="flex-1 flex flex-col">
-                                <div className="flex items-center justify-between mb-2 md:mb-3">
+                            {/* Editor Section - Card Container with Glassmorphism */}
+                            <div className="flex-1 flex flex-col bg-card/30 backdrop-blur-sm border border-border/50 rounded-xl overflow-hidden">
+                                {/* Editor Toolbar */}
+                                <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 bg-muted/30">
                                     <div className="flex items-center gap-2 text-muted-foreground">
-                                        <FileText size={14} className="md:w-4 md:h-4" />
-                                        <span className="text-xs md:text-sm font-medium">Personal Notes</span>
+                                        <FileText size={14} />
+                                        <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">Markdown Editor</span>
                                     </div>
-                                    <button
-                                        onClick={handleSave}
-                                        className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors ${saved
-                                            ? 'bg-muted text-muted-foreground cursor-default'
-                                            : 'bg-accent-green hover:bg-accent-green/90 text-background'
-                                            }`}
-                                    >
-                                        <Save size={12} />
-                                        {saved ? 'Saved' : 'Save'}
-                                    </button>
+                                    <div className="hidden sm:flex items-center gap-1.5 text-muted-foreground/70">
+                                        <kbd className="px-1.5 py-0.5 text-[10px] bg-muted rounded border border-border font-mono">Ctrl</kbd>
+                                        <span className="text-[10px]">+</span>
+                                        <kbd className="px-1.5 py-0.5 text-[10px] bg-muted rounded border border-border font-mono">S</kbd>
+                                        <span className="text-[10px] ml-1">to save</span>
+                                    </div>
                                 </div>
 
+                                {/* Textarea - Clean Sheet Style */}
                                 <textarea
                                     value={notes}
                                     onChange={(e) => handleNotesChange(e.target.value)}
                                     onBlur={handleSave}
-                                    placeholder="Write your study notes about this topic..."
-                                    className="flex-1 min-h-[150px] md:min-h-[200px] p-3 bg-background border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent-purple/50 resize-none font-mono text-xs md:text-sm leading-relaxed"
-                                />
+                                    placeholder="Write your study notes about this topic...
 
-                                <p className="text-muted-foreground text-[10px] md:text-xs mt-2">
-                                    <span className="hidden sm:inline">Ctrl+S to save • ESC to close</span>
-                                    <span className="sm:hidden">Tap outside to close</span>
-                                </p>
+Use Markdown for formatting:
+- **bold** and *italic*
+- # Headers
+- - Bullet lists
+- \`code\`"
+                                    className="flex-1 min-h-[200px] md:min-h-[280px] p-4 md:p-5 bg-transparent text-foreground placeholder-muted-foreground/60 focus:outline-none resize-none font-sans text-sm md:text-base leading-7 tracking-wide"
+                                    style={{ lineHeight: '1.8' }}
+                                />
                             </div>
+
+                            {/* Mobile hint */}
+                            <p className="text-muted-foreground text-[10px] md:text-xs text-center sm:hidden">
+                                Auto-saves as you type • Tap outside to close
+                            </p>
 
                             {/* Delete Section */}
                             <div className="pt-3 md:pt-4 border-t border-border">
@@ -249,7 +321,7 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
                         </div>
 
                         {/* Footer */}
-                        <footer className="p-3 md:p-4 border-t border-border">
+                        <footer className="p-3 md:p-4 border-t border-border bg-background/40 backdrop-blur-sm">
                             <div className="text-muted-foreground text-[10px] md:text-xs font-mono truncate">
                                 ID: {node.id}
                             </div>

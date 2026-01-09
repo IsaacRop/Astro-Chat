@@ -73,6 +73,64 @@ Astro is a futuristic AI specialized in educational tutoring and knowledge manag
 5. **Open Browser:**
    Visit [http://localhost:3000](http://localhost:3000) to start interacting with Astro.
 
+## 📖 Application Guide
+
+### 🏠 Home (`/`)
+The landing page greets users with the interactive **Octopus Mascot** and a Bento Grid dashboard layout.
+- **Login/Profile**: Integrated Supabase authentication.
+- **Navigation**: Quick access to all app modules via the interactive mascot menu.
+
+### 📊 Dashboard (`/dashboard`)
+Manage your identity and personalization settings.
+- **Profile Form**: Update your display name and user preferences.
+- **Identity**: Manage how you appear to the Otto AI.
+
+### 💬 Chat (`/chat`)
+The core conversational interface powered by the Vercel AI SDK.
+- **Real-time AI**: Streams responses from OpenAI (`gpt-4o-mini`).
+- **Markdown Rendering**: Supports code blocks, tables, and rich text.
+- **Knowledge Graph Integration**: Automatically creates nodes from conversation topics.
+- **Session History**: Access and manage past conversations via the sidebar.
+
+### 🌌 Cadernos (`/cadernos`)
+Visualizes your knowledge base as an interactive "Cosmic Graph".
+- **Force-Directed Graph**: Nodes represent topics, edges represent connections.
+- **Dynamic Growth**: Nodes grow in size based on discussion frequency.
+- **Discovery**: Visualize how your learning topics connect to each other.
+
+### 📝 Notes (`/notes`)
+A full-featured Markdown editor for personal knowledge management.
+- **Rich Text Editor**: Support for **Bold**, *Italic*, Headings, and Lists.
+- **Local Storage**: Notes are persisted instantly to your browser.
+- **Organization**: Create, edit, and delete notes with a clean interface.
+
+### ✅ Tasks (`/tasks`)
+A Kanban-style task management board.
+- **Drag & Drop**: Move tasks between "To Do", "In Progress", and "Done".
+- **Metadata**: Add due dates and color tags to tasks.
+- **Prioritization**: Visual workflow management for your projects.
+
+### 📅 Calendar (`/calendar`)
+Full-screen calendar for time management.
+- **Integration**: Displays tasks with due dates automatically.
+- **Events**: Create personal events and reminders.
+- **Visuals**: Clean, full-screen interface for planning your schedule.
+
+### 💡 Ideas (`/ideas`)
+A creative space to capture fleeting thoughts.
+- **Status Tracking**: Mark ideas as "New", "Exploring", or "Implemented".
+- **Color Coding**: Categorize ideas visually for better organization.
+
+### ⭐ Favorites (`/favorites`)
+Centralized bookmarks for quick access.
+- **Unified List**: Save important chats, notes, and external links.
+- **Categories**: Filter by type (Chat, Note, Link, Other).
+
+### ⚙️ Settings (`/settings`)
+Customize your Otto experience.
+- **Theme**: Toggle between Light, Dark, and System themes.
+- **Feedback**: Built-in form to send suggestions or report bugs directly to the team.
+
 ## 📂 Project Structure
 
 ```
@@ -80,6 +138,12 @@ Astro is a futuristic AI specialized in educational tutoring and knowledge manag
 │   ├── api/          # Backend API routes (Chat, Graph)
 │   ├── chat/         # Chat interface page
 │   ├── notes/        # Notes management page
+│   ├── cadernos/     # Graph visualization page
+│   ├── tasks/        # Kanban board page
+│   ├── calendar/     # Calendar page
+│   ├── ideas/        # Ideas tracking page
+│   ├── favorites/    # Bookmarks page
+│   ├── settings/     # App settings
 │   ├── globals.css   # Global styles & Tailwind
 │   └── page.tsx      # Landing page with Mascot
 ├── components/       # Reusable UI components
