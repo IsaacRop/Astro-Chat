@@ -2,6 +2,7 @@ import { LoginButton } from "@/components/LoginButton";
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 import { DashboardGrid } from "@/components/dashboard-grid";
+import { FeedbackDialog } from "@/components/feedback-dialog";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -23,6 +24,11 @@ export default async function Home() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <FeedbackDialog>
+              <button className="flex items-center gap-2 px-4 py-2 text-base font-medium text-zinc-400 hover:text-white rounded-full bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] hover:border-indigo-500/30 transition-all duration-300">
+                Feedback
+              </button>
+            </FeedbackDialog>
             {!user ? (
               <LoginButton />
             ) : (
