@@ -251,7 +251,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 disabled={isLoading}
                                 className={cn(
                                     "w-full bg-transparent border-0 outline-none",
-                                    "text-zinc-200 text-sm md:text-base font-sans",
+                                    "text-zinc-200 text-base font-sans",
                                     "placeholder:text-zinc-500",
                                     "resize-none overflow-hidden py-1 leading-relaxed",
                                     "disabled:opacity-50"
@@ -272,7 +272,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 onClick={() => fileInputRef.current?.click()}
                                 className={cn(
                                     "inline-flex items-center justify-center",
-                                    "h-8 w-8 rounded-lg transition-colors",
+                                    "h-10 w-10 rounded-lg transition-colors",
                                     "text-zinc-500 hover:text-zinc-200 hover:bg-white/5"
                                 )}
                                 type="button"
@@ -295,7 +295,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 disabled={!hasContent || isLoading}
                                 className={cn(
                                     "inline-flex items-center justify-center",
-                                    "h-8 w-8 rounded-lg transition-all duration-200",
+                                    "h-10 w-10 rounded-lg transition-all duration-200",
                                     hasContent && !isLoading
                                         ? "bg-zinc-100 text-zinc-900 shadow-sm hover:bg-white"
                                         : "bg-white/[0.05] text-zinc-600 cursor-not-allowed"

@@ -127,6 +127,7 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
 
     // AI SDK useChat hook
     // Note: Messages are saved to Supabase via /api/chat/save endpoint
+    // Auto-titling is triggered when saving the assistant's response
     const { messages, setMessages, sendMessage, status } = useChat({
         id: chatId,
     });
