@@ -6,13 +6,13 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 
 const tentacleItems = [
-    { icon: Notebook, label: "Notebooks", href: "/cadernos", color: "var(--accent-purple)" },
-    { icon: FileText, label: "Notes", href: "/notes", color: "var(--accent-yellow)" },
-    { icon: CheckSquare, label: "Tasks", href: "/tasks", color: "var(--accent-green)" },
+    { icon: Notebook, label: "Cadernos", href: "/cadernos", color: "var(--accent-purple)" },
+    { icon: FileText, label: "Notas", href: "/notes", color: "var(--accent-yellow)" },
+    { icon: CheckSquare, label: "Tarefas", href: "/tasks", color: "var(--accent-green)" },
     { icon: MessageCircle, label: "Chat", href: "/chat", color: "var(--accent-blue)" },
-    { icon: Calendar, label: "Calendar", href: "/calendar", color: "var(--accent-blue)" },
-    { icon: Lightbulb, label: "Ideas", href: "/ideas", color: "var(--accent-purple)" },
-    { icon: Star, label: "Favorites", href: "/favorites", color: "var(--accent-yellow)" },
+    { icon: Calendar, label: "Calendário", href: "/calendar", color: "var(--accent-blue)" },
+    { icon: Lightbulb, label: "Ideias", href: "/ideas", color: "var(--accent-purple)" },
+    { icon: Star, label: "Favoritos", href: "/favorites", color: "var(--accent-yellow)" },
 ];
 
 // Responsive icon positions - calculated based on container size (7 items now)
@@ -368,20 +368,20 @@ export const OctopusMascot = () => {
                 <motion.a
                     className="fixed bottom-6 right-6 md:bottom-8 md:right-8 flex flex-col items-center gap-1 cursor-pointer z-50"
                     initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: hoveredItem === "Settings" ? 1.1 : 1 }}
+                    animate={{ opacity: 1, scale: hoveredItem === "Configurações" ? 1.1 : 1 }}
                     whileHover={{ scale: 1.15 }}
                     whileTap={{ scale: 0.95 }}
-                    onMouseEnter={() => setHoveredItem("Settings")}
+                    onMouseEnter={() => setHoveredItem("Configurações")}
                     onMouseLeave={() => setHoveredItem(null)}
                 >
                     <motion.div
                         className="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center backdrop-blur-sm transition-all duration-300"
                         style={{
-                            background: hoveredItem === "Settings"
+                            background: hoveredItem === "Configurações"
                                 ? 'linear-gradient(135deg, var(--accent-orange)40, var(--accent-orange)20)'
                                 : 'rgba(30, 30, 50, 0.9)',
-                            border: `2px solid ${hoveredItem === "Settings" ? 'var(--accent-orange)' : 'rgba(255,255,255,0.2)'}`,
-                            boxShadow: hoveredItem === "Settings"
+                            border: `2px solid ${hoveredItem === "Configurações" ? 'var(--accent-orange)' : 'rgba(255,255,255,0.2)'}`,
+                            boxShadow: hoveredItem === "Configurações"
                                 ? '0 0 25px var(--accent-orange), 0 0 50px var(--accent-orange)40'
                                 : '0 4px 20px rgba(0,0,0,0.4)',
                         }}
@@ -390,12 +390,12 @@ export const OctopusMascot = () => {
                             className="w-5 h-5 md:w-6 md:h-6"
                             style={{
                                 color: 'var(--accent-orange)',
-                                filter: hoveredItem === "Settings" ? 'drop-shadow(0 0 6px var(--accent-orange))' : 'none'
+                                filter: hoveredItem === "Configurações" ? 'drop-shadow(0 0 6px var(--accent-orange))' : 'none'
                             }}
                         />
                     </motion.div>
                     <AnimatePresence>
-                        {hoveredItem === "Settings" && (
+                        {hoveredItem === "Configurações" && (
                             <motion.span
                                 initial={{ opacity: 0, y: -5, scale: 0.8 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -409,7 +409,7 @@ export const OctopusMascot = () => {
                                     boxShadow: '0 0 10px var(--accent-orange)30'
                                 }}
                             >
-                                Settings
+                                Configurações
                             </motion.span>
                         )}
                     </AnimatePresence>

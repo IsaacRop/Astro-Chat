@@ -20,9 +20,9 @@ import {
 // ============================================
 
 const columns: { id: TaskStatus; title: string; color: string }[] = [
-    { id: "todo", title: "To Do", color: "accent-blue" },
-    { id: "inprogress", title: "In Progress", color: "accent-orange" },
-    { id: "done", title: "Done", color: "accent-green" },
+    { id: "todo", title: "A Fazer", color: "accent-blue" },
+    { id: "inprogress", title: "Em Andamento", color: "accent-orange" },
+    { id: "done", title: "Concluído", color: "accent-green" },
 ];
 
 // ============================================
@@ -221,8 +221,8 @@ export default function TasksPage() {
                             {/* Column Content */}
                             <div
                                 className={`flex-1 bg-[#1A1A1C]/50 border rounded-2xl p-3 space-y-3 min-h-[200px] md:min-h-[400px] backdrop-blur-sm transition-all ${dragOverColumn === column.id
-                                        ? 'border-zinc-500 bg-zinc-800/30'
-                                        : 'border-white/[0.02]'
+                                    ? 'border-zinc-500 bg-zinc-800/30'
+                                    : 'border-white/[0.02]'
                                     }`}
                                 onDragOver={(e) => handleDragOver(e, column.id)}
                                 onDragLeave={handleDragLeave}

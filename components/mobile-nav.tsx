@@ -61,6 +61,9 @@ export function MobileNav() {
                             <circle cx="15" cy="7" r="1.5" fill="currentColor" />
                         </svg>
                         <span className="font-serif font-bold">Otto</span>
+                        <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-accent-purple/20 text-accent-purple border border-accent-purple/30 rounded-full">
+                            Beta
+                        </span>
                     </SheetTitle>
                 </SheetHeader>
 
@@ -71,8 +74,8 @@ export function MobileNav() {
                             href={item.href}
                             onClick={() => setOpen(false)}
                             className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 min-h-[44px] ${isActive(item.href)
-                                    ? `bg-current/10 ${item.colorClass}`
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                ? `bg-current/10 ${item.colorClass}`
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                 }`}
                         >
                             <span className={isActive(item.href) ? item.colorClass : ""}>

@@ -75,11 +75,14 @@ export function AboutSection() {
                         <Sparkles className="w-6 h-6 text-indigo-400" strokeWidth={1.5} />
                     </div>
                     <div>
-                        <h3 className="text-lg font-serif font-medium text-zinc-200 mb-2">
-                            Sobre o TEO
+                        <h3 className="text-lg font-serif font-medium text-zinc-200 mb-2 flex items-center gap-2">
+                            Sobre o Otto
+                            <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-accent-purple/20 text-accent-purple border border-accent-purple/30 rounded-full">
+                                Beta
+                            </span>
                         </h3>
                         <p className="text-zinc-400 text-sm leading-relaxed">
-                            O TEO não é apenas um chat. É um{" "}
+                            O Otto não é apenas um chat. É um{" "}
                             <span className="text-zinc-200 font-medium">
                                 ecossistema de aprendizado personalizado
                             </span>{" "}
