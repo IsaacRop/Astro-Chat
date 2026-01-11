@@ -19,7 +19,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Otto",
-  description: "Next Gen AI Assistant",
+  description: "Seu Assistente de Estudos",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${playfair.variable} antialiased font-sans bg-background text-foreground overflow-x-hidden`}
         suppressHydrationWarning

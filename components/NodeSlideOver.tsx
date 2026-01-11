@@ -109,7 +109,7 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
         const newNote: Note = {
             id: generateNoteId(),
             title: node.label,
-            content: notes || `# ${node.label}\n\nNote generated from knowledge graph node.\n\nNode ID: ${node.id}`,
+            content: notes || `# ${node.label}\n\nNota gerada a partir do nó do grafo.\n\nID do Nó: ${node.id}`,
             createdAt: Date.now(),
             updatedAt: Date.now(),
         };
@@ -170,21 +170,21 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
                 return (
                     <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
                         <Loader2 size={12} className="animate-spin" />
-                        <span>Saving...</span>
+                        <span>Salvando...</span>
                     </div>
                 );
             case 'saved':
                 return (
                     <div className="flex items-center gap-1.5 text-accent-green text-xs">
                         <Check size={12} />
-                        <span>Saved</span>
+                        <span>Salvo</span>
                     </div>
                 );
             case 'unsaved':
                 return (
                     <div className="flex items-center gap-1.5 text-accent-yellow text-xs">
                         <span className="w-2 h-2 rounded-full bg-accent-yellow animate-pulse" />
-                        <span>Not saved</span>
+                        <span>Não salvo</span>
                     </div>
                 );
         }
@@ -211,7 +211,7 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
                             <div className="min-w-0 flex-1">
                                 <h2 className="font-serif font-semibold text-base md:text-lg text-foreground truncate">{node.label}</h2>
                                 <div className="flex items-center gap-3 mt-1">
-                                    <p className="text-muted-foreground text-xs">Node Details</p>
+                                    <p className="text-muted-foreground text-xs">Detalhes do Nó</p>
                                     <StatusIndicator />
                                 </div>
                             </div>
@@ -233,7 +233,7 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
                                     className="flex-1 flex items-center justify-center gap-2 px-4 md:px-5 py-3 md:py-3.5 rounded-full bg-gradient-to-r from-accent-blue to-accent-purple text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-accent-blue/25 text-sm"
                                 >
                                     <MessageSquare size={18} />
-                                    Go to Chat
+                                    Ir para o Chat
                                 </Link>
 
                                 <button
@@ -244,7 +244,7 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
                                         }`}
                                 >
                                     <Plus size={16} className="md:w-[18px] md:h-[18px]" />
-                                    {noteGenerated ? 'Created!' : 'Generate Note'}
+                                    {noteGenerated ? 'Criado!' : 'Gerar Nota'}
                                 </button>
                             </div>
 
@@ -254,13 +254,13 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
                                 <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 bg-muted/30">
                                     <div className="flex items-center gap-2 text-muted-foreground">
                                         <FileText size={14} />
-                                        <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">Markdown Editor</span>
+                                        <span className="text-[10px] md:text-xs font-semibold uppercase tracking-wider">Editor Markdown</span>
                                     </div>
                                     <div className="hidden sm:flex items-center gap-1.5 text-muted-foreground/70">
                                         <kbd className="px-1.5 py-0.5 text-[10px] bg-muted rounded border border-border font-mono">Ctrl</kbd>
                                         <span className="text-[10px]">+</span>
                                         <kbd className="px-1.5 py-0.5 text-[10px] bg-muted rounded border border-border font-mono">S</kbd>
-                                        <span className="text-[10px] ml-1">to save</span>
+                                        <span className="text-[10px] ml-1">para salvar</span>
                                     </div>
                                 </div>
 
@@ -269,13 +269,13 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
                                     value={notes}
                                     onChange={(e) => handleNotesChange(e.target.value)}
                                     onBlur={handleSave}
-                                    placeholder="Write your study notes about this topic...
+                                    placeholder="Escreva suas notas de estudo sobre este tópico...
 
-Use Markdown for formatting:
-- **bold** and *italic*
-- # Headers
-- - Bullet lists
-- \`code\`"
+Use Markdown para formatação:
+- **negrito** e *itálico*
+- # Títulos
+- - Listas
+- \`código\`"
                                     className="flex-1 min-h-[200px] md:min-h-[280px] p-4 md:p-5 bg-transparent text-foreground placeholder-muted-foreground/60 focus:outline-none resize-none font-sans text-sm md:text-base leading-7 tracking-wide"
                                     style={{ lineHeight: '1.8' }}
                                 />
@@ -283,7 +283,7 @@ Use Markdown for formatting:
 
                             {/* Mobile hint */}
                             <p className="text-muted-foreground text-[10px] md:text-xs text-center sm:hidden">
-                                Auto-saves as you type • Tap outside to close
+                                Salva automaticamente • Toque fora para fechar
                             </p>
 
                             {/* Delete Section */}
@@ -294,25 +294,25 @@ Use Markdown for formatting:
                                         className="w-full flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors text-xs md:text-sm"
                                     >
                                         <Trash2 size={14} className="md:w-4 md:h-4" />
-                                        Delete Node & Chat
+                                        Excluir Nó e Chat
                                     </button>
                                 ) : (
                                     <div className="space-y-2">
                                         <p className="text-destructive text-[10px] md:text-xs text-center">
-                                            This will delete everything permanently.
+                                            Isso excluirá tudo permanentemente.
                                         </p>
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => setShowDeleteConfirm(false)}
                                                 className="flex-1 px-3 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors text-xs md:text-sm"
                                             >
-                                                Cancel
+                                                Cancelar
                                             </button>
                                             <button
                                                 onClick={handleDelete}
                                                 className="flex-1 px-3 py-2 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors text-xs md:text-sm font-medium"
                                             >
-                                                Confirm
+                                                Confirmar
                                             </button>
                                         </div>
                                     </div>

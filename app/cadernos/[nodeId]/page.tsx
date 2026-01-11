@@ -105,7 +105,7 @@ export default function NodeDetailPage({
                     </Link>
                     <div className="min-w-0">
                         <h1 className="font-semibold text-base md:text-lg truncate">{node.label}</h1>
-                        <p className="text-muted-foreground text-xs">Personal Notes</p>
+                        <p className="text-muted-foreground text-xs">Notas Pessoais</p>
                     </div>
                 </div>
                 <Link
@@ -113,7 +113,7 @@ export default function NodeDetailPage({
                     className="flex items-center gap-1 md:gap-2 px-3 py-2 rounded-lg bg-accent-purple hover:bg-accent-purple/80 text-background text-xs md:text-sm font-medium transition-colors flex-shrink-0"
                 >
                     <MessageSquare size={14} className="md:w-4 md:h-4" />
-                    <span className="hidden sm:inline">Go to Chat</span>
+                    <span className="hidden sm:inline">Ir para o Chat</span>
                     <span className="sm:hidden">Chat</span>
                 </Link>
             </header>
@@ -123,7 +123,7 @@ export default function NodeDetailPage({
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <FileText size={18} />
-                        <span className="text-sm font-medium">Personal Notes</span>
+                        <span className="text-sm font-medium">Notas Pessoais</span>
                     </div>
                     <button
                         onClick={handleSave}
@@ -133,7 +133,7 @@ export default function NodeDetailPage({
                             }`}
                     >
                         <Save size={14} />
-                        {saved ? 'Saved' : 'Save'}
+                        {saved ? 'Salvo' : 'Salvar'}
                     </button>
                 </div>
 
@@ -141,20 +141,20 @@ export default function NodeDetailPage({
                     value={notes}
                     onChange={(e) => handleNotesChange(e.target.value)}
                     onBlur={handleSave}
-                    placeholder="Write your study notes about this topic using Markdown...
+                    placeholder="Escreva suas notas de estudo usando Markdown...
 
-# Example Heading
-- Bullet point 1
-- Bullet point 2
+# Exemplo de Título
+- Item 1
+- Item 2
 
-**Bold text** and *italic text*
+**Texto em negrito** e *texto em itálico*
 
-```code block```"
+```bloco de código```"
                     className="w-full h-[calc(100vh-250px)] min-h-[300px] p-4 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent-purple/50 focus:border-accent-purple/50 resize-none font-mono text-sm leading-relaxed"
                 />
 
                 <p className="text-muted-foreground text-xs mt-2">
-                    Tip: Press Ctrl+S to save • Markdown supported • Auto-saves on blur
+                    Dica: Ctrl+S para salvar • Suporta Markdown • Salva automaticamente
                 </p>
             </div>
         </div>

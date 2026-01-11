@@ -66,6 +66,9 @@ export function Header({ title = "Otto", showNav = true }: HeaderProps) {
                     <span className="text-base md:text-lg font-serif font-bold text-foreground group-hover:text-accent-purple transition-colors hidden sm:block">
                         {title}
                     </span>
+                    <span className="px-1.5 py-0.5 text-[8px] md:text-[9px] font-bold uppercase tracking-wider bg-accent-purple/20 text-accent-purple border border-accent-purple/30 rounded-full hidden sm:block">
+                        Beta
+                    </span>
                 </Link>
             </div>
 

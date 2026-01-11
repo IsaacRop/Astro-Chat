@@ -7,9 +7,9 @@ import { useState } from "react";
 
 const menuItems = [
     { icon: MessageCircle, label: "Chat", href: "/chat", color: "var(--accent-blue)" },
-    { icon: Notebook, label: "Notebooks", href: "/cadernos", color: "var(--accent-purple)" },
-    { icon: FileText, label: "Notes", href: "/notes", color: "var(--accent-yellow)" },
-    { icon: CheckSquare, label: "Tasks", href: "/tasks", color: "var(--accent-green)" },
+    { icon: Notebook, label: "Cadernos", href: "/cadernos", color: "var(--accent-purple)" },
+    { icon: FileText, label: "Notas", href: "/notes", color: "var(--accent-yellow)" },
+    { icon: CheckSquare, label: "Tarefas", href: "/tasks", color: "var(--accent-green)" },
 ];
 
 export const OrbitalMenu = ({ children }: { children: React.ReactNode }) => {
@@ -99,14 +99,14 @@ export const OrbitalMenu = ({ children }: { children: React.ReactNode }) => {
                 <motion.a
                     className="absolute bottom-4 right-4 flex flex-col items-center gap-1 cursor-pointer z-20"
                     whileHover={{ scale: 1.1 }}
-                    onMouseEnter={() => setHoveredItem("Settings")}
+                    onMouseEnter={() => setHoveredItem("Configurações")}
                     onMouseLeave={() => setHoveredItem(null)}
                 >
                     <motion.div
                         className="w-12 h-12 rounded-full bg-background border-2 flex items-center justify-center shadow-lg transition-colors"
                         style={{
-                            borderColor: hoveredItem === "Settings" ? 'var(--accent-orange)' : 'var(--border)',
-                            boxShadow: hoveredItem === "Settings" ? '0 0 15px var(--accent-orange)' : undefined,
+                            borderColor: hoveredItem === "Configurações" ? 'var(--accent-orange)' : 'var(--border)',
+                            boxShadow: hoveredItem === "Configurações" ? '0 0 15px var(--accent-orange)' : undefined,
                         }}
                     >
                         <Settings
@@ -115,7 +115,7 @@ export const OrbitalMenu = ({ children }: { children: React.ReactNode }) => {
                         />
                     </motion.div>
                     <AnimatePresence>
-                        {hoveredItem === "Settings" && (
+                        {hoveredItem === "Configurações" && (
                             <motion.span
                                 initial={{ opacity: 0, y: -3 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -124,7 +124,7 @@ export const OrbitalMenu = ({ children }: { children: React.ReactNode }) => {
                                 className="text-xs font-medium px-2 py-0.5 rounded-md bg-card border border-border shadow-md"
                                 style={{ color: 'var(--accent-orange)' }}
                             >
-                                Settings
+                                Configurações
                             </motion.span>
                         )}
                     </AnimatePresence>

@@ -19,6 +19,9 @@ export default async function Home() {
             <h1 className="text-3xl md:text-3xl font-serif text-white/90 tracking-tighter">
               Otto
             </h1>
+            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-accent-purple/20 text-accent-purple border border-accent-purple/30 rounded-full">
+              Beta
+            </span>
             <p className="text-zinc-500 text-sm font-sans hidden md:block">
               Assistente de IA
             </p>
