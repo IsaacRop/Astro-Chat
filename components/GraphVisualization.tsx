@@ -179,11 +179,14 @@ export default function GraphVisualization() {
                         }
                     }}
                     nodePointerAreaPaint={(node: any, color: string, ctx: CanvasRenderingContext2D) => {
+                        // Path-based hit detection for Brave/Safari canvas security
                         const baseSize = dimensions.width < 640 ? 6 : 8;
                         const msgScale = Math.log2((node.messageCount || 1) + 1);
                         const nodeSize = baseSize + msgScale * 2;
+                        // Make hitbox 50% larger than visual node for easier clicking
+                        const hitboxSize = nodeSize * 1.5;
                         ctx.beginPath();
-                        ctx.arc(node.x, node.y, nodeSize + 10, 0, 2 * Math.PI, false);
+                        ctx.arc(node.x, node.y, hitboxSize, 0, 2 * Math.PI, false);
                         ctx.fillStyle = color;
                         ctx.fill();
                     }}
@@ -210,7 +213,7 @@ export default function GraphVisualization() {
             <div ref={containerRef} className="flex-1 bg-[#0C0C0D] relative min-h-0">
                 {/* Loading State */}
                 {isLoading && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8 pointer-events-none">
                         <Loader2 size={36} className="md:w-12 md:h-12 text-zinc-500 animate-spin mb-3 md:mb-4" />
                         <p className="text-zinc-500 text-sm md:text-base">Carregando grafo...</p>
                     </div>
@@ -218,7 +221,7 @@ export default function GraphVisualization() {
 
                 {/* Error State */}
                 {!isLoading && loadError && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8 pointer-events-auto">
                         <AlertCircle size={36} className="md:w-12 md:h-12 text-red-500 mb-3 md:mb-4" strokeWidth={1.5} />
                         <h2 className="text-lg md:text-xl font-serif text-zinc-200 mb-2">Erro</h2>
                         <p className="text-zinc-500 max-w-md text-xs md:text-sm font-sans">{loadError}</p>
@@ -233,7 +236,7 @@ export default function GraphVisualization() {
 
                 {/* Empty State */}
                 {!isLoading && !loadError && graphData.nodes.length === 0 && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8 pointer-events-auto">
                         <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#1A1A1C] border border-white/[0.05] flex items-center justify-center mb-6">
                             <Network size={32} className="md:w-10 md:h-10 text-zinc-600" strokeWidth={1} />
                         </div>

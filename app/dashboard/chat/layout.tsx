@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { getUserChats } from "@/app/actions/chat";
 import { ChatSidebar } from "@/components/chat/chat-sidebar";
+import { MobileChatSidebar } from "@/components/chat/mobile-chat-sidebar";
 import { Header } from "@/components/Header";
 
 export default async function ChatLayout({
@@ -20,14 +21,17 @@ export default async function ChatLayout({
 
     return (
         <div className="flex w-full h-screen bg-[#0C0C0D] overflow-hidden">
-            {/* Sidebar - Hidden on mobile, handled by mobile controls if needed, 
-                but for now we focus on desktop structure or basic responsive hiding */}
+            {/* Desktop Sidebar - Hidden on mobile */}
             <div className="hidden md:block h-full">
                 <ChatSidebar chats={chats || []} />
             </div>
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0 h-full relative">
+                {/* Mobile chat history button - positioned after the hamburger menu */}
+                <div className="absolute top-16 left-3 z-20 md:hidden">
+                    <MobileChatSidebar chats={chats || []} />
+                </div>
                 {children}
             </div>
         </div>

@@ -206,3 +206,39 @@ export async function deleteNote(noteId: string): Promise<{ success: boolean }> 
 
     return { success: true };
 }
+
+// ============================================
+// CHATS
+// ============================================
+
+/**
+ * Delete a chat and its messages
+ */
+export async function deleteChat(chatId: string): Promise<{ success: boolean }> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error("Not authenticated");
+    }
+
+    // Delete messages first (foreign key constraint)
+    await supabase
+        .from("messages")
+        .delete()
+        .eq("chat_id", chatId);
+
+    // Delete the chat
+    const { error } = await supabase
+        .from("chats")
+        .delete()
+        .eq("id", chatId)
+        .eq("user_id", user.id);
+
+    if (error) {
+        console.error("[deleteChat] Error:", error);
+        throw new Error(error.message);
+    }
+
+    return { success: true };
+}

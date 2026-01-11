@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Plus, MessageSquare, Loader2, Trash2 } from "lucide-react";
 import { createNewChat } from "@/app/actions/dashboard";
+import { deleteChat } from "@/app/actions/study";
 import { useState, useTransition } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -35,6 +36,23 @@ export function ChatSidebar({ chats, className }: ChatSidebarProps) {
                 console.error("Failed to create chat:", error);
             }
         });
+    };
+
+    const handleDelete = async (e: React.MouseEvent, chatId: string) => {
+        e.preventDefault(); // Prevent navigation
+        e.stopPropagation(); // Prevent link click
+        if (!confirm('Excluir conversa?')) return;
+
+        try {
+            await deleteChat(chatId);
+            // If we deleted the current chat, go to main chat page
+            if (pathname === `/dashboard/chat/${chatId}`) {
+                router.push('/dashboard/chat');
+            }
+            router.refresh(); // Refresh to update the list
+        } catch (error) {
+            console.error("Failed to delete chat:", error);
+        }
     };
 
     return (
@@ -69,7 +87,7 @@ export function ChatSidebar({ chats, className }: ChatSidebarProps) {
                                 key={chat.id}
                                 href={`/dashboard/chat/${chat.id}`}
                                 className={cn(
-                                    "flex flex-col gap-1 px-3 py-3 rounded-lg transition-all duration-200 group border border-transparent",
+                                    "flex flex-col gap-1 px-3 py-3 rounded-lg transition-all duration-200 group border border-transparent relative",
                                     isActive
                                         ? "bg-white/[0.05] border-white/[0.05]"
                                         : "hover:bg-white/[0.03] hover:border-white/[0.02]"
@@ -89,6 +107,13 @@ export function ChatSidebar({ chats, className }: ChatSidebarProps) {
                                     )}>
                                         {chat.title || "Nova Conversa"}
                                     </span>
+                                    <button
+                                        onClick={(e) => handleDelete(e, chat.id)}
+                                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-all"
+                                        title="Excluir conversa"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
                                 </div>
                                 <span className="text-[10px] text-zinc-600 pl-6 group-hover:text-zinc-500 transition-colors">
                                     {formatDistanceToNow(new Date(chat.updated_at), { addSuffix: true, locale: ptBR })}

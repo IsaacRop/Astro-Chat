@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Monitor, Star, MessageSquarePlus } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { AboutSection } from "@/components/settings/about-section";
 import { useEffect, useState } from "react";
 
 export default function SettingsPage() {
@@ -59,6 +60,9 @@ export default function SettingsPage() {
                         </button>
                     </div>
                 </section>
+
+                {/* System Guide Section */}
+                <AboutSection />
 
                 {/* About Section */}
                 <section className="space-y-4">
