@@ -8,7 +8,7 @@ export default async function Home() {
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <div className="h-screen md:h-screen w-full bg-[#0C0C0D] flex flex-col p-4 md:p-6 overflow-hidden">
+    <div className="min-h-screen md:h-screen w-full bg-[#0C0C0D] flex flex-col p-4 md:p-6 overflow-y-auto overflow-x-hidden md:overflow-hidden">
       {/* Content Container */}
       <div className="w-full max-w-[1600px] mx-auto flex flex-col gap-4 h-full relative z-10">
 
