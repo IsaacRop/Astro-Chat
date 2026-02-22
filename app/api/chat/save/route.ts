@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
-import { generateText } from "ai";
+import { generateText, embed } from "ai";
 import { openai } from "@ai-sdk/openai";
 
 export async function POST(request: Request) {
@@ -74,20 +74,35 @@ export async function POST(request: Request) {
                     // Generate a short title
                     const titleResult = await generateText({
                         model: openai('gpt-4o-mini'),
-                        prompt: `Summarize this conversation in 3 to 5 words. Plain text only. No quotes. No punctuation at the end.
+                        prompt: `Extraia APENAS o tema central de estudo ou conceito acadêmico desta conversa em no máximo 4 palavras. 
 
-User message: "${userContent.slice(0, 200)}"
-Assistant response: "${content.slice(0, 200)}"`,
+Regras absolutas:
+1. Ignore completamente saudações, cordialidades, ou descrições de ações (como "pedido de ajuda", "assistência", "dúvida").
+2. Retorne ESTRITAMENTE o nome da matéria ou conceito (ex: "Revolução Francesa", "Cálculo Integral", "Fotossíntese").
+3. Se o usuário mandou apenas um "oi" ou a mensagem ainda não tem um assunto de estudo claro, retorne EXATAMENTE a frase: "Assunto Indefinido".
+4. Sem aspas, sem pontuação final, apenas o termo.
+
+Mensagem do usuário: "${userContent.slice(0, 200)}"
+Resposta do assistente: "${content.slice(0, 200)}"`,
                         maxOutputTokens: 20,
                     });
 
                     const generatedTitle = titleResult.text.trim().slice(0, 50);
                     console.log("[Chat Save] Generated title:", generatedTitle);
 
-                    // Update the chat title
+                    // Generate Vector Embedding for the title using OpenAI
+                    const { embedding } = await embed({
+                        model: openai.embedding('text-embedding-3-small'),
+                        value: generatedTitle,
+                    });
+
+                    // Update the chat title and embedding vector
                     await supabase
                         .from("chats")
-                        .update({ title: generatedTitle })
+                        .update({
+                            title: generatedTitle,
+                            embedding: embedding
+                        })
                         .eq("id", chatId);
                 }
             } catch (titleError) {

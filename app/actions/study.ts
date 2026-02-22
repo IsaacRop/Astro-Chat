@@ -19,9 +19,15 @@ export interface GraphNode {
     val: number; // Size based on message count
 }
 
+export interface GraphLink {
+    source: string;
+    target: string;
+    value: number; // Cosine similarity score
+}
+
 export interface KnowledgeGraph {
     nodes: GraphNode[];
-    links: never[]; // Empty - nodes are isolated per user request
+    links: GraphLink[];
 }
 
 // ============================================
@@ -29,8 +35,9 @@ export interface KnowledgeGraph {
 // ============================================
 
 /**
- * Get knowledge graph data from chats table
- * Maps chats to nodes where size is based on message count
+ * Get knowledge graph data from chats table.
+ * Nodes = chats sized by message count.
+ * Links = edges between chats with similar embeddings (pgvector cosine similarity).
  */
 export async function getKnowledgeGraph(): Promise<KnowledgeGraph> {
     const supabase = await createClient();
@@ -40,7 +47,7 @@ export async function getKnowledgeGraph(): Promise<KnowledgeGraph> {
         return { nodes: [], links: [] };
     }
 
-    // Fetch chats with message count
+    // Fetch chats with message count (nodes)
     const { data: chats, error } = await supabase
         .from("chats")
         .select(`
@@ -52,7 +59,7 @@ export async function getKnowledgeGraph(): Promise<KnowledgeGraph> {
         .order("updated_at", { ascending: false });
 
     if (error) {
-        console.error("[getKnowledgeGraph] Error:", error);
+        console.error("[getKnowledgeGraph] Error fetching chats:", error);
         return { nodes: [], links: [] };
     }
 
@@ -62,7 +69,32 @@ export async function getKnowledgeGraph(): Promise<KnowledgeGraph> {
         val: ((chat.messages as { count: number }[])?.[0]?.count || 1),
     }));
 
-    return { nodes, links: [] };
+    // Fetch similarity edges via pgvector RPC
+    let links: GraphLink[] = [];
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: edges, error: rpcError } = await (supabase as any)
+            .rpc('get_chat_similarity_edges', {
+                p_user_id: user.id,
+                similarity_threshold: 0.45,
+            });
+
+        if (rpcError) {
+            console.error("[getKnowledgeGraph] RPC error:", rpcError);
+        } else {
+            links = (edges || []).map((e: { source: string; target: string; value: number }) => ({
+                source: e.source,
+                target: e.target,
+                value: e.value,
+            }));
+            console.log(`[getKnowledgeGraph] Found ${links.length} similarity edges`);
+        }
+    } catch (rpcErr) {
+        console.error("[getKnowledgeGraph] RPC call failed:", rpcErr);
+        // Fail gracefully — graph still shows nodes without edges
+    }
+
+    return { nodes, links };
 }
 
 // ============================================
