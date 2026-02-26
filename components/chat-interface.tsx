@@ -1,9 +1,10 @@
 "use client";
 
 import { useChat, type UIMessage } from "@ai-sdk/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Plus, Network } from "lucide-react";
 import Link from "next/link";
+
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Header } from "@/components/Header";
@@ -106,7 +107,7 @@ const MarkdownComponents = {
 };
 
 interface ChatInterfaceProps {
-    chatId: string;
+    chatId: string | null;
     initialMessages: Array<{
         id: string;
         role: "user" | "assistant";
@@ -114,9 +115,15 @@ interface ChatInterfaceProps {
     }>;
 }
 
-export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
+export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatInterfaceProps) {
     const [input, setInput] = useState("");
+    const [activeChatId, setActiveChatId] = useState<string | null>(initialChatId);
+    const [isCreatingChat, setIsCreatingChat] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Keep a ref to the latest activeChatId so async callbacks always see the current value
+    const activeChatIdRef = useRef(activeChatId);
+    activeChatIdRef.current = activeChatId;
 
     // Convert initial messages to the format expected by useChat
     const formattedInitialMessages: UIMessage[] = initialMessages.map(msg => ({
@@ -125,25 +132,31 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
         parts: [{ type: 'text' as const, text: msg.content }],
     }));
 
-    // AI SDK useChat hook
-    // Note: Messages are saved to Supabase via /api/chat/save endpoint
-    // Auto-titling is triggered when saving the assistant's response
+    // AI SDK useChat hook — use a STABLE id so the hook never resets mid-conversation.
+    // The id is only for client-side cache keying; the AI API route doesn't use it.
+    const chatHookId = initialChatId || "new-chat";
     const { messages, setMessages, sendMessage, status } = useChat({
-        id: chatId,
+        id: chatHookId,
     });
 
-    // Set initial messages on mount
+    // Set initial messages on mount (only for existing chats with history)
     useEffect(() => {
         if (formattedInitialMessages.length > 0 && messages.length === 0) {
             setMessages(formattedInitialMessages);
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // When the component receives a new chatId prop (e.g. navigating to an existing chat), sync state
+    useEffect(() => {
+        setActiveChatId(initialChatId);
+    }, [initialChatId]);
+
     // Save messages to Supabase after AI response completes
     const prevStatusRef = useRef(status);
     useEffect(() => {
+        const currentChatId = activeChatIdRef.current;
         // When status transitions from streaming to ready, save the AI response
-        if (prevStatusRef.current !== 'ready' && status === 'ready' && messages.length > 0) {
+        if (prevStatusRef.current !== 'ready' && status === 'ready' && messages.length > 0 && currentChatId) {
             const lastMessage = messages[messages.length - 1];
             if (lastMessage.role === 'assistant') {
                 // Save AI response to database
@@ -151,7 +164,7 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        chatId,
+                        chatId: currentChatId,
                         role: 'assistant',
                         content: getMessageText(lastMessage),
                     }),
@@ -159,33 +172,89 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
             }
         }
         prevStatusRef.current = status;
-    }, [status, messages, chatId]);
+    }, [status, messages]);
+
+    /**
+     * Lazy Chat Creation: creates the chat row in Supabase only when the user
+     * actually sends their first message. Returns the new chatId.
+     */
+    const ensureChatExists = useCallback(async (): Promise<string> => {
+        // Always read from the ref — it's the source of truth
+        if (activeChatIdRef.current) {
+            return activeChatIdRef.current;
+        }
+
+        setIsCreatingChat(true);
+        try {
+            const res = await fetch('/api/chat/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to create chat');
+            }
+
+            const { id: newChatId } = await res.json();
+
+            // Update BOTH the ref (immediate, for async code) and state (for re-renders)
+            activeChatIdRef.current = newChatId;
+            setActiveChatId(newChatId);
+
+            // Silent URL update — uses the native History API so Next.js does NOT
+            // trigger a navigation cycle (which would remount this component and
+            // kill the active useChat stream).
+            window.history.replaceState(null, '', `/dashboard/chat/${newChatId}`);
+
+            // Notify sidebar components to prepend this new chat to their list
+            window.dispatchEvent(new CustomEvent('chat-created', {
+                detail: { id: newChatId, title: 'Nova Conversa', updated_at: new Date().toISOString() },
+            }));
+
+            return newChatId;
+        } finally {
+            setIsCreatingChat(false);
+        }
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (input.trim() && status === "ready") {
-            // Save user message to database first
-            try {
-                await fetch('/api/chat/save', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chatId,
-                        role: 'user',
-                        content: input.trim(),
-                    }),
-                });
-            } catch (err) {
-                console.error('[ChatInterface] Failed to save user message:', err);
-            }
 
-            // Then send to AI
-            sendMessage({ text: input });
-            setInput("");
+        // 1. Capture & validate input immediately
+        const trimmedInput = input.trim();
+        if (!trimmedInput || status !== "ready" || isCreatingChat) return;
+
+        // 2. Clear input immediately for optimistic UX
+        setInput("");
+
+        try {
+            // 3. Lazy creation: get the definitive chatId (from ref or freshly created)
+            //    This returns the ID directly — we do NOT rely on React state here.
+            const chatId = await ensureChatExists();
+
+            // 4. Fire-and-forget: persist user message to Supabase
+            //    Uses the local `chatId` variable, NOT activeChatId state.
+            fetch('/api/chat/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chatId,
+                    role: 'user',
+                    content: trimmedInput,
+                }),
+            }).catch(err => console.error('[ChatInterface] Failed to save user message:', err));
+
+            // 5. Send to AI — the AI API route only needs messages, not chatId.
+            //    The chatId is only used for persistence (handled above).
+            sendMessage({ text: trimmedInput });
+        } catch (err) {
+            console.error('[ChatInterface] Failed to send message:', err);
+            // Restore input on failure so the user doesn't lose their text
+            setInput(trimmedInput);
         }
     };
 
-    const isLoading = status !== "ready";
+    const isLoading = status !== "ready" || isCreatingChat;
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -276,7 +345,7 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
                         })}
 
                         {/* Loading indicator */}
-                        {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
+                        {status !== "ready" && messages[messages.length - 1]?.role !== 'assistant' && (
                             <div className="flex justify-start mb-6">
                                 <div className="flex-shrink-0 w-8 h-8 rounded-full border border-white/[0.05] bg-[#1A1A1C] flex items-center justify-center mr-4">
                                     <OctopusIcon size={14} className="text-zinc-100" />

@@ -131,6 +131,15 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
         }
     }, [value]);
 
+    // Auto-focus input when loading ends so the user can keep typing
+    const prevLoadingRef = useRef(isLoading);
+    useEffect(() => {
+        if (prevLoadingRef.current && !isLoading) {
+            textareaRef.current?.focus();
+        }
+        prevLoadingRef.current = isLoading;
+    }, [isLoading]);
+
     // File Handling
     const handleFiles = useCallback((newFilesList: FileList | File[]) => {
         const newFiles = Array.from(newFilesList).map((file) => {
@@ -193,6 +202,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (isLoading) return; // Block submission during loading
         if (!value.trim() && files.length === 0) return;
         onSubmit(e);
         setFiles([]);

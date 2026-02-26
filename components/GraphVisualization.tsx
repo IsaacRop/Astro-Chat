@@ -5,7 +5,7 @@ import ForceGraph2D from 'react-force-graph-2d';
 import { Network, AlertCircle, Bug, X, List, Loader2, MessageCircle } from 'lucide-react';
 import GraphDebug from '@/components/GraphDebug';
 import NodeSlideOver from '@/components/NodeSlideOver';
-import { getKnowledgeGraph, type GraphNode as ServerGraphNode } from '@/app/actions/study';
+import { getKnowledgeGraph, type GraphNode as ServerGraphNode, type GraphLink as ServerGraphLink } from '@/app/actions/study';
 import Link from 'next/link';
 
 interface GraphNode {
@@ -20,6 +20,7 @@ interface GraphNode {
 interface GraphLink {
     source: string | GraphNode;
     target: string | GraphNode;
+    value?: number; // cosine similarity score
 }
 
 export default function GraphVisualization() {
@@ -32,6 +33,8 @@ export default function GraphVisualization() {
     const [loadError, setLoadError] = useState<string | null>(null);
     const [useListView, setUseListView] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fgRef = useRef<any>(null);
 
     const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
     const [slideOverOpen, setSlideOverOpen] = useState(false);
@@ -52,7 +55,11 @@ export default function GraphVisualization() {
                     chatId: n.id,
                     messageCount: n.val || 1,
                 })),
-                links: [] as GraphLink[],
+                links: (graph.links || []).map((l: ServerGraphLink) => ({
+                    source: l.source,
+                    target: l.target,
+                    value: l.value,
+                })),
             };
 
             setGraphData(data);
@@ -86,6 +93,24 @@ export default function GraphVisualization() {
         nodes: graphData.nodes.map(n => ({ ...n })),
         links: graphData.links.map(l => ({ ...l })),
     }), [graphData]);
+
+    // Tune d3-force physics after data loads
+    useEffect(() => {
+        if (!fgRef.current || stableGraphData.nodes.length === 0) return;
+
+        const fg = fgRef.current;
+
+        // Mild repulsion — default is ~-30 but can feel aggressive with few nodes
+        const charge = fg.d3Force('charge');
+        if (charge) charge.strength(-30).distanceMax(200);
+
+        // Fixed link distance for connected nodes
+        const link = fg.d3Force('link');
+        if (link) link.distance(60);
+
+        // Reheat the simulation so the new forces take effect
+        fg.d3ReheatSimulation();
+    }, [stableGraphData]);
 
     const handleNodeClick = useCallback((node: GraphNode) => {
         setSelectedNode(node);
@@ -125,14 +150,28 @@ export default function GraphVisualization() {
         </div>
     );
 
-    // Color palette for nodes - Muted Stone/Monochrome
+    // Dark-theme-friendly color palette for nodes
     const nodeColors = [
-        '#E5E7EB', // zinc-200
-        '#D4D4D8', // zinc-300
-        '#A1A1AA', // zinc-400
-        '#71717A', // zinc-500
-        '#52525B', // zinc-600
+        '#818CF8', // indigo-400
+        '#34D399', // emerald-400
+        '#F472B6', // pink-400
+        '#FBBF24', // amber-400
+        '#60A5FA', // blue-400
+        '#A78BFA', // violet-400
+        '#FB923C', // orange-400
+        '#2DD4BF', // teal-400
+        '#F87171', // red-400
+        '#38BDF8', // sky-400
     ];
+
+    // Deterministic hash: same id → same color, no flicker on re-render
+    const getNodeColor = useCallback((id: string) => {
+        let hash = 0;
+        for (let i = 0; i < id.length; i++) {
+            hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
+        }
+        return nodeColors[Math.abs(hash) % nodeColors.length];
+    }, []);
 
     // Graph view with custom canvas rendering
     const renderGraphView = () => {
@@ -140,6 +179,7 @@ export default function GraphVisualization() {
             return (
                 /* eslint-disable @typescript-eslint/no-explicit-any */
                 <ForceGraph2D
+                    ref={fgRef}
                     graphData={stableGraphData as any}
                     width={dimensions.width}
                     height={dimensions.height}
@@ -147,8 +187,7 @@ export default function GraphVisualization() {
                     nodeLabel={(node: any) => `${node.label} (${node.messageCount} msgs)`}
                     nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
                         const label = node.label || '';
-                        const nodeIndex = stableGraphData.nodes.findIndex((n: GraphNode) => n.id === node.id);
-                        const color = nodeColors[nodeIndex % nodeColors.length];
+                        const color = getNodeColor(node.id);
 
                         const baseSize = dimensions.width < 640 ? 6 : 8;
                         const msgScale = Math.log2((node.messageCount || 1) + 1);
@@ -191,11 +230,15 @@ export default function GraphVisualization() {
                         ctx.fill();
                     }}
                     onNodeClick={(node: any) => handleNodeClick(node as GraphNode)}
+                    linkColor={() => 'rgba(161, 161, 170, 0.25)'}
+                    linkWidth={(link: any) => Math.max(0.5, (link.value || 0.5) * 2.5)}
+                    linkDirectionalParticles={0}
                     onEngineStop={() => console.log('[Graph] Engine stopped')}
-                    cooldownTicks={100}
-                    d3VelocityDecay={0.3}
+                    cooldownTicks={150}
+                    d3VelocityDecay={0.4}
                     d3AlphaDecay={0.05}
                     enableNodeDrag={true}
+                    warmupTicks={50}
                 />
                 /* eslint-enable @typescript-eslint/no-explicit-any */
             );
