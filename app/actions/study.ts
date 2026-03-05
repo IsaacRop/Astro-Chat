@@ -254,6 +254,18 @@ export async function deleteChat(chatId: string): Promise<{ success: boolean }> 
         throw new Error("Not authenticated");
     }
 
+    // Verify ownership before touching messages
+    const { data: ownedChat, error: ownershipError } = await supabase
+        .from("chats")
+        .select("id")
+        .eq("id", chatId)
+        .eq("user_id", user.id)
+        .single();
+
+    if (ownershipError || !ownedChat) {
+        throw new Error("Chat not found");
+    }
+
     // Delete messages first (foreign key constraint)
     await supabase
         .from("messages")
@@ -273,4 +285,33 @@ export async function deleteChat(chatId: string): Promise<{ success: boolean }> 
     }
 
     return { success: true };
+}
+
+// ============================================
+// NODE DETAIL (for /cadernos/[nodeId])
+// ============================================
+
+/**
+ * Get a single chat by ID, verifying ownership.
+ * Used by the cadernos node detail page.
+ */
+export async function getChatById(chatId: string): Promise<{ id: string; title: string } | null> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return null;
+
+    const { data, error } = await supabase
+        .from('chats')
+        .select('id, title')
+        .eq('id', chatId)
+        .eq('user_id', user.id)
+        .single();
+
+    if (error) {
+        console.error('[getChatById] Error:', error);
+        return null;
+    }
+
+    return data as { id: string; title: string };
 }
