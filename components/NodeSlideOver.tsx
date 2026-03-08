@@ -3,37 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { X, MessageSquare, FileText, Trash2, Plus, Check, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { loadNote, saveNote, deleteSession } from '@/utils/storage';
-
-// Notes storage helpers
-const NOTES_STORAGE_KEY = "astro-notes";
-
-interface Note {
-    id: string;
-    title: string;
-    content: string;
-    createdAt: number;
-    updatedAt: number;
-}
-
-function loadNotes(): Note[] {
-    if (typeof window === "undefined") return [];
-    try {
-        const raw = localStorage.getItem(NOTES_STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
-    } catch {
-        return [];
-    }
-}
-
-function saveNotes(notes: Note[]): void {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes));
-}
-
-function generateNoteId(): string {
-    return `note-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-}
+import { deleteChat, getNote, saveNote, createNote } from '@/app/actions/study';
 
 interface NodeSlideOverProps {
     node: {
@@ -48,6 +18,29 @@ interface NodeSlideOverProps {
 
 type SaveStatus = 'saved' | 'unsaved' | 'saving';
 
+// Persists node-inline notes to Supabase, using a lightweight localStorage pointer
+// to link this chat node's ID to the Supabase note UUID.
+const NOTE_PTR_PREFIX = 'teo-caderno-note-';
+
+async function persistNote(
+    node: { id: string; label: string },
+    content: string
+): Promise<void> {
+    const storedId = typeof window !== 'undefined'
+        ? localStorage.getItem(NOTE_PTR_PREFIX + node.id)
+        : null;
+
+    if (storedId) {
+        await saveNote(storedId, node.label, content);
+    } else {
+        const result = await createNote(node.label);
+        if (result) {
+            localStorage.setItem(NOTE_PTR_PREFIX + node.id, result.id);
+            await saveNote(result.id, node.label, content);
+        }
+    }
+}
+
 export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeSlideOverProps) {
     const [notes, setNotes] = useState('');
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
@@ -55,14 +48,28 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [noteGenerated, setNoteGenerated] = useState(false);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [noteId, setNoteId] = useState<string | null>(null);
 
     // Load notes when node changes
     useEffect(() => {
-        if (node) {
-            setNotes(loadNote(node.id));
-            setSaveStatus('saved');
-            setShowDeleteConfirm(false);
-            setNoteGenerated(false);
+        if (!node) return;
+        setSaveStatus('saved');
+        setShowDeleteConfirm(false);
+        setNoteGenerated(false);
+        setNotes('');
+        setNoteId(null);
+
+        const storedNoteId = typeof window !== 'undefined'
+            ? localStorage.getItem('teo-caderno-note-' + node.id)
+            : null;
+
+        if (storedNoteId) {
+            getNote(storedNoteId).then((existing) => {
+                if (existing) {
+                    setNoteId(existing.id);
+                    setNotes(existing.content);
+                }
+            });
         }
     }, [node]);
 
@@ -78,50 +85,52 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
             if (node) {
                 setIsSaving(true);
                 setSaveStatus('saving');
-                // Small delay for visual feedback
-                setTimeout(() => {
-                    saveNote(node.id, value);
+                persistNote(node, value).then(() => {
                     setIsSaving(false);
                     setSaveStatus('saved');
-                }, 300);
+                }).catch(() => {
+                    setIsSaving(false);
+                    setSaveStatus('unsaved');
+                });
             }
         }, 1000); // Auto-save after 1 second of inactivity
     }, [node]);
 
-    const handleSave = useCallback(() => {
+    const handleSave = useCallback(async () => {
         if (node && !isSaving) {
             setIsSaving(true);
             setSaveStatus('saving');
-
-            // Small delay for visual feedback
-            setTimeout(() => {
-                saveNote(node.id, notes);
-                setIsSaving(false);
+            try {
+                await persistNote(node, notes);
                 setSaveStatus('saved');
-            }, 300);
+            } catch {
+                setSaveStatus('unsaved');
+            } finally {
+                setIsSaving(false);
+            }
         }
     }, [node, notes, isSaving]);
 
-    const handleGenerateNote = useCallback(() => {
+    const handleGenerateNote = useCallback(async () => {
         if (!node) return;
+        try {
+            const initialContent = notes || `# ${node.label}
 
-        const allNotes = loadNotes();
-        const newNote: Note = {
-            id: generateNoteId(),
-            title: node.label,
-            content: notes || `# ${node.label}\n\nNota gerada a partir do nó do grafo.\n\nID do Nó: ${node.id}`,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-        };
-
-        saveNotes([newNote, ...allNotes]);
-        setNoteGenerated(true);
-        setTimeout(() => setNoteGenerated(false), 2000);
+Nota gerada a partir do nó do grafo.`;
+            const result = await createNote(node.label);
+            if (result) {
+                await saveNote(result.id, node.label, initialContent);
+            }
+            setNoteGenerated(true);
+            setTimeout(() => setNoteGenerated(false), 2000);
+        } catch (e) {
+            console.error('[NodeSlideOver] Failed to generate note:', e);
+        }
     }, [node, notes]);
 
-    const handleDelete = useCallback(() => {
+    const handleDelete = useCallback(async () => {
         if (node) {
-            deleteSession(node.id);
+            await deleteChat(node.chatId);
             setShowDeleteConfirm(false);
             onClose();
             onDelete?.();
@@ -228,9 +237,9 @@ export default function NodeSlideOver({ node, isOpen, onClose, onDelete }: NodeS
                             {/* Action Buttons - Stack on very small screens */}
                             <div className="flex flex-col sm:flex-row gap-2">
                                 <Link
-                                    href={`/chat?session=${node.id}&chatId=${node.chatId}`}
+                                    href={`/dashboard/chat/${node.chatId}`}
                                     onClick={onClose}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 md:px-5 py-3 md:py-3.5 rounded-full bg-gradient-to-r from-accent-blue to-accent-purple text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-accent-blue/25 text-sm"
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 md:px-5 py-3 md:py-3.5 rounded-full bg-gradient-to-r from-accent-blue to-primary text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-accent-blue/25 text-sm"
                                 >
                                     <MessageSquare size={18} />
                                     Ir para o Chat

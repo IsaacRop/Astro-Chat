@@ -3,12 +3,15 @@
 import { use, useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, MessageSquare, Save, FileText } from 'lucide-react';
 import Link from 'next/link';
-import { getNodeById, getNote, saveNote } from '@/lib/knowledge-graph';
+import { getChatById, getNote, saveNote, createNote } from '@/app/actions/study';
+
+// Lightweight pointer stored in localStorage: chatId → Supabase noteId
+// Only stores a UUID reference, no content
+const NOTE_PTR_PREFIX = 'teo-caderno-note-';
 
 interface NodeData {
     id: string;
     label: string;
-    chatId: string;
 }
 
 export default function NodeDetailPage({
@@ -18,38 +21,61 @@ export default function NodeDetailPage({
 }) {
     const { nodeId } = use(params);
     const [node, setNode] = useState<NodeData | null>(null);
+    const [noteId, setNoteId] = useState<string | null>(null);
     const [notes, setNotes] = useState('');
     const [notFound, setNotFound] = useState(false);
     const [saved, setSaved] = useState(true);
 
-    // Load node and notes on mount
     useEffect(() => {
-        const foundNode = getNodeById(nodeId);
-        if (foundNode) {
-            setNode({
-                id: foundNode.id,
-                label: foundNode.label,
-                chatId: foundNode.chatId
-            });
-            setNotes(getNote(nodeId));
-        } else {
-            setNotFound(true);
+        async function load() {
+            const chat = await getChatById(nodeId);
+            if (!chat) {
+                setNotFound(true);
+                return;
+            }
+            setNode({ id: chat.id, label: chat.title || 'Sem título' });
+
+            // Resolve the Supabase noteId from the lightweight localStorage pointer
+            const storedNoteId = typeof window !== 'undefined'
+                ? localStorage.getItem(NOTE_PTR_PREFIX + nodeId)
+                : null;
+
+            if (storedNoteId) {
+                const existing = await getNote(storedNoteId);
+                if (existing) {
+                    setNoteId(existing.id);
+                    setNotes(existing.content);
+                }
+            }
         }
+        load();
     }, [nodeId]);
 
-    // Handle notes change
     const handleNotesChange = useCallback((value: string) => {
         setNotes(value);
         setSaved(false);
     }, []);
 
-    // Save notes
-    const handleSave = useCallback(() => {
-        saveNote(nodeId, notes);
-        setSaved(true);
-    }, [nodeId, notes]);
+    const handleSave = useCallback(async () => {
+        if (!node) return;
+        try {
+            if (noteId) {
+                await saveNote(noteId, node.label, notes);
+            } else {
+                // First save: create a new note and persist the pointer
+                const result = await createNote(node.label);
+                if (result) {
+                    localStorage.setItem(NOTE_PTR_PREFIX + nodeId, result.id);
+                    setNoteId(result.id);
+                    await saveNote(result.id, node.label, notes);
+                }
+            }
+            setSaved(true);
+        } catch (e) {
+            console.error('[NodeDetailPage] Failed to save note:', e);
+        }
+    }, [node, noteId, nodeId, notes]);
 
-    // Keyboard shortcut for save (Ctrl+S)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -61,7 +87,6 @@ export default function NodeDetailPage({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleSave]);
 
-    // 404 State
     if (notFound) {
         return (
             <div className="min-h-screen min-h-[100dvh] bg-background flex items-center justify-center px-4">
@@ -83,7 +108,6 @@ export default function NodeDetailPage({
         );
     }
 
-    // Loading State
     if (!node) {
         return (
             <div className="min-h-screen min-h-[100dvh] bg-background flex items-center justify-center">
@@ -94,7 +118,6 @@ export default function NodeDetailPage({
 
     return (
         <div className="min-h-screen min-h-[100dvh] bg-background text-foreground overflow-x-hidden">
-            {/* Header - Responsive */}
             <header className="flex items-center justify-between p-3 md:p-4 border-b border-border sticky top-0 bg-background/80 backdrop-blur-md z-10">
                 <div className="flex items-center gap-2 md:gap-3 min-w-0">
                     <Link
@@ -109,8 +132,8 @@ export default function NodeDetailPage({
                     </div>
                 </div>
                 <Link
-                    href="/"
-                    className="flex items-center gap-1 md:gap-2 px-3 py-2 rounded-lg bg-accent-purple hover:bg-accent-purple/80 text-background text-xs md:text-sm font-medium transition-colors flex-shrink-0"
+                    href={`/dashboard/chat/${node.id}`}
+                    className="flex items-center gap-1 md:gap-2 px-3 py-2 rounded-lg bg-primary hover:bg-primary/80 text-background text-xs md:text-sm font-medium transition-colors flex-shrink-0"
                 >
                     <MessageSquare size={14} className="md:w-4 md:h-4" />
                     <span className="hidden sm:inline">Ir para o Chat</span>
@@ -118,7 +141,6 @@ export default function NodeDetailPage({
                 </Link>
             </header>
 
-            {/* Notes Editor - Responsive */}
             <div className="max-w-4xl mx-auto p-4 md:p-6">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2 text-muted-foreground">
@@ -147,10 +169,8 @@ export default function NodeDetailPage({
 - Item 1
 - Item 2
 
-**Texto em negrito** e *texto em itálico*
-
-```bloco de código```"
-                    className="w-full h-[calc(100vh-250px)] min-h-[300px] p-4 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent-purple/50 focus:border-accent-purple/50 resize-none font-mono text-sm leading-relaxed"
+**Texto em negrito** e *texto em itálico*"
+                    className="w-full h-[calc(100vh-250px)] min-h-[300px] p-4 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 resize-none font-mono text-sm leading-relaxed"
                 />
 
                 <p className="text-muted-foreground text-xs mt-2">

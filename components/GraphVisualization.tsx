@@ -2,8 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
-import { Network, AlertCircle, Bug, X, List, Loader2, MessageCircle } from 'lucide-react';
-import GraphDebug from '@/components/GraphDebug';
+import { Network, AlertCircle, X, List, Loader2, MessageCircle } from 'lucide-react';
 import NodeSlideOver from '@/components/NodeSlideOver';
 import { getKnowledgeGraph, type GraphNode as ServerGraphNode, type GraphLink as ServerGraphLink } from '@/app/actions/study';
 import Link from 'next/link';
@@ -38,7 +37,6 @@ export default function GraphVisualization() {
 
     const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
     const [slideOverOpen, setSlideOverOpen] = useState(false);
-    const [debugOpen, setDebugOpen] = useState(false);
 
     // Load graph data from Supabase
     const loadGraphData = useCallback(async () => {
@@ -130,7 +128,7 @@ export default function GraphVisualization() {
                 </h2>
                 <button
                     onClick={() => setUseListView(false)}
-                    className="text-xs text-accent-purple hover:text-accent-purple/80 whitespace-nowrap"
+                    className="text-xs text-primary hover:text-primary/80 whitespace-nowrap"
                 >
                     Graph View
                 </button>
@@ -139,7 +137,7 @@ export default function GraphVisualization() {
                 {graphData.nodes.map(node => (
                     <div
                         key={node.id}
-                        className="p-3 bg-card rounded-lg border border-border cursor-pointer hover:border-accent-purple/50 transition-colors active:bg-muted"
+                        className="p-3 bg-card rounded-lg border border-border cursor-pointer hover:border-primary/50 transition-colors active:bg-muted"
                         onClick={() => handleNodeClick(node)}
                     >
                         <div className="text-foreground font-medium text-sm md:text-base truncate">{node.label}</div>
@@ -304,18 +302,6 @@ export default function GraphVisualization() {
                     useListView ? renderListView() : renderGraphView()
                 )}
 
-                {/* Debug Toggle */}
-                <button
-                    onClick={() => setDebugOpen(!debugOpen)}
-                    className={`absolute bottom-3 right-3 md:bottom-4 md:right-4 z-10 p-2 md:p-2.5 rounded-lg border transition-all ${debugOpen
-                        ? 'bg-zinc-800 border-zinc-700 text-zinc-200'
-                        : 'bg-[#1A1A1C]/80 backdrop-blur-md border-white/[0.05] text-zinc-500 hover:text-zinc-200 hover:border-white/[0.1]'
-                        }`}
-                    title="Toggle Debug Panel"
-                >
-                    <Bug size={16} className="md:w-[18px] md:h-[18px]" strokeWidth={1.5} />
-                </button>
-
                 {/* View Toggle */}
                 {!isLoading && !loadError && graphData.nodes.length > 0 && (
                     <button
@@ -335,28 +321,6 @@ export default function GraphVisualization() {
                         )}
                     </button>
                 )}
-            </div>
-
-            {/* Debug Panel */}
-            <div
-                className={`bg-[#1A1A1C] border-t md:border-t-0 md:border-l border-white/[0.05] overflow-hidden transition-all duration-300 ease-in-out ${debugOpen ? 'h-64 md:h-auto w-full md:w-72 lg:w-80' : 'h-0 md:h-auto md:w-0'
-                    }`}
-            >
-                <div className="w-full md:w-72 lg:w-80 p-4 h-full overflow-y-auto">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2 text-zinc-200">
-                            <Bug size={14} className="md:w-4 md:h-4 text-zinc-400" strokeWidth={1.5} />
-                            <span className="text-xs md:text-sm font-medium font-sans">Debug Panel</span>
-                        </div>
-                        <button
-                            onClick={() => setDebugOpen(false)}
-                            className="p-1 rounded hover:bg-white/5 text-zinc-500 hover:text-zinc-200 transition-colors"
-                        >
-                            <X size={14} className="md:w-4 md:h-4" strokeWidth={1.5} />
-                        </button>
-                    </div>
-                    <GraphDebug onGraphUpdate={loadGraphData} />
-                </div>
             </div>
 
             {/* Node Slide-Over */}

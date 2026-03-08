@@ -58,8 +58,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
     // Loading state - full screen spinner
     if (isLoading) {
         return (
-            <div className="fixed inset-0 flex items-center justify-center bg-[#0C0C0D]">
-                <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+            <div className="fixed inset-0 flex items-center justify-center bg-[#F5F9F6]">
+                <Loader2 className="w-8 h-8 animate-spin text-[#4A9E6B]" />
             </div>
         );
     }
@@ -84,7 +84,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
                     <DialogPrimitive.Content
                         className={cn(
                             "fixed left-[50%] top-[50%] z-50 grid w-full max-w-md translate-x-[-50%] translate-y-[-50%]",
-                            "gap-6 border border-white/10 bg-[#1A1A1C]/95 backdrop-blur-xl p-8 shadow-2xl rounded-2xl",
+                            "gap-6 border border-[#E2EDE6] bg-white/95 backdrop-blur-xl p-8 shadow-2xl rounded-2xl",
                             "data-[state=open]:animate-in data-[state=closed]:animate-out",
                             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
                             "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
@@ -97,14 +97,14 @@ export function AuthGuard({ children }: AuthGuardProps) {
                     >
                         <DialogHeader className="text-center sm:text-center">
                             {/* Lock Icon */}
-                            <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
-                                <Lock className="w-8 h-8 text-indigo-400" />
+                            <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-gradient-to-br from-[#DFF0E5] to-[#DFF0F0] flex items-center justify-center">
+                                <Lock className="w-8 h-8 text-[#4A9E6B]" />
                             </div>
 
-                            <DialogTitle className="text-xl font-semibold text-zinc-100">
+                            <DialogTitle className="text-xl font-semibold text-[#1E2E25]">
                                 Acesso Restrito
                             </DialogTitle>
-                            <DialogDescription className="text-zinc-400 mt-2">
+                            <DialogDescription className="text-[#5A7565] mt-2">
                                 Para salvar seu progresso e usar as ferramentas do Otto, você precisa estar conectado.
                             </DialogDescription>
                         </DialogHeader>

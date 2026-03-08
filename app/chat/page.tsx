@@ -34,12 +34,12 @@ export default function ChatPage() {
 
     // Show loading while checking auth
     return (
-        <div className="h-screen h-[100dvh] bg-[#0C0C0D] flex flex-col items-center justify-center text-center p-4">
-            <div className="w-16 h-16 rounded-full border border-white/[0.05] bg-[#1A1A1C] flex items-center justify-center mb-6">
-                <MessageCircle size={28} className="text-zinc-400" />
+        <div className="h-screen h-[100dvh] bg-background flex flex-col items-center justify-center text-center p-4">
+            <div className="w-16 h-16 rounded-full border border-border bg-card flex items-center justify-center mb-6">
+                <MessageCircle size={28} className="text-muted-foreground" />
             </div>
-            <Loader2 size={24} className="text-zinc-500 animate-spin mb-4" />
-            <p className="text-zinc-500 text-sm">Redirecionando...</p>
+            <Loader2 size={24} className="text-muted-foreground animate-spin mb-4" />
+            <p className="text-muted-foreground text-sm">Redirecionando...</p>
         </div>
     );
 }

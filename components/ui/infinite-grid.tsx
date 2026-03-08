@@ -88,10 +88,10 @@ export const InfiniteGrid = ({
 
             {/* Decorative Blur Spheres */}
             <div className="absolute inset-0 pointer-events-none z-0">
-                <div className="absolute right-[-15%] top-[-15%] w-[35%] h-[35%] rounded-full bg-accent-purple/30 blur-[100px]" />
+                <div className="absolute right-[-15%] top-[-15%] w-[35%] h-[35%] rounded-full bg-primary/30 blur-[100px]" />
                 <div className="absolute right-[15%] top-[-5%] w-[15%] h-[15%] rounded-full bg-accent-blue/25 blur-[80px]" />
                 <div className="absolute left-[-10%] bottom-[-15%] w-[35%] h-[35%] rounded-full bg-accent-blue/25 blur-[100px]" />
-                <div className="absolute left-[20%] bottom-[10%] w-[20%] h-[20%] rounded-full bg-accent-purple/20 blur-[80px]" />
+                <div className="absolute left-[20%] bottom-[10%] w-[20%] h-[20%] rounded-full bg-primary/20 blur-[80px]" />
             </div>
 
             {/* Content */}

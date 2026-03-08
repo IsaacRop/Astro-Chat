@@ -74,16 +74,12 @@ export async function POST(request: Request) {
                     // Generate a short title
                     const titleResult = await generateText({
                         model: openai('gpt-4o-mini'),
-                        prompt: `Extraia APENAS o tema central de estudo ou conceito acadêmico desta conversa em no máximo 4 palavras. 
-
-Regras absolutas:
-1. Ignore completamente saudações, cordialidades, ou descrições de ações (como "pedido de ajuda", "assistência", "dúvida").
-2. Retorne ESTRITAMENTE o nome da matéria ou conceito (ex: "Revolução Francesa", "Cálculo Integral", "Fotossíntese").
-3. Se o usuário mandou apenas um "oi" ou a mensagem ainda não tem um assunto de estudo claro, retorne EXATAMENTE a frase: "Assunto Indefinido".
-4. Sem aspas, sem pontuação final, apenas o termo.
-
-Mensagem do usuário: "${userContent.slice(0, 200)}"
-Resposta do assistente: "${content.slice(0, 200)}"`,
+                        system: `Você é um gerador de títulos. Extraia APENAS o tema central de estudo em no máximo 4 palavras.
+Regras: ignore saudações e descrições de ações. Retorne o nome da matéria ou conceito (ex: "Revolução Francesa"). Se não houver assunto claro, retorne "Assunto Indefinido". Sem aspas, sem pontuação final.`,
+                        messages: [
+                            { role: "user", content: userContent.slice(0, 200) },
+                            { role: "assistant", content: content.slice(0, 200) },
+                        ],
                         maxOutputTokens: 20,
                     });
 

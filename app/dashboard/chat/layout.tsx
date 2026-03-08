@@ -20,7 +20,7 @@ export default async function ChatLayout({
     const chats = await getUserChats();
 
     return (
-        <div className="flex w-full h-screen bg-[#0C0C0D] overflow-hidden">
+        <div className="flex w-full h-full overflow-hidden">
             {/* Desktop Sidebar - Hidden on mobile */}
             <div className="hidden md:block h-full">
                 <ChatSidebar chats={chats || []} />
