@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
 import { Plus, Trash2, GripVertical, Calendar, Loader2 } from "lucide-react";
 import { useEffect, useState, useCallback, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -171,21 +170,13 @@ export default function TasksPage() {
         setDragOverColumn(null);
     };
 
-    // Loading state
     if (isLoading || isAuthenticated === null) {
         return (
-            <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col">
-                <Header title="Tarefas" />
-                <div className="flex-1 flex items-center justify-center">
-                    <Loader2 size={32} className="text-muted-foreground animate-spin" />
-                </div>
+            <div className="flex flex-col flex-1 items-center justify-center">
+                <Loader2 size={32} className="text-muted-foreground animate-spin" />
             </div>
         );
     }
-
-    return (
-        <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
-            <Header title="Tarefas" />
 
             {/* Mobile: Vertical Stack / Desktop: Horizontal Kanban */}
             <main className="flex-1 p-4 md:p-8 overflow-x-auto">
@@ -361,6 +352,4 @@ export default function TasksPage() {
                     ))}
                 </div>
             </main>
-        </div>
-    );
 }

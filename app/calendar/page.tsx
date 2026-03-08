@@ -11,7 +11,6 @@ import {
     CalendarData,
     CalendarEvent,
 } from "@/components/ui/fullscreen-calendar";
-import { Header } from "@/components/Header";
 import { createClient } from "@/utils/supabase/client";
 import {
     getCalendarEvents,
@@ -182,22 +181,16 @@ export default function CalendarPage() {
         setSelectedEvent(event);
     };
 
-    // Loading state
     if (isLoading || isAuthenticated === null) {
         return (
-            <div className="flex flex-col h-screen h-[100dvh] bg-background text-foreground">
-                <Header title="Calendário" />
-                <div className="flex-1 flex items-center justify-center">
-                    <Loader2 size={32} className="text-muted-foreground animate-spin" />
-                </div>
+            <div className="flex-1 flex items-center justify-center">
+                <Loader2 size={32} className="text-muted-foreground animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col h-screen h-[100dvh] bg-background text-foreground">
-            <Header title="Calendário" />
-
+        <>
             <div className="flex-1 overflow-hidden">
                 <FullScreenCalendar
                     data={calendarData}
@@ -393,6 +386,6 @@ export default function CalendarPage() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </>
     );
 }

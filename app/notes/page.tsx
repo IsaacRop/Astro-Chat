@@ -277,87 +277,83 @@ export default function NotesPage() {
     const isModalOpen = isCreating || editingNote !== null;
 
     return (
-        <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
-            <Header title="Notas" />
+        <div className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full space-y-6 md:space-y-8">
+            {/* Actions */}
+            <div className="flex justify-end">
+                <button
+                    onClick={openCreate}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all shadow-sm ring-1 ring-white/10"
+                >
+                    <Plus size={18} strokeWidth={1.5} />
+                    <span className="hidden sm:inline">Nova Nota</span>
+                    <span className="sm:hidden">Nova</span>
+                </button>
+            </div>
 
-            <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full space-y-6 md:space-y-8">
-                {/* Actions */}
-                <div className="flex justify-end">
-                    <button
-                        onClick={openCreate}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-all shadow-sm ring-1 ring-white/10"
-                    >
-                        <Plus size={18} strokeWidth={1.5} />
-                        <span className="hidden sm:inline">Nova Nota</span>
-                        <span className="sm:hidden">Nova</span>
-                    </button>
+            {/* Loading State */}
+            {isLoading && (
+                <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center px-4">
+                    <Loader2 size={32} className="text-muted-foreground animate-spin mb-4" />
+                    <p className="text-muted-foreground text-sm">Carregando notas...</p>
                 </div>
+            )}
 
-                {/* Loading State */}
-                {isLoading && (
-                    <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center px-4">
-                        <Loader2 size={32} className="text-muted-foreground animate-spin mb-4" />
-                        <p className="text-muted-foreground text-sm">Carregando notas...</p>
+            {/* Empty State */}
+            {!isLoading && notes.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center px-4">
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-card border border-border flex items-center justify-center mb-6">
+                        <FileText size={32} className="md:w-10 md:h-10 text-muted-foreground" strokeWidth={1.2} />
                     </div>
-                )}
+                    <h2 className="text-xl md:text-2xl font-serif font-medium text-foreground mb-3">Nenhuma nota ainda</h2>
+                    <p className="text-muted-foreground max-w-sm text-sm md:text-base font-sans leading-relaxed">
+                        Clique no botão &ldquo;Nova Nota&rdquo; para criar seu primeiro pensamento.
+                    </p>
+                </div>
+            )}
 
-                {/* Empty State */}
-                {!isLoading && notes.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center px-4">
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-card border border-border flex items-center justify-center mb-6">
-                            <FileText size={32} className="md:w-10 md:h-10 text-muted-foreground" strokeWidth={1.2} />
-                        </div>
-                        <h2 className="text-xl md:text-2xl font-serif font-medium text-foreground mb-3">Nenhuma nota ainda</h2>
-                        <p className="text-muted-foreground max-w-sm text-sm md:text-base font-sans leading-relaxed">
-                            Clique no botão &ldquo;Nova Nota&rdquo; para criar seu primeiro pensamento.
-                        </p>
-                    </div>
-                )}
-
-                {/* Notes Grid - Responsive */}
-                {!isLoading && notes.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                        {notes.map((note) => (
-                            <motion.div
-                                key={note.id}
-                                layout
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-card border border-border rounded-2xl p-5 md:p-6 hover:border-primary/50 transition-all cursor-pointer group relative flex flex-col h-[280px]"
-                                onClick={() => openEdit(note)}
-                            >
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="p-2.5 rounded-xl bg-muted text-muted-foreground group-hover:text-foreground transition-colors border border-border">
-                                        <FileText size={18} className="md:w-5 md:h-5" strokeWidth={1.5} />
-                                    </div>
-                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                                        {new Date(note.updated_at).toLocaleDateString('pt-BR')}
-                                    </span>
+            {/* Notes Grid - Responsive */}
+            {!isLoading && notes.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                    {notes.map((note) => (
+                        <motion.div
+                            key={note.id}
+                            layout
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-card border border-border rounded-2xl p-5 md:p-6 hover:border-primary/50 transition-all cursor-pointer group relative flex flex-col h-[280px]"
+                            onClick={() => openEdit(note)}
+                        >
+                            <div className="flex items-start justify-between mb-4">
+                                <div className="p-2.5 rounded-xl bg-muted text-muted-foreground group-hover:text-foreground transition-colors border border-border">
+                                    <FileText size={18} className="md:w-5 md:h-5" strokeWidth={1.5} />
                                 </div>
-                                <h3 className="font-serif font-medium text-lg md:text-xl text-foreground mb-3 line-clamp-2 leading-tight">
-                                    {note.title}
-                                </h3>
-                                <p className="text-muted-foreground text-sm leading-relaxed line-clamp-4 font-sans flex-1">
-                                    {note.content || "Sem conteúdo"}
-                                </p>
+                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                                    {new Date(note.updated_at).toLocaleDateString('pt-BR')}
+                                </span>
+                            </div>
+                            <h3 className="font-serif font-medium text-lg md:text-xl text-foreground mb-3 line-clamp-2 leading-tight">
+                                {note.title}
+                            </h3>
+                            <p className="text-muted-foreground text-sm leading-relaxed line-clamp-4 font-sans flex-1">
+                                {note.content || "Sem conteúdo"}
+                            </p>
 
-                                {/* Delete button */}
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDelete(note.id);
-                                    }}
-                                    disabled={isPending}
-                                    className="absolute top-4 right-4 p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all disabled:opacity-50"
-                                >
-                                    <Trash2 size={16} strokeWidth={1.5} />
-                                </button>
-                            </motion.div>
-                        ))}
-                    </div>
-                )}
-            </main>
+                            {/* Delete button */}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(note.id);
+                                }}
+                                disabled={isPending}
+                                className="absolute top-4 right-4 p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all disabled:opacity-50"
+                            >
+                                <Trash2 size={16} strokeWidth={1.5} />
+                            </button>
+                        </motion.div>
+                    ))}
+                </div>
+            )}
 
             {/* Full-Page Editor Modal - Responsive */}
             <AnimatePresence>

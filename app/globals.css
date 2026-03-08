@@ -102,19 +102,19 @@
 .dark {
   /* ── shadcn/ui — Dark (Deep Green #235C38 & #1A1A1A) ── */
   --background: #1A1A1A;
-  --foreground: #D0E0D6;
+  --foreground: #FAFAFA;
 
   --card: #1A1A1A;
-  --card-foreground: #D0E0D6;
+  --card-foreground: #FAFAFA;
 
   --popover: #1A1A1A;
-  --popover-foreground: #D0E0D6;
+  --popover-foreground: #FAFAFA;
 
   --primary: #235C38;
   --primary-foreground: #FFFFFF;
 
   --secondary: #2A3E32;
-  --secondary-foreground: #D0E0D6;
+  --secondary-foreground: #FAFAFA;
 
   --muted: #2A3E32;
   --muted-foreground: #6B8574;
@@ -132,14 +132,14 @@
   /* ── V2 Design System (dark) ── */
   --sidebar: #1A1A1A;
   --sidebar-hover: #2A3E32;
-  --sidebar-text: #D0E0D6;
-  --sidebar-muted: #6B8574;
+  --sidebar-text: #FAFAFA;
+  --sidebar-muted: #8BA698;
   --accent-brand: #235C38;
   --accent-dark: #1C4D2E;
   --accent-light: #2A3E32;
   --surface-alt: #1A1A1A;
-  --text-sec: #8BA698;
-  --text-muted: #6B8574;
+  --text-sec: #E2EDE6;
+  --text-muted: #8BA698;
   --border-light: #2A3E32;
 
   /* ── Feature accent palette (dark) ── */

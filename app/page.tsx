@@ -1,9 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
 import { DashboardHome } from "@/components/dashboard-home";
-import { AppSidebar } from "@/components/app-sidebar";
-import { TopNav } from "@/components/top-nav";
-import { LoginButton } from "@/components/LoginButton";
-import Link from "next/link";
 import { getUserNotes } from "@/app/actions/study";
 import { getTasks, getIdeas } from "@/app/actions/productivity";
 import { getUserChats } from "@/app/actions/chat";
@@ -71,31 +67,12 @@ export default async function Home() {
         ? (user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "você") 
         : "visitante";
 
-    // Small custom login button component specifically fitted for the new header row
-    const HeaderLogin = () => (
-        <LoginButton className="h-[34px] px-4 py-1.5 text-[13px] bg-primary text-primary-foreground hover:bg-primary/90 border-none shadow-none rounded-lg" />
-    );
-
-    const ProfileLink = () => (
-        <Link href="/dashboard" className="h-[34px] flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors">
-            Acessar Perfil
-        </Link>
-    );
-
     return (
-        <div className="flex h-screen overflow-hidden bg-background">
-            <AppSidebar />
-            <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-                <TopNav rightElement={!user ? <HeaderLogin /> : <ProfileLink />} />
-                <div className="flex-1 overflow-auto">
-                    <DashboardHome
-                        userName={userName}
-                        stats={{ notesCount: notes.length, notesThisWeek, pendingTasks, tasksThisWeek, ideasCount: ideas.length, streakDays }}
-                        recentActivity={recentActivity}
-                        latestChatId={chats[0]?.id ?? null}
-                    />
-                </div>
-            </div>
-        </div>
+        <DashboardHome
+            userName={userName}
+            stats={{ notesCount: notes.length, notesThisWeek, pendingTasks, tasksThisWeek, ideasCount: ideas.length, streakDays }}
+            recentActivity={recentActivity}
+            latestChatId={chats[0]?.id ?? null}
+        />
     );
 }

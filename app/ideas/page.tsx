@@ -106,20 +106,14 @@ export default function IdeasPage() {
     // Loading state
     if (isLoading || isAuthenticated === null) {
         return (
-            <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col">
-                <Header title="Ideias" />
-                <div className="flex-1 flex items-center justify-center">
-                    <Loader2 size={32} className="text-muted-foreground animate-spin" />
-                </div>
+            <div className="flex-1 flex items-center justify-center">
+                <Loader2 size={32} className="text-muted-foreground animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
-            <Header title="Ideias" />
-
-            <main className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full space-y-6 md:space-y-8">
+        <div className="flex-1 p-4 md:p-8 max-w-5xl mx-auto w-full space-y-6 md:space-y-8">
                 {/* Add Idea Button */}
                 <div className="flex justify-end">
                     <button
@@ -251,8 +245,7 @@ export default function IdeasPage() {
                             </div>
                         </motion.div>
                     ))}
-                </div>
-            </main>
+            </div>
         </div>
     );
 }

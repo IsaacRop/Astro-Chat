@@ -7,7 +7,6 @@ import Link from "next/link";
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Header } from "@/components/Header";
 import { AstroChatInput } from "@/components/ui/astro-chat-input";
 
 // Octopus Icon for Otto branding
@@ -261,13 +260,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
     };
 
     return (
-        <div className="flex h-screen h-[100dvh] bg-background text-foreground overflow-hidden">
-
-
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 bg-background">
-                <Header title="Otto" />
-
+        <div className="flex-1 flex flex-col min-w-0 bg-background h-screen h-[100dvh]">
                 {/* Messages Container */}
                 <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-8 scroll-smooth">
                     <div className="max-w-3xl mx-auto">
@@ -361,6 +354,5 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                     </div>
                 </div>
             </div>
-        </div>
     );
 }
