@@ -80,3 +80,52 @@ All delete operations in `study.ts` and `chat.ts` perform an ownership check (`.
 - Icons: Lucide React
 - Toasts: Sonner (`<Toaster>` in root layout)
 - Fonts: `Inter` (sans, `--font-sans`) and `Playfair Display` (serif, `--font-serif`) via CSS variables
+
+
+
+## Redesign V2 — Design System
+
+### Rules
+- NEVER change logic, server actions, APIs, routes, or state. Visual/CSS only.
+- KEEP the existing fonts Inter (--font-sans) and Playfair Display (--font-serif). Do not replace them.
+- KEEP shadcn/ui, Framer Motion, Lucide React. Do not swap libraries.
+- Tailwind CSS v4 via PostCSS (no tailwind.config.js). Customization goes through CSS variables in globals.css.
+- All 7 features must remain functional.
+- All UI text stays in Brazilian Portuguese (pt-BR).
+
+### New Layout
+- Slim sidebar (68px): logo, search, notifications, help, settings, and profile avatar only
+- Horizontal taskbar at the top: tab navigation for Chat, Cadernos, Notas, Ideias, Favoritos, Tarefas, Calendário
+- Main area: active tab content
+
+### Color Palette (CSS variables for globals.css)
+--color-bg: #F5F9F6;
+--color-surface: #FFFFFF;
+--color-surface-alt: #EDF4EF;
+--color-sidebar: #1E2E25;
+--color-sidebar-hover: #2A3E32;
+--color-sidebar-text: #D0E0D6;
+--color-sidebar-muted: #6B8574;
+--color-accent: #4A9E6B;
+--color-accent-dark: #3B8558;
+--color-accent-light: #DFF0E5;
+--color-text: #1E2E25;
+--color-text-sec: #5A7565;
+--color-text-muted: #8BA698;
+--color-border: #D0E0D6;
+--color-border-light: #E2EDE6;
+
+### Feature Colors
+Chat: #4A9E6B / #DFF0E5
+Cadernos: #5B9E9E / #DFF0F0
+Notas: #6BBF8A / #E3F5EB
+Ideias: #9B82B8 / #EDE3F5
+Favoritos: #B89E6B / #F2ECD8
+Tarefas: #C17D8A / #F5E3E7
+Calendário: #6B9CC6 / #E0EBF5
+
+### Spacing & Radius
+Cards: rounded-2xl (18px)
+Inputs: rounded-xl (14px)
+Buttons: rounded-lg (10px)
+Transitions: duration-150 to duration-250 ease

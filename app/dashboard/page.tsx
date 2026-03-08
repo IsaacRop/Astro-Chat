@@ -1,53 +1,67 @@
-
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { ProfileForm } from "@/components/profile-form";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { getUserNotes } from "@/app/actions/study";
+import { getTasks, getIdeas } from "@/app/actions/productivity";
+import { getUserChats } from "@/app/actions/chat";
+import { DashboardHome } from "@/components/dashboard-home";
+
+function calcStreak(dates: string[]): number {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days = new Set(
+        dates.map((d) => {
+            const x = new Date(d);
+            x.setHours(0, 0, 0, 0);
+            return x.getTime();
+        })
+    );
+    let streak = 0;
+    let cur = today.getTime();
+    while (days.has(cur)) {
+        streak++;
+        cur -= 86400000;
+    }
+    return streak;
+}
 
 export default async function DashboardPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) redirect("/");
 
-    if (!user) {
-        redirect("/");
-    }
+    const [notes, tasks, ideas, chats] = await Promise.all([
+        getUserNotes(),
+        getTasks(),
+        getIdeas(),
+        getUserChats(),
+    ]);
+
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    const notesThisWeek = notes.filter((n) => new Date(n.updated_at) > weekAgo).length;
+    const pendingTasks = tasks.filter((t) => t.status !== "done").length;
+    const tasksThisWeek = tasks.filter((t) => new Date(t.created_at) > weekAgo).length;
+    const streakDays = calcStreak([
+        ...notes.map((n) => n.updated_at),
+        ...tasks.map((t) => t.created_at),
+        ...ideas.map((i) => i.created_at),
+        ...chats.map((c) => c.updated_at),
+    ]);
+
+    const recentActivity = [
+        ...notes.slice(0, 4).map((n) => ({ type: "note",  title: n.title || "Nota",          action: "Nota atualizada",      time: n.updated_at,  href: "/notes/" + n.id })),
+        ...tasks.slice(0, 3).map((t) => ({ type: "task",  title: t.title,                    action: "Tarefa " + (t.status === "done" ? "concluída" : "adicionada"), time: t.created_at, href: "/tasks" })),
+        ...ideas.slice(0, 3).map((i) => ({ type: "idea",  title: i.title || (i.content ? i.content.slice(0, 45) : "Ideia"), action: "Ideia capturada", time: i.created_at, href: "/ideas" })),
+        ...chats.slice(0, 3).map((c) => ({ type: "chat",  title: c.title || "Conversa",      action: "Conversa com Otto",    time: c.updated_at,  href: "/dashboard/chat/" + c.id })),
+    ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 8);
+
+    const userName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "você";
 
     return (
-        <main className="min-h-screen bg-[#0C0C0D] flex flex-col p-4 md:p-8">
-            {/* Header */}
-            <div className="max-w-md mx-auto w-full mb-8 flex items-center gap-4">
-                <Link href="/" className="p-2 rounded-full hover:bg-white/5 text-zinc-400 hover:text-white transition-colors">
-                    <ArrowLeft size={20} />
-                </Link>
-                <span className="text-sm font-medium text-zinc-500 uppercase tracking-widest">Painel</span>
-            </div>
-
-            {/* Card */}
-            <div className="flex-1 flex flex-col items-center justify-start pt-4 sm:pt-12">
-                <div className="w-full max-w-md relative">
-                    {/* Glassmorphic Card */}
-                    <div className="bg-[#1A1A1C]/80 backdrop-blur-md border border-white/[0.05] rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-
-                        {/* Title */}
-                        <div className="text-center mb-10">
-                            <h1 className="font-serif text-2xl text-zinc-100 mb-2">Sua Identidade</h1>
-                            <p className="text-sm text-zinc-500">Gerencie como você aparece para o Otto.</p>
-                        </div>
-
-                        <ProfileForm user={user} />
-
-                    </div>
-
-                    {/* Decorative element */}
-                    <div className="absolute -top-20 -right-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-                    <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
-                </div>
-
-                <p className="text-xs text-zinc-700 mt-12 text-center max-w-xs">
-                    Otto ID: {user.id.slice(0, 8)}...
-                </p>
-            </div>
-        </main>
+        <DashboardHome
+            userName={userName}
+            stats={{ notesCount: notes.length, notesThisWeek, pendingTasks, tasksThisWeek, ideasCount: ideas.length, streakDays }}
+            recentActivity={recentActivity}
+            latestChatId={chats[0]?.id ?? null}
+        />
     );
 }

@@ -1,70 +1,101 @@
-import { LoginButton } from "@/components/LoginButton";
 import { createClient } from "@/utils/supabase/server";
+import { DashboardHome } from "@/components/dashboard-home";
+import { AppSidebar } from "@/components/app-sidebar";
+import { TopNav } from "@/components/top-nav";
+import { LoginButton } from "@/components/LoginButton";
 import Link from "next/link";
-import { DashboardGrid } from "@/components/dashboard-grid";
-import { FeedbackDialog } from "@/components/feedback-dialog";
+import { getUserNotes } from "@/app/actions/study";
+import { getTasks, getIdeas } from "@/app/actions/productivity";
+import { getUserChats } from "@/app/actions/chat";
+
+function calcStreak(dates: string[]): number {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days = new Set(
+        dates.map((d) => {
+            const x = new Date(d);
+            x.setHours(0, 0, 0, 0);
+            return x.getTime();
+        })
+    );
+    let streak = 0;
+    let cur = today.getTime();
+    while (days.has(cur)) {
+        streak++;
+        cur -= 86400000;
+    }
+    return streak;
+}
 
 export default async function Home() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  return (
-    <div className="min-h-screen md:h-screen w-full bg-[#0C0C0D] flex flex-col p-4 md:p-6 overflow-y-auto overflow-x-hidden md:overflow-hidden">
-      {/* Content Container */}
-      <div className="w-full max-w-[1600px] mx-auto flex flex-col gap-4 h-full relative z-10">
+    // If the user isn't logged in, use blank mock data for the dashboard stats
+    let notes: any[] = [];
+    let tasks: any[] = [];
+    let ideas: any[] = [];
+    let chats: any[] = [];
 
-        {/* Header Section - Compact */}
-        <div className="relative w-full rounded-2xl overflow-hidden bg-[#1A1A1C] border border-white/[0.05] px-6 py-6 md:px-8 md:py-8 flex flex-row items-center justify-between shrink-0">
-          <div className="relative z-10 flex items-baseline gap-4">
-            <h1 className="text-3xl md:text-3xl font-serif text-white/90 tracking-tighter">
-              Otto
-            </h1>
-            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-accent-purple/20 text-accent-purple border border-accent-purple/30 rounded-full">
-              Beta
-            </span>
-            <p className="text-zinc-500 text-sm font-sans hidden md:block">
-              Assistente de IA
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <FeedbackDialog>
-              <button className="flex items-center gap-2 px-4 py-2 text-base font-medium text-zinc-400 hover:text-white rounded-full bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] hover:border-indigo-500/30 transition-all duration-300">
-                Feedback
-              </button>
-            </FeedbackDialog>
-            {!user ? (
-              <LoginButton />
-            ) : (
-              <Link
-                href="/dashboard"
-                className="group flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] hover:border-indigo-500/30 transition-all duration-300"
-              >
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 relative">
-                  {user.user_metadata.avatar_url ? (
-                    <img
-                      src={user.user_metadata.avatar_url}
-                      alt="User ID"
-                      className="w-full h-full object-cover"
+    // Only attempt to fetch data if there is an authenticated user
+    if (user) {
+        [notes, tasks, ideas, chats] = await Promise.all([
+            getUserNotes(),
+            getTasks(),
+            getIdeas(),
+            getUserChats(),
+        ]);
+    }
+
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    const notesThisWeek = notes.filter((n: any) => new Date(n.updated_at) > weekAgo).length;
+    const pendingTasks = tasks.filter((t: any) => t.status !== "done").length;
+    const tasksThisWeek = tasks.filter((t: any) => new Date(t.created_at) > weekAgo).length;
+    
+    // Fallback static array types since empty arrays map as `any` without definitions
+    const streakDays = user ? calcStreak([
+        ...notes.map((n: any) => n.updated_at),
+        ...tasks.map((t: any) => t.created_at),
+        ...ideas.map((i: any) => i.created_at),
+        ...chats.map((c: any) => c.updated_at),
+    ]) : 0;
+
+    const recentActivity = user ? [
+        ...notes.slice(0, 4).map((n: any) => ({ type: "note",  title: n.title || "Nota",          action: "Nota atualizada",      time: n.updated_at,  href: "/notes/" + n.id })),
+        ...tasks.slice(0, 3).map((t: any) => ({ type: "task",  title: t.title,                    action: "Tarefa " + (t.status === "done" ? "concluída" : "adicionada"), time: t.created_at, href: "/tasks" })),
+        ...ideas.slice(0, 3).map((i: any) => ({ type: "idea",  title: i.title || (i.content ? i.content.slice(0, 45) : "Ideia"), action: "Ideia capturada", time: i.created_at, href: "/ideas" })),
+        ...chats.slice(0, 3).map((c: any) => ({ type: "chat",  title: c.title || "Conversa",      action: "Conversa com Otto",    time: c.updated_at,  href: "/dashboard/chat/" + c.id })),
+    ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 8) : [];
+
+    const userName = user 
+        ? (user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "você") 
+        : "visitante";
+
+    // Small custom login button component specifically fitted for the new header row
+    const HeaderLogin = () => (
+        <LoginButton className="h-[34px] px-4 py-1.5 text-[13px] bg-[#4A9E6B] text-white hover:bg-[#3B8558] border-none shadow-none rounded-lg" />
+    );
+
+    const ProfileLink = () => (
+        <Link href="/dashboard" className="h-[34px] flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-white bg-[#4A9E6B] rounded-lg hover:bg-[#3B8558] transition-colors">
+            Acessar Perfil
+        </Link>
+    );
+
+    return (
+        <div className="flex h-screen overflow-hidden bg-background">
+            <AppSidebar />
+            <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+                <TopNav rightElement={!user ? <HeaderLogin /> : <ProfileLink />} />
+                <div className="flex-1 overflow-auto">
+                    <DashboardHome
+                        userName={userName}
+                        stats={{ notesCount: notes.length, notesThisWeek, pendingTasks, tasksThisWeek, ideasCount: ideas.length, streakDays }}
+                        recentActivity={recentActivity}
+                        latestChatId={chats[0]?.id ?? null}
                     />
-                  ) : (
-                    <div className="w-full h-full bg-indigo-500/20 flex items-center justify-center text-xs font-serif text-indigo-300">
-                      {user.email?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
                 </div>
-                <span className="text-sm font-medium text-zinc-300 group-hover:text-white">
-                  {user.user_metadata.full_name?.split(" ")[0] || "Perfil"}
-                </span>
-              </Link>
-            )}
-          </div>
+            </div>
         </div>
-
-        {/* Bento Grid - Fills remaining space */}
-        <div className="flex-1 min-h-0">
-          <DashboardGrid isLoggedIn={!!user} />
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

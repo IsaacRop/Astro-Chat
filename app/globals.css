@@ -4,11 +4,13 @@
 /* @custom-variant dark (&:is(.dark *)); - Removed to fix build error. Tailwind v4 handles dark variant via CSS or defaults. */
 
 @theme {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* ── Fonts (unchanged) ── */
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
-  
+
+  /* ── shadcn/ui semantic tokens ── */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -26,68 +28,128 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* ── V2 Design System ── */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-text: var(--sidebar-text);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-accent-brand: var(--accent-brand);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-light: var(--accent-light);
+  --color-surface-alt: var(--surface-alt);
+  --color-text-sec: var(--text-sec);
+  --color-text-muted: var(--text-muted);
+  --color-border-light: var(--border-light);
+
+  /* ── Feature accent palette ── */
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-green: var(--accent-green);
+  --color-accent-yellow: var(--accent-yellow);
+  --color-accent-orange: var(--accent-orange);
 }
 
 :root {
-  /* Light Mode - Warm Stone */
-  --background: #F2F0ED;
-  --foreground: #2A2826;
+  /* ── shadcn/ui — Light (Green Palette V2) ── */
+  --background: #F5F9F6;
+  --foreground: #1E2E25;
 
   --card: #FFFFFF;
-  --card-foreground: #2A2826;
- 
+  --card-foreground: #1E2E25;
+
   --popover: #FFFFFF;
-  --popover-foreground: #2A2826;
- 
-  --primary: #2A2826;
+  --popover-foreground: #1E2E25;
+
+  --primary: #4A9E6B;
   --primary-foreground: #FFFFFF;
- 
-  --secondary: #E6E4E1;
-  --secondary-foreground: #2A2826;
- 
-  --muted: #E6E4E1;
-  --muted-foreground: #8C8884;
- 
-  --accent: #E6E4E1;
-  --accent-foreground: #2A2826;
- 
+
+  --secondary: #EDF4EF;
+  --secondary-foreground: #1E2E25;
+
+  --muted: #EDF4EF;
+  --muted-foreground: #8BA698;
+
+  --accent: #DFF0E5;
+  --accent-foreground: #4A9E6B;
+
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
 
-  --border: #D8D4D0;
-  --input: #D8D4D0;
-  --ring: #2A2826;
+  --border: #E2EDE6;
+  --input: #D0E0D6;
+  --ring: #4A9E6B;
+
+  /* ── V2 Design System ── */
+  --sidebar: #1E2E25;
+  --sidebar-hover: #2A3E32;
+  --sidebar-text: #D0E0D6;
+  --sidebar-muted: #6B8574;
+  --accent-brand: #4A9E6B;
+  --accent-dark: #3B8558;
+  --accent-light: #DFF0E5;
+  --surface-alt: #EDF4EF;
+  --text-sec: #5A7565;
+  --text-muted: #8BA698;
+  --border-light: #E2EDE6;
+
+  /* ── Feature accent palette ── */
+  --accent-purple: oklch(0.6 0.2 290);
+  --accent-blue:   oklch(0.6 0.18 240);
+  --accent-green:  oklch(0.65 0.18 145);
+  --accent-yellow: oklch(0.8 0.18 85);
+  --accent-orange: oklch(0.7 0.2 50);
 }
 
 .dark {
-  /* Dark Mode - Deep Stone / Modern Minimalist */
-  --background: #0C0C0D;
-  --foreground: #EDEDED;
+  /* ── shadcn/ui — Dark (Deep Green) ── */
+  --background: #0F1A14;
+  --foreground: #D0E0D6;
 
-  --card: #1A1A1C;
-  --card-foreground: #EDEDED;
- 
-  --popover: #1A1A1C;
-  --popover-foreground: #EDEDED;
- 
-  --primary: #EDEDED;
-  --primary-foreground: #0C0C0D;
- 
-  --secondary: #27272A;
-  --secondary-foreground: #EDEDED;
- 
-  --muted: #27272A;
-  --muted-foreground: #A1A1AA;
- 
-  --accent: #27272A;
-  --accent-foreground: #EDEDED;
- 
+  --card: #1A2B20;
+  --card-foreground: #D0E0D6;
+
+  --popover: #1A2B20;
+  --popover-foreground: #D0E0D6;
+
+  --primary: #4A9E6B;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #1E2E25;
+  --secondary-foreground: #D0E0D6;
+
+  --muted: #1E2E25;
+  --muted-foreground: #6B8574;
+
+  --accent: #1E2E25;
+  --accent-foreground: #DFF0E5;
+
   --destructive: #7F1D1D;
-  --destructive-foreground: #EDEDED;
+  --destructive-foreground: #FFFFFF;
 
-  --border: #27272A;
-  --input: #27272A;
-  --ring: #D4D4D8;
+  --border: #2A3E32;
+  --input: #2A3E32;
+  --ring: #4A9E6B;
+
+  /* ── V2 Design System (dark) ── */
+  --sidebar: #111D16;
+  --sidebar-hover: #1E2E25;
+  --sidebar-text: #D0E0D6;
+  --sidebar-muted: #6B8574;
+  --accent-brand: #4A9E6B;
+  --accent-dark: #3B8558;
+  --accent-light: #1E2E25;
+  --surface-alt: #1A2B20;
+  --text-sec: #8BA698;
+  --text-muted: #6B8574;
+  --border-light: #2A3E32;
+
+  /* ── Feature accent palette (dark) ── */
+  --accent-purple: oklch(0.55 0.2 290);
+  --accent-blue:   oklch(0.55 0.18 240);
+  --accent-green:  oklch(0.6 0.18 145);
+  --accent-yellow: oklch(0.75 0.18 85);
+  --accent-orange: oklch(0.65 0.2 50);
 }
 
 @layer base {

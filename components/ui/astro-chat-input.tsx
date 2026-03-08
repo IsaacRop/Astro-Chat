@@ -229,7 +229,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                 className={cn(
                     "flex flex-col items-stretch transition-all duration-200 relative z-10",
                     "rounded-2xl cursor-text border border-white/[0.05]",
-                    "shadow-sm bg-[#1A1A1C] backdrop-blur-xl"
+                    "shadow-sm bg-white backdrop-blur-xl border border-[#E2EDE6]"
                 )}
             >
                 <div className="flex flex-col px-3 pt-3 pb-2 gap-2">
@@ -261,8 +261,8 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 disabled={isLoading}
                                 className={cn(
                                     "w-full bg-transparent border-0 outline-none",
-                                    "text-zinc-200 text-base font-sans",
-                                    "placeholder:text-zinc-500",
+                                    "text-[#1E2E25] text-base font-sans",
+                                    "placeholder:text-[#8BA698]",
                                     "resize-none overflow-hidden py-1 leading-relaxed",
                                     "disabled:opacity-50"
                                 )}
@@ -283,7 +283,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 className={cn(
                                     "inline-flex items-center justify-center",
                                     "h-10 w-10 rounded-lg transition-colors",
-                                    "text-zinc-500 hover:text-zinc-200 hover:bg-white/5"
+                                    "text-[#8BA698] hover:text-[#1E2E25] hover:bg-[#EDF4EF]"
                                 )}
                                 type="button"
                                 aria-label="Anexar arquivo"
@@ -292,7 +292,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                             </button>
 
                             {/* AI Enhancement indicator */}
-                            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/[0.03] text-zinc-400 text-xs font-medium border border-white/[0.05]">
+                            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#F5F9F6] text-[#8BA698] text-xs font-medium border border-[#E2EDE6]">
                                 <Sparkles className="w-3 h-3" />
                                 <span className="hidden sm:inline">Otto AI</span>
                             </div>
@@ -307,8 +307,8 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                     "inline-flex items-center justify-center",
                                     "h-10 w-10 rounded-lg transition-all duration-200",
                                     hasContent && !isLoading
-                                        ? "bg-zinc-100 text-zinc-900 shadow-sm hover:bg-white"
-                                        : "bg-white/[0.05] text-zinc-600 cursor-not-allowed"
+                                        ? "bg-[#4A9E6B] text-white shadow-sm hover:bg-[#3B8558]"
+                                        : "bg-[#F5F9F6] text-[#8BA698] cursor-not-allowed"
                                 )}
                                 type="button"
                                 aria-label="Enviar mensagem"
@@ -326,9 +326,9 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
 
             {/* Drag Overlay */}
             {isDragging && (
-                <div className="absolute inset-0 bg-[#1A1A1C]/90 border border-white/[0.1] rounded-2xl z-50 flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none">
-                    <Archive className="w-8 h-8 text-zinc-300 mb-2 animate-bounce" strokeWidth={1.5} />
-                    <p className="text-zinc-300 font-medium text-sm font-sans">
+                <div className="absolute inset-0 bg-white/90 border border-[#E2EDE6] rounded-2xl z-50 flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none">
+                    <Archive className="w-8 h-8 text-[#5A7565] mb-2 animate-bounce" strokeWidth={1.5} />
+                    <p className="text-[#5A7565] font-medium text-sm font-sans">
                         Solte os arquivos aqui
                     </p>
                 </div>

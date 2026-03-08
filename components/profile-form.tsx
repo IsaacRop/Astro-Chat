@@ -65,7 +65,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 {/* Avatar Section */}
                 <div className="flex flex-col items-center gap-4">
                     <div className="relative group">
-                        <div className="w-24 h-24 rounded-full border-2 border-white/[0.05] overflow-hidden shadow-2xl">
+                        <div className="w-24 h-24 rounded-full border-2 border-[#E2EDE6] overflow-hidden shadow-2xl">
                             {user.user_metadata.avatar_url ? (
                                 <img
                                     src={user.user_metadata.avatar_url}
@@ -73,34 +73,34 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                     className="w-full h-full object-cover transition-opacity group-hover:opacity-75"
                                 />
                             ) : (
-                                <div className="w-full h-full bg-indigo-500/20 flex items-center justify-center text-2xl font-serif text-indigo-300">
+                                <div className="w-full h-full bg-[#DFF0E5] flex items-center justify-center text-2xl font-serif text-[#4A9E6B]">
                                     {initialName.charAt(0).toUpperCase()}
                                 </div>
                             )}
                         </div>
                         <button
                             type="button"
-                            className="absolute bottom-0 right-0 p-2 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 transition-all shadow-lg"
+                            className="absolute bottom-0 right-0 p-2 rounded-full bg-[#EDF4EF] border border-[#D0E0D6] text-[#8BA698] hover:text-[#1E2E25] hover:border-[#4A9E6B]/30 transition-all shadow-lg"
                             title="Alterar foto (Em breve)"
                         >
                             <Camera size={14} />
                         </button>
                     </div>
                     <div className="text-center">
-                        <p className="text-sm text-zinc-500 font-medium">{user.email}</p>
+                        <p className="text-sm text-[#8BA698] font-medium">{user.email}</p>
                     </div>
                 </div>
 
                 {/* Inputs */}
                 <div className="space-y-6">
                     <div className="space-y-2">
-                        <label className="text-xs uppercase tracking-wider text-zinc-500 font-medium ml-1">
+                        <label className="text-xs uppercase tracking-wider text-[#8BA698] font-medium ml-1">
                             Nome Completo
                         </label>
                         <input
                             name="fullName"
                             defaultValue={initialName}
-                            className="w-full bg-[#1A1A1C] border border-white/[0.05] rounded-xl px-4 py-3 text-zinc-200 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all placeholder:text-zinc-600"
+                            className="w-full bg-[#F5F9F6] border border-[#E2EDE6] rounded-xl px-4 py-3 text-[#1E2E25] focus:outline-none focus:border-[#4A9E6B]/50 focus:ring-1 focus:ring-[#4A9E6B]/30 transition-all placeholder:text-[#8BA698]"
                             placeholder="Seu nome"
                         />
                     </div>
@@ -112,10 +112,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         <input
                             name="nickname"
                             defaultValue={initialNickname}
-                            className="w-full bg-[#1A1A1C] border border-white/[0.05] rounded-xl px-4 py-3 text-zinc-200 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all placeholder:text-zinc-600"
+                            className="w-full bg-[#F5F9F6] border border-[#E2EDE6] rounded-xl px-4 py-3 text-[#1E2E25] focus:outline-none focus:border-[#4A9E6B]/50 focus:ring-1 focus:ring-[#4A9E6B]/30 transition-all placeholder:text-[#8BA698]"
                             placeholder="Apelido ou primeiro nome"
                         />
-                        <p className="text-[11px] text-zinc-600 pl-1">
+                        <p className="text-[11px] text-[#8BA698] pl-1">
                             Isso é como o Otto vai chamar você nas conversas.
                         </p>
                     </div>
@@ -127,7 +127,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         <button
                             type="submit"
                             disabled={isPending}
-                            className="flex items-center gap-2 px-8 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-medium transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] animate-in fade-in slide-in-from-bottom-2"
+                            className="flex items-center gap-2 px-8 py-2.5 bg-[#4A9E6B] hover:bg-[#3B8558] text-white rounded-full font-medium transition-all shadow-[0_0_20px_rgba(74,158,107,0.3)] animate-in fade-in slide-in-from-bottom-2"
                         >
                             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Alterações"}
                         </button>
@@ -135,21 +135,21 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 </div>
             </form>
 
-            <div className="border-t border-white/[0.05] my-8" />
+            <div className="border-t border-[#E2EDE6] my-8" />
 
             {/* Account Actions */}
             <div className="flex flex-col gap-3">
                 <button
                     onClick={handleSignOut}
-                    className="flex items-center justify-between w-full p-4 rounded-xl border border-white/[0.05] bg-transparent hover:bg-white/[0.02] transition-colors group"
+                    className="flex items-center justify-between w-full p-4 rounded-xl border border-[#E2EDE6] bg-transparent hover:bg-[#F5F9F6] transition-colors group"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800 group-hover:border-zinc-700 transition-colors">
-                            <LogOut size={16} className="text-zinc-500 group-hover:text-zinc-300" />
+                        <div className="p-2 rounded-lg bg-[#EDF4EF] border border-[#D0E0D6] group-hover:border-[#4A9E6B]/30 transition-colors">
+                            <LogOut size={16} className="text-[#8BA698] group-hover:text-[#5A7565]" />
                         </div>
                         <div className="text-left">
-                            <p className="text-sm font-medium text-zinc-300 group-hover:text-white">Sair da conta</p>
-                            <p className="text-xs text-zinc-600">Encerrar sessão neste dispositivo</p>
+                            <p className="text-sm font-medium text-[#1E2E25] group-hover:text-[#4A9E6B]">Sair da conta</p>
+                            <p className="text-xs text-[#8BA698]">Encerrar sessão neste dispositivo</p>
                         </div>
                     </div>
                 </button>
@@ -162,22 +162,22 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         >
                             <div className="flex items-center gap-3">
                                 <div className="p-2 rounded-lg bg-transparent border border-transparent group-hover:border-red-500/30 transition-colors">
-                                    <Trash2 size={16} className="text-zinc-600 group-hover:text-red-400" />
+                                    <Trash2 size={16} className="text-[#8BA698] group-hover:text-red-400" />
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-sm font-medium text-zinc-500 group-hover:text-red-400">Excluir minha conta</p>
-                                    <p className="text-xs text-zinc-700 group-hover:text-red-500/70">Ação irreversível</p>
+                                    <p className="text-sm font-medium text-[#8BA698] group-hover:text-red-400">Excluir minha conta</p>
+                                    <p className="text-xs text-[#8BA698] group-hover:text-red-500/70">Ação irreversível</p>
                                 </div>
                             </div>
                         </button>
                     </DialogTrigger>
-                    <DialogContent className="bg-[#1f1f22] border-red-900/30">
+                    <DialogContent className="bg-white border-red-200">
                         <DialogHeader>
                             <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 text-red-500">
                                 <ShieldAlert size={24} />
                             </div>
                             <DialogTitle className="text-red-500 font-serif text-xl">Tem certeza absoluta?</DialogTitle>
-                            <DialogDescription className="text-zinc-400 pt-2 pb-4">
+                            <DialogDescription className="text-[#5A7565] pt-2 pb-4">
                                 Essa ação é <strong>irreversível</strong>. Todo seu histórico de conversas, memórias e anotações com o Otto será apagado permanentemente.
                                 <br /><br />
                                 Não há como recuperar esses dados.

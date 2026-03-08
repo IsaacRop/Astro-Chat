@@ -18,12 +18,12 @@ const GraphVisualization = dynamic(
 
 export default function CadernosPage() {
     return (
-        <div className="min-h-screen min-h-[100dvh] bg-[#0C0C0D] text-foreground flex flex-col overflow-hidden">
+        <div className="min-h-screen min-h-[100dvh] bg-[#F5F9F6] text-foreground flex flex-col overflow-hidden">
             {/* Shared Header */}
             <Header title="Cadernos" />
 
             {/* Dynamic Graph Component - fits remaining height */}
-            <div className="flex-1 relative overflow-hidden bg-[#0C0C0D]">
+            <div className="flex-1 relative overflow-hidden bg-[#F5F9F6]">
                 <GraphVisualization />
             </div>
         </div>
