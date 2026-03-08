@@ -80,14 +80,14 @@ export function ChatSidebar({ chats, className }: ChatSidebarProps) {
     };
 
     return (
-        <aside className={cn("w-64 border-r border-[#E2EDE6] bg-white flex flex-col h-full", className)}>
+        <aside className={cn("w-64 border-r border-border bg-card flex flex-col h-full", className)}>
             {/* Header */}
-            <div className="p-4 border-b border-[#E2EDE6]">
+            <div className="p-4 border-b border-border">
                 <button
                     onClick={handleNewChat}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#DFF0E5] hover:bg-[#4A9E6B]/20 text-[#4A9E6B] text-sm font-medium transition-all border border-[#4A9E6B]/20 duration-300 group"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-all border border-primary/20 duration-300 group"
                 >
-                    <Plus size={16} strokeWidth={2} className="group-hover:text-[#3B8558] transition-colors" />
+                    <Plus size={16} strokeWidth={2} className="group-hover:text-primary/80 transition-colors" />
                     <span>Nova Conversa</span>
                 </button>
             </div>
@@ -96,7 +96,7 @@ export function ChatSidebar({ chats, className }: ChatSidebarProps) {
             <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
                 {localChats.length === 0 ? (
                     <div className="text-center py-8 px-4">
-                        <p className="text-[#8BA698] text-xs">Nenhuma conversa recente</p>
+                        <p className="text-muted-foreground text-xs">Nenhuma conversa recente</p>
                     </div>
                 ) : (
                     localChats.map((chat) => {
@@ -108,8 +108,8 @@ export function ChatSidebar({ chats, className }: ChatSidebarProps) {
                                 className={cn(
                                     "flex flex-col gap-1 px-3 py-3 rounded-lg transition-all duration-200 group border border-transparent relative",
                                     isActive
-                                        ? "bg-white/[0.05] border-white/[0.05]"
-                                        : "hover:bg-white/[0.03] hover:border-white/[0.02]"
+                                        ? "bg-muted border-border"
+                                        : "hover:bg-muted/50 hover:border-border/50"
                                 )}
                             >
                                 <div className="flex items-center gap-2">
@@ -117,24 +117,24 @@ export function ChatSidebar({ chats, className }: ChatSidebarProps) {
                                         size={14}
                                         className={cn(
                                             "shrink-0 transition-colors",
-                                            isActive ? "text-[#4A9E6B]" : "text-[#8BA698] group-hover:text-[#5A7565]"
+                                            isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                                         )}
                                     />
                                     <span className={cn(
                                         "text-sm font-medium truncate flex-1 transition-colors",
-                                        isActive ? "text-[#1E2E25]" : "text-[#5A7565] group-hover:text-[#1E2E25]"
+                                        isActive ? "text-foreground" : "text-foreground/70 group-hover:text-foreground"
                                     )}>
                                         {chat.title || "Nova Conversa"}
                                     </span>
                                     <button
                                         onClick={(e) => handleDelete(e, chat.id)}
-                                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 text-[#8BA698] hover:text-red-500 transition-all"
+                                        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
                                         title="Excluir conversa"
                                     >
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
-                                <span className="text-[10px] text-[#8BA698] pl-6 group-hover:text-[#5A7565] transition-colors">
+                                <span className="text-[10px] text-muted-foreground pl-6 group-hover:text-foreground/70 transition-colors">
                                     {formatDistanceToNow(new Date(chat.updated_at), { addSuffix: true, locale: ptBR })}
                                 </span>
                             </Link>
@@ -144,8 +144,8 @@ export function ChatSidebar({ chats, className }: ChatSidebarProps) {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-[#E2EDE6]">
-                <div className="flex items-center justify-between text-xs text-[#8BA698]">
+            <div className="p-4 border-t border-border">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{localChats.length} conversas</span>
                 </div>
             </div>

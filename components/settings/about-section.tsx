@@ -64,26 +64,26 @@ const features = [
 export function AboutSection() {
     return (
         <section className="space-y-4">
-            <h2 className="text-xl font-serif font-medium text-[#1E2E25] border-b border-[#E2EDE6] pb-3">
+            <h2 className="text-xl font-serif font-medium text-foreground border-b border-border pb-3">
                 Guia do Sistema
             </h2>
 
             {/* Manifesto Header */}
-            <div className="bg-gradient-to-br from-[#DFF0E5] via-[#DFF0F0]/30 to-transparent border border-[#E2EDE6] rounded-2xl p-6">
+            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-border rounded-2xl p-6">
                 <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-[#EDF4EF] border border-[#E2EDE6] flex items-center justify-center flex-shrink-0">
-                        <Sparkles className="w-6 h-6 text-[#4A9E6B]" strokeWidth={1.5} />
+                    <div className="w-12 h-12 rounded-xl bg-muted border border-border flex items-center justify-center flex-shrink-0">
+                        <Sparkles className="w-6 h-6 text-primary" strokeWidth={1.5} />
                     </div>
                     <div>
-                        <h3 className="text-lg font-serif font-medium text-[#1E2E25] mb-2 flex items-center gap-2">
+                        <h3 className="text-lg font-serif font-medium text-foreground mb-2 flex items-center gap-2">
                             Sobre o Otto
-                            <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-[#DFF0E5] text-[#4A9E6B] border border-[#4A9E6B]/20 rounded-full">
+                            <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20 rounded-full">
                                 Beta
                             </span>
                         </h3>
-                        <p className="text-[#5A7565] text-sm leading-relaxed">
+                        <p className="text-muted-foreground text-sm leading-relaxed">
                             O Otto não é apenas um chat. É um{" "}
-                            <span className="text-[#1E2E25] font-medium">
+                            <span className="text-foreground font-medium">
                                 ecossistema de aprendizado personalizado
                             </span>{" "}
                             que conecta suas dúvidas, anotações e planejamento em um único
@@ -94,28 +94,28 @@ export function AboutSection() {
             </div>
 
             {/* Feature Accordion */}
-            <div className="bg-white border border-[#E2EDE6] rounded-2xl overflow-hidden">
+            <div className="bg-card border border-border rounded-2xl overflow-hidden">
                 <Accordion type="single" collapsible className="w-full">
                     {features.map((feature) => (
                         <AccordionItem
                             key={feature.id}
                             value={feature.id}
-                            className="border-[#E2EDE6] px-6"
+                            className="border-border px-6"
                         >
                             <AccordionTrigger className="hover:no-underline group">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-[#F5F9F6] border border-[#E2EDE6] flex items-center justify-center group-hover:bg-[#EDF4EF] transition-colors">
+                                    <div className="w-8 h-8 rounded-lg bg-muted/50 border border-border flex items-center justify-center group-hover:bg-muted transition-colors">
                                         <feature.icon
-                                            className="w-4 h-4 text-[#8BA698] group-hover:text-[#1E2E25] transition-colors"
+                                            className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors"
                                             strokeWidth={1.5}
                                         />
                                     </div>
-                                    <span className="font-serif text-[#1E2E25] group-hover:text-[#4A9E6B] transition-colors">
+                                    <span className="font-serif text-foreground group-hover:text-primary transition-colors">
                                         {feature.title}
                                     </span>
                                 </div>
                             </AccordionTrigger>
-                            <AccordionContent className="text-[#5A7565] leading-relaxed pl-11">
+                            <AccordionContent className="text-muted-foreground leading-relaxed pl-11">
                                 {feature.description}
                             </AccordionContent>
                         </AccordionItem>

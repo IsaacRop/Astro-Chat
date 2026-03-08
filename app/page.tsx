@@ -73,11 +73,11 @@ export default async function Home() {
 
     // Small custom login button component specifically fitted for the new header row
     const HeaderLogin = () => (
-        <LoginButton className="h-[34px] px-4 py-1.5 text-[13px] bg-[#4A9E6B] text-white hover:bg-[#3B8558] border-none shadow-none rounded-lg" />
+        <LoginButton className="h-[34px] px-4 py-1.5 text-[13px] bg-primary text-primary-foreground hover:bg-primary/90 border-none shadow-none rounded-lg" />
     );
 
     const ProfileLink = () => (
-        <Link href="/dashboard" className="h-[34px] flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-white bg-[#4A9E6B] rounded-lg hover:bg-[#3B8558] transition-colors">
+        <Link href="/dashboard" className="h-[34px] flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors">
             Acessar Perfil
         </Link>
     );

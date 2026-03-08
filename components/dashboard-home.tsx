@@ -37,19 +37,19 @@ interface Props {
 
 const features = [
     { id: "chat",       label: "Chat",       icon: MessageSquare, href: "/dashboard/chat", desc: "Converse com o Otto",
-      text: "text-[#4A9E6B]", bg: "bg-[#DFF0E5]", border: "border-[#4A9E6B]/20", hov: "hover:border-[#4A9E6B]/50 hover:bg-[#DFF0E5]/60" },
+      text: "text-primary", bg: "bg-primary/10", border: "border-primary/20", hov: "hover:border-primary/50 hover:bg-primary/20" },
     { id: "cadernos",   label: "Cadernos",   icon: BookOpen,      href: "/cadernos",       desc: "Grafo de conhecimento",
-      text: "text-[#5B9E9E]", bg: "bg-[#DFF0F0]", border: "border-[#5B9E9E]/20", hov: "hover:border-[#5B9E9E]/50 hover:bg-[#DFF0F0]/60" },
+      text: "text-accent-teal", bg: "bg-accent-teal/10", border: "border-accent-teal/20", hov: "hover:border-accent-teal/50 hover:bg-accent-teal/20" },
     { id: "notas",      label: "Notas",      icon: FileText,      href: "/notes",          desc: "Editor Markdown",
-      text: "text-[#6BBF8A]", bg: "bg-[#E3F5EB]", border: "border-[#6BBF8A]/20", hov: "hover:border-[#6BBF8A]/50 hover:bg-[#E3F5EB]/60" },
+      text: "text-accent-green", bg: "bg-accent-green/10", border: "border-accent-green/20", hov: "hover:border-accent-green/50 hover:bg-accent-green/20" },
     { id: "ideias",     label: "Ideias",     icon: Lightbulb,     href: "/ideas",          desc: "Capture inspirações",
-      text: "text-[#9B82B8]", bg: "bg-[#EDE3F5]", border: "border-[#9B82B8]/20", hov: "hover:border-[#9B82B8]/50 hover:bg-[#EDE3F5]/60" },
+      text: "text-accent-purple", bg: "bg-accent-purple/10", border: "border-accent-purple/20", hov: "hover:border-accent-purple/50 hover:bg-accent-purple/20" },
     { id: "favoritos",  label: "Favoritos",  icon: Star,          href: "/favorites",      desc: "Itens salvos",
-      text: "text-[#B89E6B]", bg: "bg-[#F2ECD8]", border: "border-[#B89E6B]/20", hov: "hover:border-[#B89E6B]/50 hover:bg-[#F2ECD8]/60" },
+      text: "text-accent-yellow", bg: "bg-accent-yellow/10", border: "border-accent-yellow/20", hov: "hover:border-accent-yellow/50 hover:bg-accent-yellow/20" },
     { id: "tarefas",    label: "Tarefas",    icon: CheckSquare,   href: "/tasks",          desc: "Kanban Board",
-      text: "text-[#C17D8A]", bg: "bg-[#F5E3E7]", border: "border-[#C17D8A]/20", hov: "hover:border-[#C17D8A]/50 hover:bg-[#F5E3E7]/60" },
+      text: "text-accent-red", bg: "bg-accent-red/10", border: "border-accent-red/20", hov: "hover:border-accent-red/50 hover:bg-accent-red/20" },
     { id: "calendario", label: "Calendário", icon: CalendarDays,  href: "/calendar",       desc: "Eventos e prazos",
-      text: "text-[#6B9CC6]", bg: "bg-[#E0EBF5]", border: "border-[#6B9CC6]/20", hov: "hover:border-[#6B9CC6]/50 hover:bg-[#E0EBF5]/60" },
+      text: "text-accent-blue", bg: "bg-accent-blue/10", border: "border-accent-blue/20", hov: "hover:border-accent-blue/50 hover:bg-accent-blue/20" },
 ];
 
 const item = {
@@ -62,14 +62,14 @@ function StatCard({ label, value, trend, trendColor, delay }: {
 }) {
     return (
         <motion.div
-            className="flex-1 min-w-0 bg-white border border-[#E2EDE6] rounded-2xl p-5"
+            className="flex-1 min-w-0 bg-card border border-border rounded-2xl p-5"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay }}
         >
-            <p className="text-[#8BA698] text-[11px] font-bold tracking-wider uppercase">{label}</p>
+            <p className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">{label}</p>
             <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-[#1E2E25] text-[32px] leading-none font-bold">{value}</span>
+                <span className="text-foreground text-[32px] leading-none font-bold">{value}</span>
                 {trend && <span className={"text-xs font-semibold whitespace-nowrap " + trendColor}>{trend}</span>}
             </div>
         </motion.div>
@@ -82,23 +82,23 @@ function FeatureCard({ f, delay }: { f: typeof features[0]; delay: number }) {
         <motion.div custom={delay} variants={item} initial="hidden" animate="visible">
             <Link
                 href={f.href}
-                className={"flex flex-col items-start p-5 bg-white border border-[#E2EDE6] rounded-2xl transition-all duration-200 group hover:-translate-y-1 hover:shadow-md h-full"}
+                className={"flex flex-col items-start p-5 bg-card border border-border rounded-2xl transition-all duration-200 group hover:-translate-y-1 hover:shadow-md h-full"}
             >
                 <div className={"flex items-center justify-center w-12 h-12 rounded-xl mb-4 " + f.bg}>
                     <Icon size={22} className={f.text} strokeWidth={1.8} />
                 </div>
-                <h3 className="text-[#1E2E25] font-bold text-[15px]">{f.label}</h3>
-                <p className="text-[#8BA698] text-[13px] mt-1">{f.desc}</p>
+                <h3 className="text-foreground font-bold text-[15px]">{f.label}</h3>
+                <p className="text-muted-foreground text-[13px] mt-1">{f.desc}</p>
             </Link>
         </motion.div>
     );
 }
 
 const typeIcon: Record<string, React.ReactNode> = {
-    note:  <StickyNote  size={14} className="text-[#6BBF8A]" />,
-    task:  <ListTodo    size={14} className="text-[#C17D8A]" />,
-    idea:  <Lightbulb   size={14} className="text-[#9B82B8]" />,
-    chat:  <MessageSquare size={14} className="text-[#4A9E6B]" />,
+    note:  <StickyNote  size={14} className="text-accent-green" />,
+    task:  <ListTodo    size={14} className="text-accent-red" />,
+    idea:  <Lightbulb   size={14} className="text-accent-purple" />,
+    chat:  <MessageSquare size={14} className="text-primary" />,
 };
 
 function ActivityRow({ act, delay }: { act: ActivityItem; delay: number }) {
@@ -108,15 +108,15 @@ function ActivityRow({ act, delay }: { act: ActivityItem; delay: number }) {
     })();
     return (
         <motion.div custom={delay} variants={item} initial="hidden" animate="visible">
-            <Link href={act.href} className="flex items-center gap-3 px-4 py-3 hover:bg-[#EDF4EF] transition-colors duration-150 group">
-                <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#F5F9F6] flex-shrink-0">
+            <Link href={act.href} className="flex items-center gap-3 px-4 py-3 hover:bg-accent/10 transition-colors duration-150 group">
+                <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-accent/5 flex-shrink-0">
                     {typeIcon[act.type] ?? typeIcon.note}
                 </span>
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#1E2E25] truncate">{act.title}</p>
-                    <p className="text-xs text-[#8BA698]">{act.action}</p>
+                    <p className="text-sm font-medium text-foreground truncate">{act.title}</p>
+                    <p className="text-xs text-muted-foreground">{act.action}</p>
                 </div>
-                <span className="text-xs text-[#8BA698] flex-shrink-0 group-hover:text-[#5A7565]">{relTime}</span>
+                <span className="text-xs text-muted-foreground flex-shrink-0 group-hover:text-foreground/70">{relTime}</span>
             </Link>
         </motion.div>
     );
@@ -130,38 +130,38 @@ function ChatWidget({ latestChatId, userName }: { latestChatId: string | null; u
         router.push("/dashboard/chat");
     };
     return (
-        <div className="bg-white border border-[#E2EDE6] rounded-2xl flex flex-col h-full overflow-hidden">
-            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-[#E2EDE6]">
+        <div className="bg-card border border-border rounded-2xl flex flex-col h-full overflow-hidden">
+            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border">
                 <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#4A9E6B]" />
-                    <span className="font-bold text-[15px] text-[#1E2E25]">Otto</span>
+                    <span className="w-2 h-2 rounded-full bg-primary" />
+                    <span className="font-bold text-[15px] text-foreground">Otto</span>
                 </div>
-                <span className="text-[13px] font-medium text-[#8BA698]">Assistente de IA</span>
+                <span className="text-[13px] font-medium text-muted-foreground">Assistente de IA</span>
             </div>
-            <div className="flex-1 flex flex-col gap-3 p-5 overflow-y-auto bg-white">
+            <div className="flex-1 flex flex-col gap-3 p-5 overflow-y-auto bg-background">
                 <div className="flex justify-start">
-                    <div className="max-w-[85%] bg-[#EDF4EF] text-[#1E2E25] text-[14px] px-4 py-3 rounded-2xl rounded-tl-sm leading-relaxed">
+                    <div className="max-w-[85%] bg-accent/10 text-foreground text-[14px] px-4 py-3 rounded-2xl rounded-tl-sm leading-relaxed">
                         Olá {userName?.split(' ')[0] || 'Isaac'}! Como posso ajudar você hoje?
                     </div>
                 </div>
                 {latestChatId && (
                     <div className="flex justify-end mt-2">
-                        <Link href={"/dashboard/chat/" + latestChatId} className="max-w-[82%] bg-[#4A9E6B] text-white text-[13px] font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm leading-relaxed hover:bg-[#3B8558] transition-colors">
+                        <Link href={"/dashboard/chat/" + latestChatId} className="max-w-[82%] bg-primary text-primary-foreground text-[13px] font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm leading-relaxed hover:bg-primary/90 transition-colors">
                             Ver conversa anterior →
                         </Link>
                     </div>
                 )}
             </div>
-            <div className="p-4 border-t border-[#E2EDE6] bg-white">
-                <div className="flex items-center gap-2 bg-[#F5F9F6] border border-[#E2EDE6] rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-[#4A9E6B]/20 focus-within:border-[#4A9E6B]/40 transition-all">
+            <div className="p-4 border-t border-border bg-background">
+                <div className="flex items-center gap-2 bg-accent/5 border border-border rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/40 transition-all">
                     <input
                         value={msg}
                         onChange={(e) => setMsg(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && submit()}
                         placeholder="Pergunte ao Otto..."
-                        className="flex-1 bg-transparent text-[14px] text-[#1E2E25] placeholder:text-[#8BA698] outline-none"
+                        className="flex-1 bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground outline-none"
                     />
-                    <button onClick={submit} className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#4A9E6B] text-white hover:bg-[#3B8558] transition-colors flex-shrink-0">
+                    <button onClick={submit} className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex-shrink-0">
                         <Send size={15} />
                     </button>
                 </div>
@@ -179,21 +179,21 @@ export function DashboardHome({ userName, stats, recentActivity, latestChatId }:
     }, []);
 
     const statCards = [
-        { label: "Notas",     value: stats.notesCount, trend: stats.notesThisWeek > 0 ? `+${stats.notesThisWeek} esta semana` : "", trendColor: "text-[#6BBF8A]" },
-        { label: "Pendentes", value: stats.pendingTasks, trend: stats.pendingTasks > 0 ? `${stats.pendingTasks} para hoje` : "",  trendColor: "text-[#C17D8A]" },
+        { label: "Notas",     value: stats.notesCount, trend: stats.notesThisWeek > 0 ? `+${stats.notesThisWeek} esta semana` : "", trendColor: "text-accent-green" },
+        { label: "Pendentes", value: stats.pendingTasks, trend: stats.pendingTasks > 0 ? `${stats.pendingTasks} para hoje` : "",  trendColor: "text-accent-red" },
         { label: "Ideias",    value: stats.ideasCount, trend: "", trendColor: "" },
-        { label: "Sequência", value: `${stats.streakDays} dias`, trend: "Recorde!", trendColor: "text-[#6B9CC6]" },
+        { label: "Sequência", value: `${stats.streakDays} dias`, trend: "Recorde!", trendColor: "text-accent-blue" },
     ];
 
     return (
-        <main className="p-6 min-h-full bg-[#F5F9F6] space-y-5">
+        <main className="p-6 min-h-full bg-background space-y-5">
 
             {/* Greeting */}
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-                <h1 className="font-serif text-2xl font-bold text-[#1E2E25]">
+                <h1 className="font-serif text-2xl font-bold text-foreground">
                     {greeting}, {userName}
                 </h1>
-                <p className="text-[#8BA698] text-sm mt-1">Aqui está um resumo do seu espaço de trabalho</p>
+                <p className="text-muted-foreground text-sm mt-1">Aqui está um resumo do seu espaço de trabalho</p>
             </motion.div>
 
             {/* Stats row */}
@@ -213,7 +213,7 @@ export function DashboardHome({ userName, stats, recentActivity, latestChatId }:
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.35, delay: 0.2 }}
                 >
-                    <h2 className="text-[#1E2E25] font-bold text-[17px] mb-4">Assistente</h2>
+                    <h2 className="text-foreground font-bold text-[17px] mb-4">Assistente</h2>
                     <div className="flex-1 max-h-[500px]">
                         <ChatWidget latestChatId={latestChatId} userName={userName} />
                     </div>
@@ -226,7 +226,7 @@ export function DashboardHome({ userName, stats, recentActivity, latestChatId }:
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.35, delay: 0.25 }}
                 >
-                    <h2 className="text-[#1E2E25] font-bold text-[17px] mb-4">Acesso rápido</h2>
+                    <h2 className="text-foreground font-bold text-[17px] mb-4">Acesso rápido</h2>
                     <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                         {features.filter(f => f.id !== "chat").map((f, i) => (
                             <FeatureCard key={f.id} f={f} delay={0.28 + i * 0.06} />
@@ -238,16 +238,16 @@ export function DashboardHome({ userName, stats, recentActivity, latestChatId }:
             {/* Recent activity */}
             {recentActivity.length > 0 && (
                 <motion.div
-                    className="bg-white rounded-2xl border border-[#E2EDE6] overflow-hidden"
+                    className="bg-card rounded-2xl border border-border overflow-hidden"
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35, delay: 0.35 }}
                 >
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-[#E2EDE6]">
-                        <h2 className="text-sm font-semibold text-[#1E2E25]">Atividade recente</h2>
-                        <span className="text-xs text-[#8BA698]">{recentActivity.length} itens</span>
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                        <h2 className="text-sm font-semibold text-foreground">Atividade recente</h2>
+                        <span className="text-xs text-muted-foreground">{recentActivity.length} itens</span>
                     </div>
-                    <div className="divide-y divide-[#F0F5F2]">
+                    <div className="divide-y divide-border">
                         {recentActivity.map((act, i) => (
                             <ActivityRow key={act.href + i} act={act} delay={0.38 + i * 0.05} />
                         ))}

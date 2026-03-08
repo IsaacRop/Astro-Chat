@@ -58,7 +58,7 @@ function NavTab({ tab, isActive }: { tab: TabDef; isActive: boolean }) {
             className={"relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 select-none " +
                 (isActive
                     ? tab.textColor + " " + tab.bgColor
-                    : "text-[#5A7565] hover:bg-[#EDF4EF] hover:text-[#1E2E25]")}
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground")}
         >
             <Icon size={15} strokeWidth={isActive ? 2.2 : 1.8} />
             <span>{tab.label}</span>
@@ -66,7 +66,7 @@ function NavTab({ tab, isActive }: { tab: TabDef; isActive: boolean }) {
             {tab.badge && (
                 <TabBadge
                     label={tab.badge}
-                    color={isActive ? tab.textColor + " bg-white/60" : "text-[#8BA698] bg-[#EDF4EF]"}
+                    color={isActive ? tab.textColor + " bg-white/60" : "text-muted-foreground bg-muted"}
                 />
             )}
 
@@ -85,17 +85,17 @@ export function TopNav({ rightElement }: { rightElement?: React.ReactNode } = {}
     const isActive = useActiveTab();
 
     return (
-        <header className="flex items-center h-[52px] px-4 bg-white border-b border-[#E2EDE6] flex-shrink-0 gap-4">
+        <header className="flex items-center h-[52px] px-4 bg-background border-b border-border flex-shrink-0 gap-4">
             {/* Left: Brand */}
             <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="font-serif font-bold text-xl text-[#1E2E25] leading-none">Otto</span>
-                <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-[#DFF0E5] text-[#4A9E6B] rounded-full">
+                <span className="font-serif font-bold text-xl text-foreground leading-none">Otto</span>
+                <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-primary/10 text-primary rounded-full">
                     Beta
                 </span>
             </div>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-[#E2EDE6] flex-shrink-0" />
+            <div className="w-px h-6 bg-border flex-shrink-0" />
 
             {/* Center: Feature tabs */}
             <nav className="flex items-center gap-0.5 flex-1 overflow-x-auto scrollbar-none">
@@ -107,7 +107,7 @@ export function TopNav({ rightElement }: { rightElement?: React.ReactNode } = {}
             {/* Right: Feedback & Additions */}
             <div className="flex-shrink-0 flex items-center gap-2">
                 <FeedbackDialog>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#5A7565] border border-[#D0E0D6] rounded-lg hover:bg-[#EDF4EF] hover:text-[#1E2E25] transition-colors duration-150">
+                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted hover:text-foreground transition-colors duration-150">
                         Feedback
                     </button>
                 </FeedbackDialog>

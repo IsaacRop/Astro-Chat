@@ -99,7 +99,7 @@ export const LimelightNav = ({ className = "" }: LimelightNavProps) => {
                 >
                     {React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
                         className: `w-4 h-4 md:w-5 md:h-5 transition-all duration-200 ${activeIndex === index
-                            ? 'opacity-100 text-accent-purple scale-110'
+                            ? 'opacity-100 text-primary scale-110'
                             : 'opacity-50 text-foreground hover:opacity-70'
                             }`,
                     })}
@@ -109,11 +109,11 @@ export const LimelightNav = ({ className = "" }: LimelightNavProps) => {
             {/* Limelight effect */}
             <div
                 ref={limelightRef}
-                className={`absolute top-0 z-10 w-8 md:w-10 h-[4px] rounded-full bg-accent-purple shadow-[0_20px_25px_var(--accent-purple)] ${isReady ? 'transition-[left] duration-300 ease-out' : ''
+                className={`absolute top-0 z-10 w-8 md:w-10 h-[4px] rounded-full bg-primary shadow-[0_20px_25px_var(--primary)] ${isReady ? 'transition-[left] duration-300 ease-out' : ''
                     }`}
                 style={{ left: '-999px' }}
             >
-                <div className="absolute left-[-30%] top-[4px] w-[160%] h-10 [clip-path:polygon(5%_100%,25%_0,75%_0,95%_100%)] bg-gradient-to-b from-accent-purple/30 to-transparent pointer-events-none" />
+                <div className="absolute left-[-30%] top-[4px] w-[160%] h-10 [clip-path:polygon(5%_100%,25%_0,75%_0,95%_100%)] bg-gradient-to-b from-primary/30 to-transparent pointer-events-none" />
             </div>
         </nav>
     );

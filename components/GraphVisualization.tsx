@@ -128,7 +128,7 @@ export default function GraphVisualization() {
                 </h2>
                 <button
                     onClick={() => setUseListView(false)}
-                    className="text-xs text-accent-purple hover:text-accent-purple/80 whitespace-nowrap"
+                    className="text-xs text-primary hover:text-primary/80 whitespace-nowrap"
                 >
                     Graph View
                 </button>
@@ -137,7 +137,7 @@ export default function GraphVisualization() {
                 {graphData.nodes.map(node => (
                     <div
                         key={node.id}
-                        className="p-3 bg-card rounded-lg border border-border cursor-pointer hover:border-accent-purple/50 transition-colors active:bg-muted"
+                        className="p-3 bg-card rounded-lg border border-border cursor-pointer hover:border-primary/50 transition-colors active:bg-muted"
                         onClick={() => handleNodeClick(node)}
                     >
                         <div className="text-foreground font-medium text-sm md:text-base truncate">{node.label}</div>

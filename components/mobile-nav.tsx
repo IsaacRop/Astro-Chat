@@ -21,9 +21,9 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-    { id: "home", name: "Início", icon: <Home className="w-5 h-5" />, href: "/", colorClass: "text-accent-purple" },
-    { id: "chat", name: "Chat", icon: <MessageCircle className="w-5 h-5" />, href: "/chat", colorClass: "text-accent-purple" },
-    { id: "cadernos", name: "Cadernos", icon: <Network className="w-5 h-5" />, href: "/cadernos", colorClass: "text-accent-purple" },
+    { id: "home", name: "Início", icon: <Home className="w-5 h-5" />, href: "/", colorClass: "text-primary" },
+    { id: "chat", name: "Chat", icon: <MessageCircle className="w-5 h-5" />, href: "/chat", colorClass: "text-primary" },
+    { id: "cadernos", name: "Cadernos", icon: <Network className="w-5 h-5" />, href: "/cadernos", colorClass: "text-primary" },
     { id: "calendar", name: "Calendário", icon: <Calendar className="w-5 h-5" />, href: "/calendar", colorClass: "text-accent-blue" },
     { id: "tasks", name: "Tarefas", icon: <CheckSquare className="w-5 h-5" />, href: "/tasks", colorClass: "text-accent-green" },
     { id: "notes", name: "Notas", icon: <FileText className="w-5 h-5" />, href: "/notes", colorClass: "text-accent-blue" },
@@ -54,14 +54,11 @@ export function MobileNav() {
             <SheetContent side="left" className="w-[280px] bg-background/95 backdrop-blur-xl border-r border-border/50 p-0">
                 <SheetHeader className="p-4 pb-2 border-b border-border/50">
                     <SheetTitle className="flex items-center gap-2 text-foreground">
-                        {/* Octopus Icon */}
-                        <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6 text-accent-purple">
-                            <ellipse cx="12" cy="8" rx="7" ry="6" fill="currentColor" opacity="0.2" stroke="currentColor" strokeWidth="1.5" />
-                            <circle cx="9" cy="7" r="1.5" fill="currentColor" />
-                            <circle cx="15" cy="7" r="1.5" fill="currentColor" />
-                        </svg>
-                        <span className="font-serif font-bold">Otto</span>
-                        <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-accent-purple/20 text-accent-purple border border-accent-purple/30 rounded-full">
+                        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-[#4A9E6B] to-[#5B9E9E] shadow-sm flex-shrink-0">
+                            <span className="text-white font-serif font-bold text-sm leading-none select-none">O</span>
+                        </div>
+                        <span className="font-serif font-bold text-lg text-foreground mt-0.5">Otto</span>
+                        <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider bg-primary/20 text-primary border border-primary/30 rounded-full">
                             Beta
                         </span>
                     </SheetTitle>

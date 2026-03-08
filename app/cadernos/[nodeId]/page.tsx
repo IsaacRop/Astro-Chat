@@ -133,7 +133,7 @@ export default function NodeDetailPage({
                 </div>
                 <Link
                     href={`/dashboard/chat/${node.id}`}
-                    className="flex items-center gap-1 md:gap-2 px-3 py-2 rounded-lg bg-accent-purple hover:bg-accent-purple/80 text-background text-xs md:text-sm font-medium transition-colors flex-shrink-0"
+                    className="flex items-center gap-1 md:gap-2 px-3 py-2 rounded-lg bg-primary hover:bg-primary/80 text-background text-xs md:text-sm font-medium transition-colors flex-shrink-0"
                 >
                     <MessageSquare size={14} className="md:w-4 md:h-4" />
                     <span className="hidden sm:inline">Ir para o Chat</span>
@@ -170,7 +170,7 @@ export default function NodeDetailPage({
 - Item 2
 
 **Texto em negrito** e *texto em itálico*"
-                    className="w-full h-[calc(100vh-250px)] min-h-[300px] p-4 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent-purple/50 focus:border-accent-purple/50 resize-none font-mono text-sm leading-relaxed"
+                    className="w-full h-[calc(100vh-250px)] min-h-[300px] p-4 bg-card border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 focus:border-primary/50 resize-none font-mono text-sm leading-relaxed"
                 />
 
                 <p className="text-muted-foreground text-xs mt-2">

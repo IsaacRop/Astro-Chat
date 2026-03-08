@@ -11,27 +11,10 @@ import { Header } from "@/components/Header";
 import { AstroChatInput } from "@/components/ui/astro-chat-input";
 
 // Octopus Icon for Otto branding
-const OctopusIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
-    <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-    >
-        <ellipse cx="12" cy="9" rx="5" ry="4" />
-        <circle cx="10" cy="8.5" r="0.5" fill="currentColor" />
-        <circle cx="14" cy="8.5" r="0.5" fill="currentColor" />
-        <path d="M7 12c-1 1.5-1.5 3.5-1 5" />
-        <path d="M9 13c-.5 1.5-.5 3.5 0 5" />
-        <path d="M12 13c0 1.5 0 3.5 0 5" />
-        <path d="M15 13c.5 1.5.5 3.5 0 5" />
-        <path d="M17 12c1 1.5 1.5 3.5 1 5" />
-    </svg>
+const OctopusIcon = ({ className = "" }: { size?: number; className?: string }) => (
+    <div className={`flex flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#4A9E6B] to-[#5B9E9E] shadow-sm ${className}`}>
+        <span className="text-white font-serif font-bold leading-none select-none">O</span>
+    </div>
 );
 
 // Markdown styling
@@ -43,7 +26,7 @@ const MarkdownComponents = {
         if (isInline) {
             return (
                 <code
-                    className="bg-accent-purple/10 text-accent-purple px-1.5 py-0.5 rounded text-xs md:text-sm font-mono border border-accent-purple/20"
+                    className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-xs md:text-sm font-mono border border-primary/20"
                     {...props}
                 >
                     {children}
@@ -93,7 +76,7 @@ const MarkdownComponents = {
         </a>
     ),
     blockquote: ({ children }: React.ComponentProps<'blockquote'>) => (
-        <blockquote className="border-l-4 border-accent-purple pl-3 md:pl-4 my-3 italic text-muted-foreground text-sm md:text-base">
+        <blockquote className="border-l-4 border-primary pl-3 md:pl-4 my-3 italic text-muted-foreground text-sm md:text-base">
             {children}
         </blockquote>
     ),
@@ -278,11 +261,11 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
     };
 
     return (
-        <div className="flex h-screen h-[100dvh] bg-[#F5F9F6] text-foreground overflow-hidden">
+        <div className="flex h-screen h-[100dvh] bg-background text-foreground overflow-hidden">
 
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 bg-[#F5F9F6]">
+            <div className="flex-1 flex flex-col min-w-0 bg-background">
                 <Header title="Otto" />
 
                 {/* Messages Container */}
@@ -291,13 +274,13 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                         {/* Welcome message */}
                         {messages.length === 0 && (
                             <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center px-4">
-                                <div className="w-16 h-16 rounded-full border border-[#E2EDE6] bg-white flex items-center justify-center mb-6">
-                                    <OctopusIcon size={28} className="text-[#1E2E25]" />
+                                <div className="mb-6">
+                                    <OctopusIcon className="w-16 h-16 text-4xl" />
                                 </div>
-                                <h2 className="text-3xl md:text-4xl font-serif font-medium text-[#1E2E25] mb-3 tracking-tight">
+                                <h2 className="text-3xl md:text-4xl font-serif font-medium text-foreground mb-3 tracking-tight">
                                     Olá, eu sou o Otto.
                                 </h2>
-                                <p className="text-[#8BA698] max-w-md text-sm md:text-base font-sans leading-relaxed">
+                                <p className="text-muted-foreground max-w-md text-sm md:text-base font-sans leading-relaxed">
                                     Seu explorador do conhecimento. Como posso ajudar você hoje?
                                 </p>
                             </div>
@@ -314,15 +297,15 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                                     className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6 group`}
                                 >
                                     {!isUser && (
-                                        <div className="flex-shrink-0 w-8 h-8 rounded-full border border-[#E2EDE6] bg-white flex items-center justify-center mr-4 mt-1">
-                                            <OctopusIcon size={14} className="text-[#1E2E25]" />
+                                        <div className="mr-4 mt-1">
+                                            <OctopusIcon className="w-8 h-8 text-lg rounded-full" />
                                         </div>
                                     )}
 
                                     <div
                                         className={`max-w-[90%] md:max-w-[85%] relative ${isUser
-                                            ? 'bg-white text-[#1E2E25] rounded-2xl rounded-tr-sm px-5 py-3 border border-[#E2EDE6]'
-                                            : 'text-[#5A7565] px-0 py-2'
+                                            ? 'bg-card text-foreground rounded-2xl rounded-tr-sm px-5 py-3 border border-border'
+                                            : 'text-foreground px-0 py-2'
                                             }`}
                                     >
                                         {isUser ? (
@@ -330,7 +313,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                                                 {messageText}
                                             </p>
                                         ) : (
-                                            <div className="prose prose-sm prose-invert max-w-none prose-p:text-[#5A7565] prose-headings:font-serif prose-headings:text-[#1E2E25]">
+                                            <div className="prose prose-sm prose-invert max-w-none prose-p:text-foreground prose-headings:font-serif prose-headings:text-foreground">
                                                 <ReactMarkdown
                                                     remarkPlugins={[remarkGfm]}
                                                     components={MarkdownComponents}
@@ -347,14 +330,14 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                         {/* Loading indicator */}
                         {status !== "ready" && messages[messages.length - 1]?.role !== 'assistant' && (
                             <div className="flex justify-start mb-6">
-                                <div className="flex-shrink-0 w-8 h-8 rounded-full border border-[#E2EDE6] bg-white flex items-center justify-center mr-4">
-                                    <OctopusIcon size={14} className="text-[#1E2E25]" />
+                                <div className="mr-4">
+                                    <OctopusIcon className="w-8 h-8 text-lg rounded-full" />
                                 </div>
                                 <div className="px-0 py-2">
                                     <div className="flex space-x-2">
-                                        <div className="w-1.5 h-1.5 bg-[#4A9E6B] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                                        <div className="w-1.5 h-1.5 bg-[#4A9E6B] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                                        <div className="w-1.5 h-1.5 bg-[#4A9E6B] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                                     </div>
                                 </div>
                             </div>
@@ -365,7 +348,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                 </div>
 
                 {/* Input Area */}
-                <div className="bg-[#F5F9F6] px-4 pb-6 pt-2">
+                <div className="bg-background px-4 pb-6 pt-2">
                     <div className="max-w-3xl mx-auto">
                         <AstroChatInput
                             value={input}
@@ -374,7 +357,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                             isLoading={isLoading}
                             placeholder="Pergunte qualquer coisa..."
                         />
-                        <p className="text-center text-[10px] text-[#8BA698] mt-3 font-sans">Otto pode cometer erros. Verifique informações importantes.</p>
+                        <p className="text-center text-[10px] text-muted-foreground mt-3 font-sans">Otto pode cometer erros. Verifique informações importantes.</p>
                     </div>
                 </div>
             </div>

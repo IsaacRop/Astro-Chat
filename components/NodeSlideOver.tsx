@@ -239,7 +239,7 @@ Nota gerada a partir do nó do grafo.`;
                                 <Link
                                     href={`/dashboard/chat/${node.chatId}`}
                                     onClick={onClose}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 md:px-5 py-3 md:py-3.5 rounded-full bg-gradient-to-r from-accent-blue to-accent-purple text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-accent-blue/25 text-sm"
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 md:px-5 py-3 md:py-3.5 rounded-full bg-gradient-to-r from-accent-blue to-primary text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-accent-blue/25 text-sm"
                                 >
                                     <MessageSquare size={18} />
                                     Ir para o Chat

@@ -98,21 +98,21 @@ export function AppSidebar() {
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: 8, scale: 0.96 }}
                                 transition={{ duration: 0.15, ease: "easeOut" }}
-                                className="absolute bottom-full left-full ml-3 mb-1 w-52 bg-[#1A2B20] border border-[#2A3E32] rounded-xl shadow-2xl overflow-hidden z-50 origin-bottom-left"
+                                className="absolute bottom-full left-full ml-3 mb-1 w-52 bg-popover border border-border rounded-xl shadow-2xl overflow-hidden z-50 origin-bottom-left"
                             >
-                                <div className="px-4 py-3 border-b border-[#2A3E32]">
-                                    <p className="text-[#D0E0D6] text-sm font-semibold truncate">{user?.name ?? "Carregando..."}</p>
-                                    <p className="text-[#6B8574] text-xs truncate mt-0.5">{user?.email ?? ""}</p>
-                                    <span className="inline-block mt-1.5 px-1.5 py-0.5 bg-[#4A9E6B]/20 text-[#4A9E6B] text-[10px] font-semibold rounded-full border border-[#4A9E6B]/30">Plano Gratuito</span>
+                                <div className="px-4 py-3 border-b border-border">
+                                    <p className="text-popover-foreground text-sm font-semibold truncate">{user?.name ?? "Carregando..."}</p>
+                                    <p className="text-muted-foreground text-xs truncate mt-0.5">{user?.email ?? ""}</p>
+                                    <span className="inline-block mt-1.5 px-1.5 py-0.5 bg-primary/20 text-primary text-[10px] font-semibold rounded-full border border-primary/30">Plano Gratuito</span>
                                 </div>
                                 <div className="py-1">
                                     <DropdownLink href="/settings" icon={<User size={14} />} label="Perfil" onClick={() => setDropdownOpen(false)} />
                                     <DropdownLink href="/settings" icon={<CreditCard size={14} />} label="Assinatura" onClick={() => setDropdownOpen(false)} />
                                     <DropdownLink href="/settings" icon={<SlidersHorizontal size={14} />} label="Preferências" onClick={() => setDropdownOpen(false)} />
                                 </div>
-                                <div className="border-t border-[#2A3E32] py-1">
+                                <div className="border-t border-border py-1">
                                     <form action={signOut}>
-                                        <button type="submit" className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors duration-150">
+                                        <button type="submit" className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors duration-150">
                                             <LogOut size={14} />
                                             Sair
                                         </button>

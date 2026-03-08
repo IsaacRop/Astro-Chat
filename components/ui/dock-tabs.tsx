@@ -26,9 +26,9 @@ interface DockItem {
 
 // Colors matching the home page accent colors
 const dockItems: DockItem[] = [
-    { id: "home", name: "Início", icon: <Home className="w-5 h-5" />, colorClass: "text-accent-purple", href: "/" },
-    { id: "chat", name: "Chat", icon: <MessageCircle className="w-5 h-5" />, colorClass: "text-accent-purple", href: "/chat" },
-    { id: "cadernos", name: "Cadernos", icon: <Network className="w-5 h-5" />, colorClass: "text-accent-purple", href: "/cadernos" },
+    { id: "home", name: "Início", icon: <Home className="w-5 h-5" />, colorClass: "text-primary", href: "/" },
+    { id: "chat", name: "Chat", icon: <MessageCircle className="w-5 h-5" />, colorClass: "text-primary", href: "/chat" },
+    { id: "cadernos", name: "Cadernos", icon: <Network className="w-5 h-5" />, colorClass: "text-primary", href: "/cadernos" },
     { id: "calendar", name: "Calendário", icon: <Calendar className="w-5 h-5" />, colorClass: "text-accent-blue", href: "/calendar" },
     { id: "tasks", name: "Tarefas", icon: <CheckSquare className="w-5 h-5" />, colorClass: "text-accent-green", href: "/tasks" },
     { id: "notes", name: "Notas", icon: <FileText className="w-5 h-5" />, colorClass: "text-accent-blue", href: "/notes" },

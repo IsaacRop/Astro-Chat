@@ -41,32 +41,13 @@ export function Header({ title = "Otto", showNav = true }: HeaderProps) {
 
                 {/* Logo/Title */}
                 <Link href="/" className="flex items-center gap-2 group">
-                    {/* Octopus Icon */}
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        className="w-7 h-7 md:w-8 md:h-8 text-accent-purple"
-                    >
-                        {/* Head */}
-                        <ellipse cx="12" cy="8" rx="7" ry="6" fill="currentColor" opacity="0.2" stroke="currentColor" strokeWidth="1.5" />
-                        {/* Eyes */}
-                        <circle cx="9" cy="7" r="1.5" fill="currentColor" />
-                        <circle cx="15" cy="7" r="1.5" fill="currentColor" />
-                        <circle cx="9.5" cy="6.5" r="0.5" fill="white" />
-                        <circle cx="15.5" cy="6.5" r="0.5" fill="white" />
-                        {/* Tentacles - 8 curling arms */}
-                        <path d="M5 12 Q3 15 4 18 Q5 20 6 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-                        <path d="M7 13 Q6 16 6 18 Q6 21 8 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-                        <path d="M9 14 Q9 17 8 19 Q7 22 10 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-                        <path d="M12 14 Q12 18 11 20 Q10 22 13 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-                        <path d="M15 14 Q15 17 16 19 Q17 22 14 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-                        <path d="M17 13 Q18 16 18 18 Q18 21 16 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-                        <path d="M19 12 Q21 15 20 18 Q19 20 18 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-                    </svg>
-                    <span className="text-base md:text-lg font-serif font-bold text-foreground group-hover:text-accent-purple transition-colors hidden sm:block">
+                    <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-[#4A9E6B] to-[#5B9E9E] shadow-sm flex-shrink-0">
+                        <span className="text-white font-serif font-bold text-lg md:text-xl leading-none select-none">O</span>
+                    </div>
+                    <span className="text-base md:text-lg font-serif font-bold text-foreground transition-colors hidden sm:block">
                         {title}
                     </span>
-                    <span className="px-1.5 py-0.5 text-[8px] md:text-[9px] font-bold uppercase tracking-wider bg-accent-purple/20 text-accent-purple border border-accent-purple/30 rounded-full hidden sm:block">
+                    <span className="px-1.5 py-0.5 text-[8px] md:text-[9px] font-bold uppercase tracking-wider bg-primary/20 text-primary border border-primary/30 rounded-full hidden sm:block">
                         Beta
                     </span>
                 </Link>

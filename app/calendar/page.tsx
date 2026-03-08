@@ -185,17 +185,17 @@ export default function CalendarPage() {
     // Loading state
     if (isLoading || isAuthenticated === null) {
         return (
-            <div className="flex flex-col h-screen h-[100dvh] bg-[#F5F9F6] text-foreground">
+            <div className="flex flex-col h-screen h-[100dvh] bg-background text-foreground">
                 <Header title="Calendário" />
                 <div className="flex-1 flex items-center justify-center">
-                    <Loader2 size={32} className="text-[#8BA698] animate-spin" />
+                    <Loader2 size={32} className="text-muted-foreground animate-spin" />
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col h-screen h-[100dvh] bg-[#F5F9F6] text-foreground">
+        <div className="flex flex-col h-screen h-[100dvh] bg-background text-foreground">
             <Header title="Calendário" />
 
             <div className="flex-1 overflow-hidden">
@@ -224,18 +224,18 @@ export default function CalendarPage() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-lg font-serif font-medium text-[#1E2E25]">
+                                <h3 className="text-lg font-serif font-medium text-foreground">
                                     Novo Evento
                                 </h3>
                                 <button
                                     onClick={() => setShowAddModal(false)}
-                                    className="p-1.5 rounded-lg hover:bg-white/5 text-[#8BA698] hover:text-[#1E2E25] transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     <X size={18} strokeWidth={1.5} />
                                 </button>
                             </div>
 
-                            <p className="text-sm text-[#5A7565] mb-6 capitalize font-serif italic">
+                            <p className="text-sm text-muted-foreground mb-6 capitalize font-serif italic">
                                 {format(selectedDate, "EEEE, d 'de' MMMM", {
                                     locale: ptBR,
                                 })}
@@ -243,7 +243,7 @@ export default function CalendarPage() {
 
                             <div className="space-y-5">
                                 <div>
-                                    <label className="block text-xs font-medium text-[#5A7565] mb-2 uppercase tracking-wider">
+                                    <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
                                         Título
                                     </label>
                                     <input
@@ -255,26 +255,26 @@ export default function CalendarPage() {
                                             if (e.key === "Escape") setShowAddModal(false);
                                         }}
                                         placeholder="Nome do evento"
-                                        className="w-full px-4 py-3 bg-[#F5F9F6] border border-[#E2EDE6] rounded-xl text-[#1E2E25] text-sm focus:outline-none focus:border-[#4A9E6B]/50 transition-colors placeholder:text-[#8BA698]"
+                                        className="w-full px-4 py-3 bg-muted border border-border rounded-xl text-foreground text-sm focus:outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground"
                                         autoFocus
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-medium text-[#5A7565] mb-2 uppercase tracking-wider">
+                                    <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
                                         Horário (opcional)
                                     </label>
                                     <div className="relative">
                                         <Clock
                                             size={16}
                                             strokeWidth={1.5}
-                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8BA698]"
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                                         />
                                         <input
                                             type="time"
                                             value={newEventTime}
                                             onChange={(e) => setNewEventTime(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 bg-[#F5F9F6] border border-[#E2EDE6] rounded-xl text-[#1E2E25] text-sm focus:outline-none focus:border-[#4A9E6B]/50 transition-colors"
+                                            className="w-full pl-10 pr-4 py-3 bg-muted border border-border rounded-xl text-foreground text-sm focus:outline-none focus:border-primary/50 transition-colors"
                                         />
                                     </div>
                                 </div>
@@ -282,14 +282,14 @@ export default function CalendarPage() {
                                 <div className="flex gap-3 pt-4">
                                     <button
                                         onClick={() => setShowAddModal(false)}
-                                        className="flex-1 px-4 py-2.5 border border-[#E2EDE6] rounded-xl text-[#5A7565] text-sm font-medium hover:bg-[#F5F9F6] hover:text-[#1E2E25] transition-colors"
+                                        className="flex-1 px-4 py-2.5 border border-border rounded-xl text-muted-foreground text-sm font-medium hover:bg-muted hover:text-foreground transition-colors"
                                     >
                                         Cancelar
                                     </button>
                                     <button
                                         onClick={handleAddEvent}
                                         disabled={!newEventTitle.trim() || isPending}
-                                        className="flex-1 px-4 py-2.5 bg-[#4A9E6B] text-white rounded-xl text-sm font-medium hover:bg-[#3B8558] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
                                         {isPending ? (
                                             <Loader2 size={16} className="animate-spin" />
@@ -347,21 +347,21 @@ export default function CalendarPage() {
                                         >
                                             {selectedEvent.type === "task" ? "Tarefa" : "Evento"}
                                         </span>
-                                        <h3 className="text-xl font-serif font-medium text-[#1E2E25] mt-0.5">
+                                        <h3 className="text-xl font-serif font-medium text-foreground mt-0.5">
                                             {selectedEvent.name}
                                         </h3>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setSelectedEvent(null)}
-                                    className="p-1.5 rounded-lg hover:bg-white/5 text-[#8BA698] hover:text-[#1E2E25] transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     <X size={18} strokeWidth={1.5} />
                                 </button>
                             </div>
 
                             {selectedEvent.time && (
-                                <p className="text-sm text-[#5A7565] mb-6 flex items-center gap-2 font-sans bg-[#F5F9F6] p-3 rounded-xl border border-[#E2EDE6]">
+                                <p className="text-sm text-muted-foreground mb-6 flex items-center gap-2 font-sans bg-muted p-3 rounded-xl border border-border">
                                     <Clock size={16} strokeWidth={1.5} />
                                     {selectedEvent.time}
                                 </p>
@@ -385,7 +385,7 @@ export default function CalendarPage() {
                             )}
 
                             {selectedEvent.type === "task" && (
-                                <p className="text-sm text-[#8BA698] text-center font-sans">
+                                <p className="text-sm text-muted-foreground text-center font-sans">
                                     Gerencie esta tarefa no Kanban
                                 </p>
                             )}

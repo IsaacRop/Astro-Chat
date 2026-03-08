@@ -28,13 +28,13 @@ export function MobileChatSidebar({ chats }: MobileChatSidebarProps) {
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
                 <button
-                    className="flex md:hidden items-center justify-center w-10 h-10 rounded-lg bg-[#EDF4EF] hover:bg-[#DFF0E5] text-[#5A7565] hover:text-[#1E2E25] transition-colors border border-[#E2EDE6]"
+                    className="flex md:hidden items-center justify-center w-10 h-10 rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors border border-border"
                     aria-label="Histórico de conversas"
                 >
                     <List size={18} />
                 </button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[280px] p-0 bg-white border-r border-[#E2EDE6]">
+            <SheetContent side="left" className="w-[280px] p-0 bg-card border-r border-border">
                 <SheetHeader className="sr-only">
                     <SheetTitle>Histórico de Conversas</SheetTitle>
                 </SheetHeader>

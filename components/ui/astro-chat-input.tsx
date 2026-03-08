@@ -46,7 +46,7 @@ const FilePreviewCard: React.FC<FilePreviewCardProps> = ({
             className={cn(
                 "relative group flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden",
                 "border border-border bg-card animate-in fade-in-0 slide-in-from-bottom-2",
-                "transition-all hover:border-accent-purple/50"
+                "transition-all hover:border-primary/50"
             )}
         >
             {isImage ? (

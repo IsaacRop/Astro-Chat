@@ -43,7 +43,6 @@
   --color-border-light: var(--border-light);
 
   /* ── Feature accent palette ── */
-  --color-accent-purple: var(--accent-purple);
   --color-accent-blue: var(--accent-blue);
   --color-accent-green: var(--accent-green);
   --color-accent-yellow: var(--accent-yellow);
@@ -64,20 +63,20 @@
   --primary: #4A9E6B;
   --primary-foreground: #FFFFFF;
 
-  --secondary: #EDF4EF;
+  --secondary: #E2EDE6;
   --secondary-foreground: #1E2E25;
 
   --muted: #EDF4EF;
   --muted-foreground: #8BA698;
 
-  --accent: #DFF0E5;
-  --accent-foreground: #4A9E6B;
+  --accent: #F4F4F5;
+  --accent-foreground: #1E2E25;
 
   --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
+  --destructive-foreground: #FAFAFA;
 
   --border: #E2EDE6;
-  --input: #D0E0D6;
+  --input: #E2EDE6;
   --ring: #4A9E6B;
 
   /* ── V2 Design System ── */
@@ -94,7 +93,6 @@
   --border-light: #E2EDE6;
 
   /* ── Feature accent palette ── */
-  --accent-purple: oklch(0.6 0.2 290);
   --accent-blue:   oklch(0.6 0.18 240);
   --accent-green:  oklch(0.65 0.18 145);
   --accent-yellow: oklch(0.8 0.18 85);
@@ -102,26 +100,26 @@
 }
 
 .dark {
-  /* ── shadcn/ui — Dark (Deep Green) ── */
-  --background: #0F1A14;
+  /* ── shadcn/ui — Dark (Deep Green #235C38 & #1A1A1A) ── */
+  --background: #1A1A1A;
   --foreground: #D0E0D6;
 
-  --card: #1A2B20;
+  --card: #1A1A1A;
   --card-foreground: #D0E0D6;
 
-  --popover: #1A2B20;
+  --popover: #1A1A1A;
   --popover-foreground: #D0E0D6;
 
-  --primary: #4A9E6B;
+  --primary: #235C38;
   --primary-foreground: #FFFFFF;
 
-  --secondary: #1E2E25;
+  --secondary: #2A3E32;
   --secondary-foreground: #D0E0D6;
 
-  --muted: #1E2E25;
+  --muted: #2A3E32;
   --muted-foreground: #6B8574;
 
-  --accent: #1E2E25;
+  --accent: #2A3E32;
   --accent-foreground: #DFF0E5;
 
   --destructive: #7F1D1D;
@@ -129,23 +127,22 @@
 
   --border: #2A3E32;
   --input: #2A3E32;
-  --ring: #4A9E6B;
+  --ring: #235C38;
 
   /* ── V2 Design System (dark) ── */
-  --sidebar: #111D16;
-  --sidebar-hover: #1E2E25;
+  --sidebar: #1A1A1A;
+  --sidebar-hover: #2A3E32;
   --sidebar-text: #D0E0D6;
   --sidebar-muted: #6B8574;
-  --accent-brand: #4A9E6B;
-  --accent-dark: #3B8558;
-  --accent-light: #1E2E25;
-  --surface-alt: #1A2B20;
+  --accent-brand: #235C38;
+  --accent-dark: #1C4D2E;
+  --accent-light: #2A3E32;
+  --surface-alt: #1A1A1A;
   --text-sec: #8BA698;
   --text-muted: #6B8574;
   --border-light: #2A3E32;
 
   /* ── Feature accent palette (dark) ── */
-  --accent-purple: oklch(0.55 0.2 290);
   --accent-blue:   oklch(0.55 0.18 240);
   --accent-green:  oklch(0.6 0.18 145);
   --accent-yellow: oklch(0.75 0.18 85);
@@ -191,7 +188,7 @@
   .loader {
     width: 48px;
     height: 48px;
-    border: 4px solid var(--accent-purple);
+    border: 4px solid var(--primary);
     border-bottom-color: transparent;
     border-radius: 50%;
     display: inline-block;
