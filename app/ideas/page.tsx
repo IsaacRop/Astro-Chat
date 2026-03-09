@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
 import { Lightbulb, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { useEffect, useState, useCallback, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";

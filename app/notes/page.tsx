@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
 import { FileText, Plus, X, Trash2, Bold, Italic, List, Heading, Loader2, Check, Cloud } from "lucide-react";
 import { useEffect, useState, useCallback, useRef, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";

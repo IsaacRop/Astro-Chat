@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Bell, HelpCircle, Settings, LogOut, User, CreditCard, SlidersHorizontal } from "lucide-react";
+import { Search, LogOut, User, CreditCard, Home, HelpCircle, Settings } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import { signOut } from "@/app/actions/profile";
+import { SearchDialog } from "@/components/search-dialog";
 
 interface SidebarUser { name: string; email: string; initials: string; }
 
@@ -50,6 +51,7 @@ function SidebarIconButton({ icon, tooltip, onClick, href, badge }: IconButtonPr
 export function AppSidebar() {
     const [user, setUser] = useState<SidebarUser | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -71,18 +73,17 @@ export function AppSidebar() {
     }, []);
 
     return (
+        <>
         <aside className="hidden md:flex flex-col items-center w-[68px] h-screen bg-[#1E2E25] border-r border-[#2A3E32] py-3 gap-1 flex-shrink-0 z-40">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-[#4A9E6B] to-[#5B9E9E] shadow-md mb-2 flex-shrink-0">
                 <span className="text-white font-serif font-bold text-lg leading-none select-none">O</span>
             </div>
             <div className="flex flex-col items-center gap-1 mt-1">
-                <SidebarIconButton icon={<Search size={18} />} tooltip="Buscar ⌘K" />
-                <SidebarIconButton icon={<Bell size={18} />} tooltip="Notificações" badge />
-                <SidebarIconButton icon={<HelpCircle size={18} />} tooltip="Ajuda" />
+                <SidebarIconButton icon={<Home size={18} />} tooltip="Home" href="/" />
+                <SidebarIconButton icon={<Search size={18} />} tooltip="Buscar ⌘K" onClick={() => setSearchOpen(true)} />
             </div>
             <div className="flex-1" />
             <div className="flex flex-col items-center gap-1">
-                <SidebarIconButton icon={<Settings size={18} />} tooltip="Configurações" href="/settings" />
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setDropdownOpen((v) => !v)}
@@ -106,9 +107,9 @@ export function AppSidebar() {
                                     <span className="inline-block mt-1.5 px-1.5 py-0.5 bg-primary/20 text-primary text-[10px] font-semibold rounded-full border border-primary/30">Plano Gratuito</span>
                                 </div>
                                 <div className="py-1">
-                                    <DropdownLink href="/settings" icon={<User size={14} />} label="Perfil" onClick={() => setDropdownOpen(false)} />
-                                    <DropdownLink href="/settings" icon={<CreditCard size={14} />} label="Assinatura" onClick={() => setDropdownOpen(false)} />
-                                    <DropdownLink href="/settings" icon={<SlidersHorizontal size={14} />} label="Preferências" onClick={() => setDropdownOpen(false)} />
+                                    <DropdownLink href="/profile" icon={<User size={14} />} label="Perfil" onClick={() => setDropdownOpen(false)} />
+                                    <DropdownLink href="/settings" icon={<Settings size={14} />} label="Configurações" onClick={() => setDropdownOpen(false)} />
+                                    <DropdownLink href="/help" icon={<HelpCircle size={14} />} label="Ajuda" onClick={() => setDropdownOpen(false)} />
                                 </div>
                                 <div className="border-t border-border py-1">
                                     <form action={signOut}>
@@ -124,6 +125,8 @@ export function AppSidebar() {
                 </div>
             </div>
         </aside>
+        <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+        </>
     );
 }
 

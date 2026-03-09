@@ -40,7 +40,7 @@ export default async function RootLayout({
   );
 
   const ProfileLink = () => (
-    <Link href="/dashboard" className="h-[34px] flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors">
+    <Link href="/profile" className="h-[34px] flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors">
       Acessar Perfil
     </Link>
   );

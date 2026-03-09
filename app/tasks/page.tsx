@@ -179,6 +179,7 @@ export default function TasksPage() {
     }
 
             {/* Mobile: Vertical Stack / Desktop: Horizontal Kanban */}
+            return (
             <main className="flex-1 p-4 md:p-8 overflow-x-auto">
                 <div className="flex flex-col md:flex-row gap-6 md:gap-8 md:min-w-max h-full">
                     {columns.map((column) => (
@@ -352,4 +353,5 @@ export default function TasksPage() {
                     ))}
                 </div>
             </main>
+        );
 }
