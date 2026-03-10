@@ -65,7 +65,7 @@ function SidebarContent({
     dropdownOpen: boolean;
     setDropdownOpen: (v: boolean | ((prev: boolean) => boolean)) => void;
     setSearchOpen: (v: boolean) => void;
-    dropdownRef: React.RefObject<HTMLDivElement>;
+    dropdownRef: React.RefObject<HTMLDivElement | null>;
     onClose?: () => void;
 }) {
     return (
