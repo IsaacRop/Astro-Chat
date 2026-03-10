@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
     MessageSquare, BookOpen, FileText, Lightbulb, Star, CheckSquare,
-    CalendarDays, Network, TrendingUp, Flame, Send, StickyNote, ListTodo
+    CalendarDays, Send, StickyNote, ListTodo
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useAuthModal } from "@/components/auth/auth-modal-provider";
 
 interface Stats {
     notesCount: number;
@@ -62,34 +63,56 @@ function StatCard({ label, value, trend, trendColor, delay }: {
 }) {
     return (
         <motion.div
-            className="flex-1 min-w-0 bg-card border border-border rounded-2xl p-5"
+            className="w-full bg-card border border-border rounded-2xl p-3 md:p-5 overflow-hidden"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay }}
         >
-            <p className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">{label}</p>
-            <div className="flex items-baseline gap-2 mt-2">
-                <span className="text-foreground text-[32px] leading-none font-bold">{value}</span>
-                {trend && <span className={"text-xs font-semibold whitespace-nowrap " + trendColor}>{trend}</span>}
+            <p className="text-muted-foreground text-[10px] md:text-[11px] font-bold tracking-wider uppercase truncate">{label}</p>
+            <div className="flex items-baseline gap-1.5 mt-1.5 md:mt-2 min-w-0">
+                <span className="text-foreground text-2xl md:text-[32px] leading-none font-bold">{value}</span>
+                {trend && <span className={"hidden sm:inline text-xs font-semibold whitespace-nowrap " + trendColor}>{trend}</span>}
             </div>
         </motion.div>
     );
 }
 
+/**
+ * Feature card — behaves as a Link for authenticated users,
+ * and as an auth trigger for guests.
+ */
 function FeatureCard({ f, delay }: { f: typeof features[0]; delay: number }) {
     const Icon = f.icon;
+    const { requireAuth, isAuthenticated } = useAuthModal();
+    const router = useRouter();
+
     return (
-        <motion.div custom={delay} variants={item} initial="hidden" animate="visible">
-            <Link
-                href={f.href}
-                className={"flex flex-col items-start p-5 bg-card border border-border rounded-2xl transition-all duration-200 group hover:-translate-y-1 hover:shadow-md h-full"}
-            >
-                <div className={"flex items-center justify-center w-12 h-12 rounded-xl mb-4 " + f.bg}>
-                    <Icon size={22} className={f.text} strokeWidth={1.8} />
-                </div>
-                <h3 className="text-foreground font-bold text-[15px]">{f.label}</h3>
-                <p className="text-muted-foreground text-[13px] mt-1">{f.desc}</p>
-            </Link>
+        <motion.div custom={delay} variants={item} initial="hidden" animate="visible" className="h-full">
+            {isAuthenticated ? (
+                // Authenticated: fast client-side navigation via Link
+                <Link
+                    href={f.href}
+                    className="flex flex-col items-start p-4 md:p-5 bg-card border border-border rounded-2xl transition-all duration-200 group hover:-translate-y-1 hover:shadow-md h-full"
+                >
+                    <div className={"flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl mb-3 md:mb-4 " + f.bg}>
+                        <Icon size={20} className={f.text} strokeWidth={1.8} />
+                    </div>
+                    <h3 className="text-foreground font-bold text-[14px] md:text-[15px]">{f.label}</h3>
+                    <p className="text-muted-foreground text-[12px] md:text-[13px] mt-1">{f.desc}</p>
+                </Link>
+            ) : (
+                // Guest: show card normally, gate the click
+                <button
+                    onClick={() => requireAuth(() => router.push(f.href))}
+                    className="flex flex-col items-start p-4 md:p-5 bg-card border border-border rounded-2xl transition-all duration-200 group hover:-translate-y-1 hover:shadow-md h-full w-full text-left"
+                >
+                    <div className={"flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl mb-3 md:mb-4 " + f.bg}>
+                        <Icon size={20} className={f.text} strokeWidth={1.8} />
+                    </div>
+                    <h3 className="text-foreground font-bold text-[14px] md:text-[15px]">{f.label}</h3>
+                    <p className="text-muted-foreground text-[12px] md:text-[13px] mt-1">{f.desc}</p>
+                </button>
+            )}
         </motion.div>
     );
 }
@@ -108,7 +131,7 @@ function ActivityRow({ act, delay }: { act: ActivityItem; delay: number }) {
     })();
     return (
         <motion.div custom={delay} variants={item} initial="hidden" animate="visible">
-            <Link href={act.href} className="flex items-center gap-3 px-4 py-3 hover:bg-accent/10 transition-colors duration-150 group">
+            <Link href={act.href} className="flex items-center gap-2 md:gap-3 px-3 py-2.5 md:px-4 md:py-3 hover:bg-accent/10 transition-colors duration-150 group w-full min-w-0">
                 <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-accent/5 flex-shrink-0">
                     {typeIcon[act.type] ?? typeIcon.note}
                 </span>
@@ -122,23 +145,45 @@ function ActivityRow({ act, delay }: { act: ActivityItem; delay: number }) {
     );
 }
 
+/**
+ * Mini chat widget on the home dashboard.
+ * For guests: any interaction with the input opens the auth modal.
+ * For authenticated users: submitting navigates to the full chat page.
+ */
 function ChatWidget({ latestChatId, userName }: { latestChatId: string | null; userName: string }) {
     const router = useRouter();
+    const { requireAuth, isAuthenticated } = useAuthModal();
     const [msg, setMsg] = useState("");
+
     const submit = () => {
         if (!msg.trim()) return;
-        router.push("/dashboard/chat");
+        requireAuth(() => router.push("/dashboard/chat"));
     };
+
+    const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+        if (!isAuthenticated) {
+            // Prevent the input from staying focused so the modal doesn't compete
+            e.target.blur();
+            requireAuth();
+        }
+    };
+
+    const handleInputClick = () => {
+        if (!isAuthenticated) {
+            requireAuth();
+        }
+    };
+
     return (
         <div className="bg-card border border-border rounded-2xl flex flex-col h-full overflow-hidden">
-            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-border">
+            <div className="flex items-center gap-2.5 px-4 py-3 md:px-5 md:py-4 border-b border-border">
                 <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-primary" />
                     <span className="font-bold text-[15px] text-foreground">Otto</span>
                 </div>
                 <span className="text-[13px] font-medium text-muted-foreground">Assistente de IA</span>
             </div>
-            <div className="flex-1 flex flex-col gap-3 p-5 overflow-y-auto bg-background">
+            <div className="flex-1 flex flex-col gap-3 p-3 md:p-5 overflow-y-auto bg-background">
                 <div className="flex justify-start">
                     <div className="max-w-[85%] bg-accent/10 text-foreground text-[14px] px-4 py-3 rounded-2xl rounded-tl-sm leading-relaxed">
                         Olá {userName?.split(' ')[0] || 'Isaac'}! Como posso ajudar você hoje?
@@ -152,16 +197,22 @@ function ChatWidget({ latestChatId, userName }: { latestChatId: string | null; u
                     </div>
                 )}
             </div>
-            <div className="p-4 border-t border-border bg-background">
+            <div className="p-3 md:p-4 border-t border-border bg-background">
                 <div className="flex items-center gap-2 bg-accent/5 border border-border rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/40 transition-all">
                     <input
                         value={msg}
                         onChange={(e) => setMsg(e.target.value)}
+                        onFocus={handleInputFocus}
+                        onClick={handleInputClick}
                         onKeyDown={(e) => e.key === "Enter" && submit()}
                         placeholder="Pergunte ao Otto..."
                         className="flex-1 bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground outline-none"
+                        readOnly={!isAuthenticated}
                     />
-                    <button onClick={submit} className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex-shrink-0">
+                    <button
+                        onClick={submit}
+                        className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex-shrink-0"
+                    >
                         <Send size={15} />
                     </button>
                 </div>
@@ -186,25 +237,25 @@ export function DashboardHome({ userName, stats, recentActivity, latestChatId }:
     ];
 
     return (
-        <main className="p-6 min-h-full bg-background space-y-5">
+        <main className="p-4 md:p-6 lg:p-8 min-h-full bg-background space-y-5">
 
             {/* Greeting */}
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-                <h1 className="font-serif text-2xl font-bold text-foreground">
+                <h1 className="font-serif text-xl md:text-2xl font-bold text-foreground">
                     {greeting}, {userName}
                 </h1>
                 <p className="text-muted-foreground text-sm mt-1">Aqui está um resumo do seu espaço de trabalho</p>
             </motion.div>
 
             {/* Stats row */}
-            <div className="flex gap-3">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
                 {statCards.map((s, i) => (
                     <StatCard key={s.label} label={s.label} value={s.value} trend={s.trend} trendColor={s.trendColor} delay={0.1 + i * 0.07} />
                 ))}
             </div>
 
             {/* Two columns */}
-            <div className="flex flex-col lg:flex-row gap-8 mt-10">
+            <div className="flex flex-col lg:flex-row gap-5 mt-5 md:gap-8 md:mt-10">
 
                 {/* Left: Chat widget */}
                 <motion.div
@@ -214,7 +265,7 @@ export function DashboardHome({ userName, stats, recentActivity, latestChatId }:
                     transition={{ duration: 0.35, delay: 0.2 }}
                 >
                     <h2 className="text-foreground font-bold text-[17px] mb-4">Assistente</h2>
-                    <div className="flex-1 max-h-[500px]">
+                    <div className="flex-1 max-h-[300px] md:max-h-[500px]">
                         <ChatWidget latestChatId={latestChatId} userName={userName} />
                     </div>
                 </motion.div>
@@ -227,7 +278,7 @@ export function DashboardHome({ userName, stats, recentActivity, latestChatId }:
                     transition={{ duration: 0.35, delay: 0.25 }}
                 >
                     <h2 className="text-foreground font-bold text-[17px] mb-4">Acesso rápido</h2>
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                         {features.filter(f => f.id !== "chat").map((f, i) => (
                             <FeatureCard key={f.id} f={f} delay={0.28 + i * 0.06} />
                         ))}
@@ -243,7 +294,7 @@ export function DashboardHome({ userName, stats, recentActivity, latestChatId }:
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35, delay: 0.35 }}
                 >
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                    <div className="flex items-center justify-between px-3 py-2.5 md:px-4 md:py-3 border-b border-border">
                         <h2 className="text-sm font-semibold text-foreground">Atividade recente</h2>
                         <span className="text-xs text-muted-foreground">{recentActivity.length} itens</span>
                     </div>

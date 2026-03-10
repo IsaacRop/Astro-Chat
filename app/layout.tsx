@@ -4,8 +4,8 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
-import { AppSidebar } from "@/components/app-sidebar";
-import { TopNav } from "@/components/top-nav";
+import { LayoutShell } from "@/components/layout-shell";
+import { AuthModalProvider } from "@/components/auth/auth-modal-provider";
 import { createClient } from "@/utils/supabase/server";
 import { LoginButton } from "@/components/LoginButton";
 import Link from "next/link";
@@ -56,16 +56,12 @@ export default async function RootLayout({
           defaultTheme="system"
           enableSystem
         >
-          <div className="flex h-screen overflow-hidden bg-background">
-            <AppSidebar />
-            <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative">
-              <TopNav rightElement={!user ? <HeaderLogin /> : <ProfileLink />} />
-              <div className="flex-1 overflow-auto relative">
-                {children}
-              </div>
-            </div>
-          </div>
-          <Toaster />
+          <AuthModalProvider initialIsAuthenticated={!!user}>
+            <LayoutShell rightElement={!user ? <HeaderLogin /> : <ProfileLink />}>
+              {children}
+            </LayoutShell>
+            <Toaster />
+          </AuthModalProvider>
         </ThemeProvider>
       </body>
     </html >

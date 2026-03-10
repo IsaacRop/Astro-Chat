@@ -181,7 +181,7 @@ export default function TasksPage() {
             {/* Mobile: Vertical Stack / Desktop: Horizontal Kanban */}
             return (
             <main className="flex-1 p-4 md:p-8 overflow-x-auto">
-                <div className="flex flex-col md:flex-row gap-6 md:gap-8 md:min-w-max h-full">
+                <div className="flex flex-col md:flex-row gap-6 md:gap-8 lg:min-w-max h-full">
                     {columns.map((column) => (
                         <div
                             key={column.id}
@@ -204,7 +204,7 @@ export default function TasksPage() {
                                 <button
                                     onClick={() => setAddingToColumn(column.id)}
                                     disabled={isPending}
-                                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                                    className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                                 >
                                     <Plus size={18} strokeWidth={1.5} />
                                 </button>
@@ -240,7 +240,7 @@ export default function TasksPage() {
                                                     }}
                                                     placeholder="Nova tarefa..."
                                                     autoFocus
-                                                    className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:border-primary/50 transition-colors"
+                                                    className="w-full px-3 py-2 min-h-[44px] bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:border-primary/50 transition-colors"
                                                 />
                                                 <div className="flex items-center gap-2">
                                                     <Calendar size={14} className="text-muted-foreground flex-shrink-0" strokeWidth={1.5} />
@@ -249,7 +249,7 @@ export default function TasksPage() {
                                                         value={newTaskDate}
                                                         onChange={(e) => setNewTaskDate(e.target.value)}
                                                         min={today}
-                                                        className="flex-1 px-2 py-1.5 bg-muted border border-border rounded-lg text-foreground/80 text-xs focus:outline-none focus:border-primary/50 transition-colors"
+                                                        className="flex-1 px-2 py-2 min-h-[44px] bg-muted border border-border rounded-lg text-foreground/80 text-xs focus:outline-none focus:border-primary/50 transition-colors"
                                                         placeholder="Data (opcional)"
                                                     />
                                                 </div>
@@ -257,13 +257,13 @@ export default function TasksPage() {
                                                     <button
                                                         onClick={() => handleAddTask(column.id)}
                                                         disabled={isPending || !newTaskTitle.trim()}
-                                                        className="flex-1 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                                                        className="flex-1 px-3 py-2 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
                                                     >
                                                         {isPending ? <Loader2 size={14} className="animate-spin mx-auto" /> : "Adicionar"}
                                                     </button>
                                                     <button
                                                         onClick={() => setAddingToColumn(null)}
-                                                        className="px-3 py-1.5 rounded-lg border border-border text-muted-foreground text-sm hover:bg-muted hover:text-foreground transition-colors"
+                                                        className="px-3 py-2 min-h-[44px] rounded-lg border border-border text-muted-foreground text-sm hover:bg-muted hover:text-foreground transition-colors"
                                                     >
                                                         Cancelar
                                                     </button>
@@ -334,7 +334,7 @@ export default function TasksPage() {
                                             <button
                                                 onClick={() => handleDeleteTask(task.id)}
                                                 disabled={isPending}
-                                                className="p-1.5 rounded-lg md:opacity-0 md:group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all flex-shrink-0 absolute top-2 right-2 disabled:opacity-50"
+                                                className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all flex-shrink-0 absolute top-2 right-2 disabled:opacity-50"
                                             >
                                                 <Trash2 size={14} strokeWidth={1.5} />
                                             </button>

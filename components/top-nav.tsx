@@ -55,7 +55,7 @@ function NavTab({ tab, isActive }: { tab: TabDef; isActive: boolean }) {
     return (
         <Link
             href={tab.href}
-            className={"relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 select-none " +
+            className={"relative flex items-center gap-1.5 px-3 py-2 min-h-[44px] text-sm font-medium rounded-lg transition-colors duration-150 select-none shrink-0 " +
                 (isActive
                     ? tab.textColor + " " + tab.bgColor
                     : "text-muted-foreground hover:bg-muted/50 hover:text-foreground")}
@@ -81,11 +81,16 @@ function NavTab({ tab, isActive }: { tab: TabDef; isActive: boolean }) {
     );
 }
 
-export function TopNav({ rightElement }: { rightElement?: React.ReactNode } = {}) {
+interface TopNavProps {
+    rightElement?: React.ReactNode;
+    onMobileMenuToggle?: () => void;
+}
+
+export function TopNav({ rightElement, onMobileMenuToggle }: TopNavProps = {}) {
     const isActive = useActiveTab();
 
     return (
-        <header className="flex items-center h-[52px] px-4 bg-background border-b border-border flex-shrink-0 gap-4">
+        <header className="hidden md:flex items-center h-[52px] px-3 md:px-4 bg-background border-b border-border flex-shrink-0 gap-2 md:gap-4">
             {/* Left: Brand */}
             <div className="flex items-center gap-2 flex-shrink-0">
                 <span className="font-serif font-bold text-xl text-foreground leading-none">Otto</span>
@@ -94,23 +99,25 @@ export function TopNav({ rightElement }: { rightElement?: React.ReactNode } = {}
                 </span>
             </div>
 
-            {/* Divider */}
-            <div className="w-px h-6 bg-border flex-shrink-0" />
+            {/* Divider — hidden on mobile */}
+            <div className="hidden md:block w-px h-6 bg-border flex-shrink-0" />
 
-            {/* Center: Feature tabs */}
+            {/* Center: Feature tabs — horizontally scrollable on mobile */}
             <nav className="flex items-center gap-0.5 flex-1 overflow-x-auto scrollbar-none">
                 {tabs.map((tab) => (
                     <NavTab key={tab.id} tab={tab} isActive={isActive(tab.href)} />
                 ))}
             </nav>
 
-            {/* Right: Feedback & Additions */}
+            {/* Right: Feedback (desktop only) & right element */}
             <div className="flex-shrink-0 flex items-center gap-2">
-                <FeedbackDialog>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted hover:text-foreground transition-colors duration-150">
-                        Feedback
-                    </button>
-                </FeedbackDialog>
+                <div className="hidden md:flex">
+                    <FeedbackDialog>
+                        <button className="flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted hover:text-foreground transition-colors duration-150">
+                            Feedback
+                        </button>
+                    </FeedbackDialog>
+                </div>
                 {rightElement}
             </div>
         </header>

@@ -226,7 +226,7 @@ Nota gerada a partir do nó do grafo.`;
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 ml-2"
+                                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 ml-2"
                             >
                                 <X size={20} />
                             </button>
@@ -239,7 +239,7 @@ Nota gerada a partir do nó do grafo.`;
                                 <Link
                                     href={`/dashboard/chat/${node.chatId}`}
                                     onClick={onClose}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 md:px-5 py-3 md:py-3.5 rounded-full bg-gradient-to-r from-accent-blue to-primary text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-accent-blue/25 text-sm"
+                                    className="flex-1 flex items-center justify-center gap-2 px-4 md:px-5 py-3 md:py-3.5 min-h-[44px] rounded-full bg-gradient-to-r from-accent-blue to-primary text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-accent-blue/25 text-sm"
                                 >
                                     <MessageSquare size={18} />
                                     Ir para o Chat
@@ -247,7 +247,7 @@ Nota gerada a partir do nó do grafo.`;
 
                                 <button
                                     onClick={handleGenerateNote}
-                                    className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-lg font-medium transition-all shadow-sm text-sm ${noteGenerated
+                                    className={`flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 min-h-[44px] rounded-lg font-medium transition-all shadow-sm text-sm ${noteGenerated
                                         ? 'bg-accent-green text-background'
                                         : 'bg-accent-yellow text-background hover:bg-accent-yellow/90'
                                         }`}
@@ -300,7 +300,7 @@ Use Markdown para formatação:
                                 {!showDeleteConfirm ? (
                                     <button
                                         onClick={() => setShowDeleteConfirm(true)}
-                                        className="w-full flex items-center justify-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors text-xs md:text-sm"
+                                        className="w-full flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 min-h-[44px] rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors text-xs md:text-sm"
                                     >
                                         <Trash2 size={14} className="md:w-4 md:h-4" />
                                         Excluir Nó e Chat
@@ -313,13 +313,13 @@ Use Markdown para formatação:
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => setShowDeleteConfirm(false)}
-                                                className="flex-1 px-3 py-2 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors text-xs md:text-sm"
+                                                className="flex-1 px-3 py-2.5 min-h-[44px] rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors text-xs md:text-sm"
                                             >
                                                 Cancelar
                                             </button>
                                             <button
                                                 onClick={handleDelete}
-                                                className="flex-1 px-3 py-2 rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors text-xs md:text-sm font-medium"
+                                                className="flex-1 px-3 py-2.5 min-h-[44px] rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors text-xs md:text-sm font-medium"
                                             >
                                                 Confirmar
                                             </button>

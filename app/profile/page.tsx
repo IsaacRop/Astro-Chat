@@ -55,7 +55,7 @@ export default function ProfilePage() {
             <main className="flex-1 p-4 md:p-8 max-w-2xl mx-auto w-full space-y-8">
                 {/* Cabeçalho do Perfil */}
                 <section className="bg-card border border-border rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left shadow-sm">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#4A9E6B] to-[#3B8558] text-white flex items-center justify-center text-3xl font-bold uppercase shadow-inner flex-shrink-0">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-[#4A9E6B] to-[#3B8558] text-white flex items-center justify-center text-2xl sm:text-3xl font-bold uppercase shadow-inner flex-shrink-0">
                         {initials}
                     </div>
                     <div className="space-y-2 flex-1">

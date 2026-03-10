@@ -1,5 +1,6 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { openai } from '@ai-sdk/openai'
+import { createClient } from "@/utils/supabase/server"
 
 // System prompt for Otto - the educational AI assistant (optimized for conciseness)
 const SYSTEM_PROMPT = `Você é o Otto, um assistente de inteligência artificial especializado em tutoria educacional.
@@ -29,6 +30,7 @@ RESTRIÇÃO CRÍTICA:
 // Safety & Cost Configuration
 const MAX_CONTEXT_MESSAGES = 6;
 const MAX_OUTPUT_TOKENS = 500;
+const FREE_DAILY_LIMIT = 10;
 
 // Allow streaming responses up to 60 seconds
 export const maxDuration = 60;
@@ -41,6 +43,51 @@ export async function POST(request: Request) {
     console.log('[Chat API] === REQUEST STARTED ===');
 
     try {
+        // ── Paywall Gate ─────────────────────────────────────────────────────
+        const supabase = await createClient();
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('plan_tier, daily_message_count, last_message_date')
+            .eq('id', user.id)
+            .single();
+
+        const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+        const planTier = profile?.plan_tier ?? 'free';
+        let dailyCount = profile?.daily_message_count ?? 0;
+
+        // Reset counter if the stored date is not today
+        if (profile?.last_message_date !== today) {
+            dailyCount = 0;
+        }
+
+        // Block free-tier users who have hit the daily limit
+        if (planTier === 'free' && dailyCount >= FREE_DAILY_LIMIT) {
+            console.log(`[Chat API] Paywall triggered for user ${user.id} (count: ${dailyCount})`);
+            return new Response(JSON.stringify({ error: 'PAYWALL_LIMIT_REACHED' }), {
+                status: 403,
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
+
+        // Increment usage counter (fire-and-forget — don't block the stream)
+        supabase
+            .from('profiles')
+            .update({ daily_message_count: dailyCount + 1, last_message_date: today })
+            .eq('id', user.id)
+            .then(() => {
+                console.log(`[Chat API] Updated message count to ${dailyCount + 1} for user ${user.id}`);
+            });
+        // ─────────────────────────────────────────────────────────────────────
+
         const body = await request.json();
         const rawMessages = body.messages || [];
 

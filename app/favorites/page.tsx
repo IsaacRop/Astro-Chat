@@ -183,7 +183,7 @@ export default function FavoritesPage() {
                                     <select
                                         value={newFavorite.category}
                                         onChange={(e) => setNewFavorite({ ...newFavorite, category: e.target.value as BookmarkCategory })}
-                                        className="px-4 py-3 bg-muted border border-border rounded-xl text-foreground text-sm focus:outline-none focus:border-primary/50 transition-colors appearance-none min-w-[150px]"
+                                        className="w-full md:min-w-[150px] px-4 py-3 bg-muted border border-border rounded-xl text-foreground text-sm focus:outline-none focus:border-primary/50 transition-colors appearance-none"
                                     >
                                         {Object.entries(categoryLabels).map(([key, label]) => (
                                             <option key={key} value={key}>{label}</option>
@@ -194,13 +194,13 @@ export default function FavoritesPage() {
                                     <button
                                         onClick={handleAddFavorite}
                                         disabled={isPending || !newFavorite.title.trim()}
-                                        className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                                        className="flex-1 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
                                     >
                                         {isPending ? <Loader2 size={16} className="animate-spin mx-auto" /> : "Adicionar Favorito"}
                                     </button>
                                     <button
                                         onClick={() => setShowAddForm(false)}
-                                        className="px-4 py-2.5 rounded-xl border border-border text-muted-foreground text-sm hover:bg-muted hover:text-foreground transition-colors"
+                                        className="px-4 py-2.5 min-h-[44px] rounded-xl border border-border text-muted-foreground text-sm hover:bg-muted hover:text-foreground transition-colors"
                                     >
                                         Cancelar
                                     </button>
@@ -214,7 +214,7 @@ export default function FavoritesPage() {
                 {favorites.length === 0 && !isLoading && (
                     <div className="flex flex-col items-center justify-center py-20 md:py-32 text-center px-4">
                         <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-card border border-border flex items-center justify-center mb-6">
-                            <Star size={32} className="md:w-10 md:h-10 text-muted-foreground" strokeWidth={1.2} />
+                            <Star size={24} className="w-6 h-6 md:w-10 md:h-10 text-muted-foreground" strokeWidth={1.2} />
                         </div>
                         <h2 className="text-xl md:text-2xl font-serif font-medium text-foreground mb-3">Sem Favoritos</h2>
                         <p className="text-muted-foreground max-w-sm text-sm md:text-base font-sans leading-relaxed">
@@ -257,7 +257,7 @@ export default function FavoritesPage() {
                                                 <Link
                                                     href={favorite.url}
                                                     target="_blank"
-                                                    className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+                                                    className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
                                                 >
                                                     <ExternalLink size={14} strokeWidth={1.5} />
                                                 </Link>
@@ -265,7 +265,7 @@ export default function FavoritesPage() {
                                             <button
                                                 onClick={() => handleDeleteFavorite(favorite.id)}
                                                 disabled={isPending}
-                                                className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all disabled:opacity-50"
+                                                className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all disabled:opacity-50"
                                             >
                                                 <Trash2 size={14} strokeWidth={1.5} />
                                             </button>

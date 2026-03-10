@@ -25,7 +25,7 @@ Next.js 16 App Router application called "Astro" / "Otto" — a Portuguese-langu
 
 ### Storage: Supabase is the single source of truth
 
-All data lives in Supabase. There is no localStorage data layer. The Supabase tables are: `chats`, `messages`, `notes`, `tasks`, `ideas`, `bookmarks`, `calendar_events`, `feedbacks`.
+All data lives in Supabase. There is no localStorage data layer. The Supabase tables are: `chats`, `messages`, `notes`, `tasks`, `ideas`, `bookmarks`, `calendar_events`, `feedbacks`, `profiles`.
 
 - `utils/supabase/server.ts` — server-side client (used in Server Components, server actions, route handlers)
 - `utils/supabase/client.ts` — browser client (used in Client Components)
@@ -33,9 +33,17 @@ All data lives in Supabase. There is no localStorage data layer. The Supabase ta
 
 `middleware.ts` runs on `/dashboard/*`, `/cadernos/*`, and `/api/**` to refresh Supabase session tokens on every request. **Do not remove the `supabase.auth.getUser()` call from middleware** — it is what keeps sessions alive server-side.
 
-### Authentication
+### Authentication — Interaction Gate
 
-`components/auth/auth-guard.tsx` is a **Client Component** that checks auth client-side and shows a login modal overlay if unauthenticated. The `/dashboard` layout wraps all pages in it. Server actions independently call `supabase.auth.getUser()` — they do not rely on AuthGuard.
+Auth uses a **lazy/interaction-gate** model: unauthenticated users can see all dashboard UI, but any interaction triggers a login modal.
+
+- `components/auth/auth-modal-provider.tsx` — Client Component context provider wrapping the entire app (in `app/layout.tsx`). Exposes `useAuthModal()` with:
+  - `isAuthenticated: boolean` — real-time Supabase session state
+  - `requireAuth(callback?)` — executes callback if authenticated, opens login modal if not
+  - `openModal()` — imperative open
+- `app/layout.tsx` passes `initialIsAuthenticated={!!user}` (server-resolved) to the provider to eliminate client-side flash for logged-in users.
+- `components/auth/auth-guard.tsx` — legacy hard-wall guard; **currently unused**, kept for reference.
+- Server actions independently call `supabase.auth.getUser()` — they do not rely on the client-side auth context.
 
 ### Server Actions (`app/actions/`)
 
@@ -64,6 +72,27 @@ All delete operations in `study.ts` and `chat.ts` perform an ownership check (`.
 `POST /api/chat` streams responses via Vercel AI SDK (`streamText`, `gpt-4o-mini`). Context is capped at the last 6 messages; output at 500 tokens. `POST /api/chat/save` persists messages to Supabase and triggers auto-title + embedding generation on the first assistant reply.
 
 `components/chat-interface.tsx` handles lazy chat creation: the Supabase `chats` row is only inserted when the user sends their first message (`POST /api/chat/create`), not on page load.
+
+### Freemium Paywall
+
+Free-tier users are limited to **10 AI messages per day**. The gate is enforced server-side in `POST /api/chat`.
+
+**Database columns on `profiles`** (run `supabase/migrations/20260309_add_paywall_columns.sql`):
+- `plan_tier` (text, default `'free'`) — `'free'` or `'pro'`
+- `daily_message_count` (integer, default `0`) — resets each day
+- `last_message_date` (date) — tracks which calendar day the counter belongs to
+
+**Backend flow** (`app/api/chat/route.ts`):
+1. Authenticate via Supabase; return 401 if no session.
+2. Fetch `plan_tier`, `daily_message_count`, `last_message_date` from `profiles`.
+3. If `last_message_date ≠ today`, reset counter to 0.
+4. If `plan_tier === 'free'` and `count >= 10`, return **HTTP 403** `{ error: "PAYWALL_LIMIT_REACHED" }`.
+5. Otherwise increment counter (fire-and-forget) and stream the AI response.
+
+**Frontend** (`components/chat-interface.tsx`):
+- `useChat` `onError` callback detects `PAYWALL_LIMIT_REACHED` and sets `showPaywall(true)`.
+- `<PaywallModal>` renders with an upgrade CTA ("Fazer upgrade para o Otto Pro") and a dismiss option.
+- Input is disabled (`isLoading || showPaywall`) while the paywall is active.
 
 ### Route Structure
 
@@ -129,3 +158,14 @@ Cards: rounded-2xl (18px)
 Inputs: rounded-xl (14px)
 Buttons: rounded-lg (10px)
 Transitions: duration-150 to duration-250 ease
+
+## Responsiveness Rules
+- Mobile first: default styles target 320px–480px
+- Breakpoints: sm (640px), md (768px), lg (1024px), xl (1280px)
+- Sidebar: hidden on mobile, toggled via hamburger menu
+- Top taskbar: scrollable horizontally on mobile, or collapsed into hamburger
+- Cards grid: 1 column on mobile, 2 on sm/md, 3 on lg+
+- Font sizes: reduce headings by 1 step on mobile (text-2xl → text-xl)
+- Padding: p-4 on mobile, p-6 on md, p-8 on lg+
+- Touch targets: minimum 44x44px for all interactive elements
+- Test targets: iPhone SE (375px), iPhone 14 (390px), Android mid-range (360px), iPad (768px)

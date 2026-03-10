@@ -103,7 +103,7 @@ export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChan
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15 }}
-                    className="fixed inset-0 z-[100] flex items-start justify-center pt-[20vh]"
+                    className="fixed inset-0 z-[100] flex items-start justify-center pt-6 sm:pt-[20vh] px-4 sm:px-0"
                     onClick={() => onOpenChange(false)}
                 >
                     {/* Backdrop */}
@@ -115,7 +115,7 @@ export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChan
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -10 }}
                         transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="relative w-full max-w-lg bg-popover border border-border rounded-2xl shadow-2xl overflow-hidden"
+                        className="relative w-full sm:max-w-lg bg-popover border border-border rounded-2xl shadow-2xl overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Search Input */}
