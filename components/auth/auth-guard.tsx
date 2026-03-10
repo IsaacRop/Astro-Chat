@@ -112,7 +112,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
                         {/* Actions */}
                         <div className="flex flex-col gap-3 mt-2">
                             <LoginButton
-                                nextUrl={typeof window !== "undefined" ? window.location.pathname : "/dashboard"}
+                                nextUrl={typeof window !== "undefined" ? window.location.pathname : "/"}
                                 className="w-full justify-center"
                             />
 

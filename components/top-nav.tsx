@@ -18,7 +18,7 @@ interface TabDef {
 }
 
 const tabs: TabDef[] = [
-    { id: "chat",      label: "Chat",       icon: MessageSquare, href: "/dashboard/chat", badge: "Online",
+    { id: "chat",      label: "Chat",       icon: MessageSquare, href: "/chat", badge: "Online",
       textColor: "text-[#4A9E6B]", bgColor: "bg-[#DFF0E5]", indicatorColor: "bg-[#4A9E6B]" },
     { id: "cadernos",  label: "Cadernos",   icon: BookOpen,      href: "/cadernos",       badge: "3",
       textColor: "text-[#5B9E9E]", bgColor: "bg-[#DFF0F0]", indicatorColor: "bg-[#5B9E9E]" },
@@ -37,7 +37,7 @@ const tabs: TabDef[] = [
 function useActiveTab() {
     const pathname = usePathname();
     return (href: string) => {
-        if (href === "/dashboard/chat") return pathname === "/dashboard/chat" || pathname.startsWith("/dashboard/chat/");
+        if (href === "/chat") return pathname === "/chat" || pathname.startsWith("/chat/");
         return pathname === href || pathname.startsWith(href + "/");
     };
 }

@@ -132,7 +132,7 @@ export default function NodeDetailPage({
                     </div>
                 </div>
                 <Link
-                    href={`/dashboard/chat/${node.id}`}
+                    href={`/chat/${node.id}`}
                     className="flex items-center gap-1 md:gap-2 px-3 py-3 min-h-[44px] rounded-lg bg-primary hover:bg-primary/80 text-background text-xs md:text-sm font-medium transition-colors flex-shrink-0"
                 >
                     <MessageSquare size={14} className="md:w-4 md:h-4" />

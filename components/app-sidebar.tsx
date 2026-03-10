@@ -135,7 +135,7 @@ const mobileTabs: Array<{
     bgClass: string;
     borderClass: string;
 }> = [
-    { id: "chat",       label: "Chat",       icon: MessageSquare, href: "/dashboard/chat", badge: "Online",
+    { id: "chat",       label: "Chat",       icon: MessageSquare, href: "/chat", badge: "Online",
       textClass: "text-[#4A9E6B]", bgClass: "bg-[#4A9E6B]/10", borderClass: "border-[#4A9E6B]" },
     { id: "cadernos",   label: "Cadernos",   icon: BookOpen,      href: "/cadernos",       badge: "3",
       textClass: "text-[#5B9E9E]", bgClass: "bg-[#5B9E9E]/10", borderClass: "border-[#5B9E9E]" },
@@ -161,7 +161,7 @@ function MobileSidebarContent({ user, onClose, setSearchOpen }: {
     const pathname = usePathname();
 
     const isActive = (href: string) => {
-        if (href === "/dashboard/chat") return pathname === "/dashboard/chat" || pathname.startsWith("/dashboard/chat/");
+        if (href === "/chat") return pathname === "/chat" || pathname.startsWith("/chat/");
         return pathname === href || pathname.startsWith(href + "/");
     };
 

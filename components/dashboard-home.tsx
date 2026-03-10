@@ -37,7 +37,7 @@ interface Props {
 }
 
 const features = [
-    { id: "chat",       label: "Chat",       icon: MessageSquare, href: "/dashboard/chat", desc: "Converse com o Otto",
+    { id: "chat",       label: "Chat",       icon: MessageSquare, href: "/chat", desc: "Converse com o Otto",
       text: "text-primary", bg: "bg-primary/10", border: "border-primary/20", hov: "hover:border-primary/50 hover:bg-primary/20" },
     { id: "cadernos",   label: "Cadernos",   icon: BookOpen,      href: "/cadernos",       desc: "Grafo de conhecimento",
       text: "text-accent-teal", bg: "bg-accent-teal/10", border: "border-accent-teal/20", hov: "hover:border-accent-teal/50 hover:bg-accent-teal/20" },
@@ -157,7 +157,7 @@ function ChatWidget({ latestChatId, userName }: { latestChatId: string | null; u
 
     const submit = () => {
         if (!msg.trim()) return;
-        requireAuth(() => router.push("/dashboard/chat"));
+        requireAuth(() => router.push("/chat"));
     };
 
     const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -191,7 +191,7 @@ function ChatWidget({ latestChatId, userName }: { latestChatId: string | null; u
                 </div>
                 {latestChatId && (
                     <div className="flex justify-end mt-2">
-                        <Link href={"/dashboard/chat/" + latestChatId} className="max-w-[82%] bg-primary text-primary-foreground text-[13px] font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm leading-relaxed hover:bg-primary/90 transition-colors">
+                        <Link href={"/chat/" + latestChatId} className="max-w-[82%] bg-primary text-primary-foreground text-[13px] font-medium px-4 py-2.5 rounded-2xl rounded-tr-sm leading-relaxed hover:bg-primary/90 transition-colors">
                             Ver conversa anterior →
                         </Link>
                     </div>

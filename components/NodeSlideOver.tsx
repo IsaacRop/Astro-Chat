@@ -237,7 +237,7 @@ Nota gerada a partir do nó do grafo.`;
                             {/* Action Buttons - Stack on very small screens */}
                             <div className="flex flex-col sm:flex-row gap-2">
                                 <Link
-                                    href={`/dashboard/chat/${node.chatId}`}
+                                    href={`/chat/${node.chatId}`}
                                     onClick={onClose}
                                     className="flex-1 flex items-center justify-center gap-2 px-4 md:px-5 py-3 md:py-3.5 min-h-[44px] rounded-full bg-gradient-to-r from-accent-blue to-primary text-white font-semibold hover:opacity-90 transition-all shadow-lg shadow-accent-blue/25 text-sm"
                                 >
