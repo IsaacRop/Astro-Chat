@@ -105,6 +105,7 @@ interface AstroChatInputProps {
     value: string;
     onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
     onSubmit: (e: React.FormEvent) => void;
+    onFileChange?: (file: File | null) => void;
     isLoading?: boolean;
     placeholder?: string;
 }
@@ -113,6 +114,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
     value,
     onChange,
     onSubmit,
+    onFileChange,
     isLoading = false,
     placeholder = "Como posso ajudar você hoje?",
 }) => {
@@ -140,33 +142,34 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
         prevLoadingRef.current = isLoading;
     }, [isLoading]);
 
-    // File Handling
+    // Notify parent when file changes
+    useEffect(() => {
+        if (onFileChange) {
+            onFileChange(files.length > 0 ? files[0].file : null);
+        }
+    }, [files, onFileChange]);
+
+    // File Handling — single file, restricted types
     const handleFiles = useCallback((newFilesList: FileList | File[]) => {
-        const newFiles = Array.from(newFilesList).map((file) => {
-            const isImage =
-                file.type.startsWith("image/") ||
-                /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.name);
-            return {
-                id: Math.random().toString(36).substr(2, 9),
-                file,
-                type: isImage ? "image/unknown" : file.type || "application/octet-stream",
-                preview: isImage ? URL.createObjectURL(file) : null,
-                uploadStatus: "pending",
-            };
-        });
+        const fileArray = Array.from(newFilesList);
+        // Take only the first file (single upload)
+        const file = fileArray[0];
+        if (!file) return;
 
-        setFiles((prev) => [...prev, ...newFiles]);
+        const isImage =
+            file.type.startsWith("image/") ||
+            /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name);
 
-        // Simulate upload completion
-        newFiles.forEach((f) => {
-            setTimeout(() => {
-                setFiles((prev) =>
-                    prev.map((p) =>
-                        p.id === f.id ? { ...p, uploadStatus: "complete" } : p
-                    )
-                );
-            }, 800 + Math.random() * 500);
-        });
+        const attached: AttachedFile = {
+            id: Math.random().toString(36).substr(2, 9),
+            file,
+            type: isImage ? file.type || "image/unknown" : file.type || "application/octet-stream",
+            preview: isImage ? URL.createObjectURL(file) : null,
+            uploadStatus: "complete",
+        };
+
+        // Replace any existing file (single file mode)
+        setFiles([attached]);
     }, []);
 
     // Drag & Drop
@@ -200,12 +203,25 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
         }
     };
 
+    const removeFile = (id: string) => {
+        setFiles((prev) => {
+            const removed = prev.find((f) => f.id === id);
+            if (removed?.preview) URL.revokeObjectURL(removed.preview);
+            return prev.filter((f) => f.id !== id);
+        });
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (isLoading) return; // Block submission during loading
         if (!value.trim() && files.length === 0) return;
         onSubmit(e);
+        // Clear files after submit
+        files.forEach((f) => {
+            if (f.preview) URL.revokeObjectURL(f.preview);
+        });
         setFiles([]);
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -240,9 +256,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 <FilePreviewCard
                                     key={file.id}
                                     file={file}
-                                    onRemove={(id) =>
-                                        setFiles((prev) => prev.filter((f) => f.id !== id))
-                                    }
+                                    onRemove={removeFile}
                                 />
                             ))}
                         </div>
@@ -334,11 +348,11 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                 </div>
             )}
 
-            {/* Hidden File Input */}
+            {/* Hidden File Input — restricted to PDF + images */}
             <input
                 ref={fileInputRef}
                 type="file"
-                multiple
+                accept=".pdf,image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
                 onChange={(e) => {
                     if (e.target.files) handleFiles(e.target.files);
