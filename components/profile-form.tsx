@@ -59,13 +59,13 @@ export function ProfileForm({ user }: ProfileFormProps) {
     }
 
     return (
-        <div className="space-y-12">
-            <form action={handleSubmit} onChange={() => setHasChanges(true)} className="space-y-8">
+        <div className="space-y-8 md:space-y-12">
+            <form action={handleSubmit} onChange={() => setHasChanges(true)} className="space-y-6 md:space-y-8">
 
                 {/* Avatar Section */}
-                <div className="flex flex-col items-center gap-4">
+                <div className="flex flex-col items-center gap-3 md:gap-4">
                     <div className="relative group">
-                        <div className="w-24 h-24 rounded-full border-2 border-border overflow-hidden shadow-2xl">
+                        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-border overflow-hidden shadow-2xl">
                             {user.user_metadata.avatar_url ? (
                                 <img
                                     src={user.user_metadata.avatar_url}
@@ -80,19 +80,19 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         </div>
                         <button
                             type="button"
-                            className="absolute bottom-0 right-0 p-2 rounded-full bg-muted border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all shadow-lg"
+                            className="absolute bottom-0 right-0 p-2 min-w-[36px] min-h-[36px] rounded-full bg-muted border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all shadow-lg flex items-center justify-center"
                             title="Alterar foto (Em breve)"
                         >
                             <Camera size={14} />
                         </button>
                     </div>
-                    <div className="text-center">
-                        <p className="text-sm text-muted-foreground font-medium">{user.email}</p>
+                    <div className="text-center min-w-0 w-full px-4">
+                        <p className="text-sm text-muted-foreground font-medium truncate">{user.email}</p>
                     </div>
                 </div>
 
                 {/* Inputs */}
-                <div className="space-y-6">
+                <div className="space-y-4 md:space-y-6">
                     <div className="space-y-2">
                         <label className="text-xs uppercase tracking-wider text-muted-foreground font-medium ml-1">
                             Nome Completo
@@ -100,7 +100,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         <input
                             name="fullName"
                             defaultValue={initialName}
-                            className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all placeholder:text-muted-foreground"
+                            className="w-full bg-muted border border-border rounded-xl px-4 py-3 min-h-[44px] text-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all placeholder:text-muted-foreground"
                             placeholder="Seu nome"
                         />
                     </div>
@@ -112,7 +112,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         <input
                             name="nickname"
                             defaultValue={initialNickname}
-                            className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all placeholder:text-muted-foreground"
+                            className="w-full bg-muted border border-border rounded-xl px-4 py-3 min-h-[44px] text-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all placeholder:text-muted-foreground"
                             placeholder="Apelido ou primeiro nome"
                         />
                         <p className="text-[11px] text-muted-foreground pl-1">
@@ -122,12 +122,12 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 </div>
 
                 {/* Save Button */}
-                <div className="h-12 flex items-center justify-center">
+                <div className="min-h-[44px] flex items-center justify-center">
                     {(hasChanges || isPending) && (
                         <button
                             type="submit"
                             disabled={isPending}
-                            className="flex items-center gap-2 px-8 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full font-medium transition-all shadow-lg shadow-primary/30 animate-in fade-in slide-in-from-bottom-2"
+                            className="flex items-center gap-2 px-8 py-3 min-h-[44px] bg-primary hover:bg-primary/90 text-primary-foreground rounded-full font-medium transition-all shadow-lg shadow-primary/30 animate-in fade-in slide-in-from-bottom-2"
                         >
                             {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Alterações"}
                         </button>
@@ -135,19 +135,19 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 </div>
             </form>
 
-            <div className="border-t border-border my-8" />
+            <div className="border-t border-border my-6 md:my-8" />
 
             {/* Account Actions */}
             <div className="flex flex-col gap-3">
                 <button
                     onClick={handleSignOut}
-                    className="flex items-center justify-between w-full p-4 rounded-xl border border-border bg-transparent hover:bg-muted transition-colors group"
+                    className="flex items-center justify-between w-full p-4 min-h-[44px] rounded-xl border border-border bg-transparent hover:bg-muted transition-colors group"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-muted/50 border border-border group-hover:border-primary/30 transition-colors">
+                        <div className="p-2 rounded-lg bg-muted/50 border border-border group-hover:border-primary/30 transition-colors flex-shrink-0">
                             <LogOut size={16} className="text-muted-foreground group-hover:text-foreground" />
                         </div>
-                        <div className="text-left">
+                        <div className="text-left min-w-0">
                             <p className="text-sm font-medium text-foreground group-hover:text-primary">Sair da conta</p>
                             <p className="text-xs text-muted-foreground">Encerrar sessão neste dispositivo</p>
                         </div>
@@ -158,13 +158,13 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 <Dialog>
                     <DialogTrigger asChild>
                         <button
-                            className="flex items-center justify-between w-full p-4 rounded-xl border border-transparent hover:bg-red-500/10 hover:border-red-500/20 transition-all group"
+                            className="flex items-center justify-between w-full p-4 min-h-[44px] rounded-xl border border-transparent hover:bg-red-500/10 hover:border-red-500/20 transition-all group"
                         >
                             <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-transparent border border-transparent group-hover:border-red-500/30 transition-colors">
+                                <div className="p-2 rounded-lg bg-transparent border border-transparent group-hover:border-red-500/30 transition-colors flex-shrink-0">
                                     <Trash2 size={16} className="text-muted-foreground group-hover:text-red-400" />
                                 </div>
-                                <div className="text-left">
+                                <div className="text-left min-w-0">
                                     <p className="text-sm font-medium text-muted-foreground group-hover:text-red-400">Excluir minha conta</p>
                                     <p className="text-xs text-muted-foreground group-hover:text-red-500/70">Ação irreversível</p>
                                 </div>
@@ -173,21 +173,21 @@ export function ProfileForm({ user }: ProfileFormProps) {
                     </DialogTrigger>
                     <DialogContent className="bg-card border-red-500/20">
                         <DialogHeader>
-                            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 text-red-500">
+                            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 text-red-500 flex-shrink-0">
                                 <ShieldAlert size={24} />
                             </div>
-                            <DialogTitle className="text-red-500 font-serif text-xl">Tem certeza absoluta?</DialogTitle>
+                            <DialogTitle className="text-red-500 font-serif text-lg md:text-xl">Tem certeza absoluta?</DialogTitle>
                             <DialogDescription className="text-muted-foreground pt-2 pb-4">
                                 Essa ação é <strong>irreversível</strong>. Todo seu histórico de conversas, memórias e anotações com o Otto será apagado permanentemente.
                                 <br /><br />
                                 Não há como recuperar esses dados.
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="flex gap-2 justify-end">
+                        <div className="flex gap-2 justify-end flex-wrap">
                             <button
                                 onClick={handleDeleteAccount}
                                 disabled={isDeleting}
-                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 min-h-[44px] rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                             >
                                 {isDeleting && <Loader2 className="w-3 h-3 animate-spin" />}
                                 Sim, excluir tudo

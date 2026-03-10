@@ -122,13 +122,13 @@ export default function GraphVisualization() {
     // List view - Responsive
     const renderListView = () => (
         <div className="p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto h-full">
-            <div className="flex items-center justify-between gap-2">
-                <h2 className="text-sm md:text-lg font-semibold text-foreground truncate">
+            <div className="flex items-center justify-between gap-2 min-w-0">
+                <h2 className="text-sm md:text-base font-semibold text-foreground truncate min-w-0">
                     Knowledge Graph ({graphData.nodes.length} nodes)
                 </h2>
                 <button
                     onClick={() => setUseListView(false)}
-                    className="text-xs text-primary hover:text-primary/80 whitespace-nowrap"
+                    className="text-xs text-primary hover:text-primary/80 whitespace-nowrap px-2 py-2 min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0"
                 >
                     Graph View
                 </button>
@@ -137,11 +137,11 @@ export default function GraphVisualization() {
                 {graphData.nodes.map(node => (
                     <div
                         key={node.id}
-                        className="p-3 bg-card rounded-lg border border-border cursor-pointer hover:border-primary/50 transition-colors active:bg-muted"
+                        className="px-3 py-3 min-h-[44px] bg-card rounded-lg border border-border cursor-pointer hover:border-primary/50 transition-colors active:bg-muted flex flex-col justify-center"
                         onClick={() => handleNodeClick(node)}
                     >
-                        <div className="text-foreground font-medium text-sm md:text-base truncate">{node.label}</div>
-                        <div className="text-muted-foreground text-[10px] md:text-xs mt-1 truncate">{node.messageCount} mensagens</div>
+                        <div className="text-foreground font-medium text-sm truncate">{node.label}</div>
+                        <div className="text-muted-foreground text-[10px] md:text-xs mt-0.5 truncate">{node.messageCount} mensagens</div>
                     </div>
                 ))}
             </div>
@@ -249,13 +249,13 @@ export default function GraphVisualization() {
 
 
     return (
-        <div className="flex flex-col lg:flex-row h-[calc(100vh-57px)] md:h-[calc(100vh-73px)]">
+        <div className="flex flex-col lg:flex-row h-full">
             {/* Graph Container */}
             <div ref={containerRef} className="flex-1 bg-[#0C0C0D] relative min-h-0">
                 {/* Loading State */}
                 {isLoading && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8 pointer-events-none">
-                        <Loader2 size={36} className="md:w-12 md:h-12 text-zinc-500 animate-spin mb-3 md:mb-4" />
+                        <Loader2 size={36} className="w-9 h-9 md:w-12 md:h-12 text-zinc-500 animate-spin mb-3 md:mb-4" />
                         <p className="text-zinc-500 text-sm md:text-base">Carregando grafo...</p>
                     </div>
                 )}
@@ -263,12 +263,12 @@ export default function GraphVisualization() {
                 {/* Error State */}
                 {!isLoading && loadError && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8 pointer-events-auto">
-                        <AlertCircle size={36} className="md:w-12 md:h-12 text-red-500 mb-3 md:mb-4" strokeWidth={1.5} />
+                        <AlertCircle size={36} className="w-9 h-9 md:w-12 md:h-12 text-red-500 mb-3 md:mb-4" strokeWidth={1.5} />
                         <h2 className="text-lg md:text-xl font-serif text-zinc-200 mb-2">Erro</h2>
                         <p className="text-zinc-500 max-w-md text-xs md:text-sm font-sans">{loadError}</p>
                         <button
                             onClick={loadGraphData}
-                            className="mt-4 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-sm transition-colors"
+                            className="mt-4 px-5 py-3 min-h-[44px] bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg text-sm transition-colors"
                         >
                             Tentar Novamente
                         </button>
@@ -278,18 +278,18 @@ export default function GraphVisualization() {
                 {/* Empty State */}
                 {!isLoading && !loadError && graphData.nodes.length === 0 && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 md:p-8 pointer-events-auto">
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#1A1A1C] border border-white/[0.05] flex items-center justify-center mb-6">
-                            <Network size={32} className="md:w-10 md:h-10 text-zinc-600" strokeWidth={1} />
+                        <div className="w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-[#1A1A1C] border border-white/[0.05] flex items-center justify-center mb-4 md:mb-6 flex-shrink-0">
+                            <Network size={28} className="md:w-10 md:h-10 text-zinc-600" strokeWidth={1} />
                         </div>
-                        <h2 className="text-lg md:text-xl font-serif text-zinc-300 mb-2">
+                        <h2 className="text-base md:text-xl font-serif text-zinc-300 mb-2">
                             Grafo Vazio
                         </h2>
-                        <p className="text-zinc-500 max-w-md text-xs md:text-sm font-sans mb-6">
+                        <p className="text-zinc-500 w-full max-w-xs md:max-w-md text-xs md:text-sm font-sans mb-4 md:mb-6 px-4">
                             Nenhuma conversa encontrada. Inicie uma conversa com o Otto para criar seu primeiro nó.
                         </p>
                         <Link
                             href="/dashboard/chat"
-                            className="flex items-center gap-2 px-4 py-2.5 bg-zinc-100 hover:bg-white text-zinc-900 rounded-xl text-sm font-medium transition-colors"
+                            className="flex items-center gap-2 px-5 py-3 min-h-[44px] bg-zinc-100 hover:bg-white text-zinc-900 rounded-xl text-sm font-medium transition-colors"
                         >
                             <MessageCircle size={16} strokeWidth={1.5} />
                             Iniciar Conversa
@@ -306,7 +306,7 @@ export default function GraphVisualization() {
                 {!isLoading && !loadError && graphData.nodes.length > 0 && (
                     <button
                         onClick={() => setUseListView(!useListView)}
-                        className="absolute bottom-3 left-3 md:bottom-4 md:left-4 z-10 flex items-center gap-1.5 px-2.5 py-1.5 md:px-3 md:py-2 bg-[#1A1A1C]/80 backdrop-blur-md border border-white/[0.05] hover:border-white/[0.1] text-zinc-400 hover:text-zinc-200 text-[10px] md:text-xs rounded-lg transition-colors font-sans"
+                        className="absolute bottom-3 left-3 md:bottom-4 md:left-4 z-10 flex items-center gap-1.5 px-3 py-2.5 min-h-[44px] md:px-3 md:py-2 md:min-h-0 bg-[#1A1A1C]/80 backdrop-blur-md border border-white/[0.05] hover:border-white/[0.1] text-zinc-400 hover:text-zinc-200 text-[10px] md:text-xs rounded-lg transition-colors font-sans"
                     >
                         {useListView ? (
                             <>

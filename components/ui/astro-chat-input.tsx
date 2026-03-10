@@ -250,7 +250,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
 
                     {/* Input Area */}
                     <div className="relative">
-                        <div className="max-h-48 w-full overflow-y-auto">
+                        <div className="max-h-36 md:max-h-48 w-full overflow-y-auto">
                             <textarea
                                 ref={textareaRef}
                                 value={value}
@@ -282,7 +282,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 onClick={() => fileInputRef.current?.click()}
                                 className={cn(
                                     "inline-flex items-center justify-center",
-                                    "h-10 w-10 rounded-lg transition-colors",
+                                    "h-10 w-10 min-h-[44px] min-w-[44px] rounded-lg transition-colors",
                                     "text-muted-foreground hover:text-foreground hover:bg-muted"
                                 )}
                                 type="button"
@@ -305,7 +305,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 disabled={!hasContent || isLoading}
                                 className={cn(
                                     "inline-flex items-center justify-center",
-                                    "h-10 w-10 rounded-lg transition-all duration-200",
+                                    "h-10 w-10 min-h-[44px] min-w-[44px] rounded-lg transition-all duration-200",
                                     hasContent && !isLoading
                                         ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
                                         : "bg-muted text-muted-foreground cursor-not-allowed"

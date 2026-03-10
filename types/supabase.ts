@@ -297,25 +297,31 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          daily_message_count: number
           email: string | null
           full_name: string | null
           id: string
+          last_message_date: string | null
           plan_tier: string | null
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
+          daily_message_count?: number
           email?: string | null
           full_name?: string | null
           id: string
+          last_message_date?: string | null
           plan_tier?: string | null
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
+          daily_message_count?: number
           email?: string | null
           full_name?: string | null
           id?: string
+          last_message_date?: string | null
           plan_tier?: string | null
           updated_at?: string | null
         }

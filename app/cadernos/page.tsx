@@ -8,8 +8,8 @@ const GraphVisualization = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div className="flex-1 flex items-center justify-center bg-background px-4">
-                <div className="text-muted-foreground animate-pulse text-center text-sm md:text-base">Loading cosmic graph...</div>
+            <div className="flex-1 flex items-center justify-center bg-background px-4 min-h-[200px]">
+                <div className="text-muted-foreground animate-pulse text-center text-sm">Carregando grafo...</div>
             </div>
         ),
     }

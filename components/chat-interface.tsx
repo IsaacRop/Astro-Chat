@@ -2,8 +2,7 @@
 
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Plus, Network } from "lucide-react";
-import Link from "next/link";
+import { Zap } from "lucide-react";
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -88,6 +87,56 @@ const MarkdownComponents = {
     hr: () => <hr className="my-4 border-border" />,
 };
 
+// ── PaywallModal ─────────────────────────────────────────────────────────────
+function PaywallModal({ onClose }: { onClose: () => void }) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Dark overlay */}
+            <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                onClick={onClose}
+                aria-hidden="true"
+            />
+
+            {/* Card */}
+            <div className="relative z-10 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">
+                {/* Icon badge */}
+                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[var(--color-accent-light)] mx-auto mb-5">
+                    <Zap className="w-7 h-7 text-[var(--color-accent)]" />
+                </div>
+
+                <h2 className="text-xl font-serif font-bold text-[var(--color-text)] mb-2">
+                    Limite diário atingido
+                </h2>
+
+                <p className="text-sm text-[var(--color-text-sec)] mb-7 leading-relaxed">
+                    Você atingiu o limite diário do plano Free{" "}
+                    <span className="font-semibold text-[var(--color-text)]">(10 mensagens)</span>.
+                    <br />
+                    Faça upgrade para continuar aprendendo sem limites.
+                </p>
+
+                {/* CTA */}
+                <button
+                    onClick={() => console.log("Redirect to Stripe")}
+                    className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 mb-3"
+                >
+                    Fazer upgrade para o Otto Pro
+                </button>
+
+                {/* Dismiss */}
+                <button
+                    onClick={onClose}
+                    className="w-full text-[var(--color-text-muted)] hover:text-[var(--color-text-sec)] text-sm py-2 transition-colors duration-150"
+                >
+                    Voltar amanhã
+                </button>
+            </div>
+        </div>
+    );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface ChatInterfaceProps {
     chatId: string | null;
     initialMessages: Array<{
@@ -101,6 +150,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
     const [input, setInput] = useState("");
     const [activeChatId, setActiveChatId] = useState<string | null>(initialChatId);
     const [isCreatingChat, setIsCreatingChat] = useState(false);
+    const [showPaywall, setShowPaywall] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Keep a ref to the latest activeChatId so async callbacks always see the current value
@@ -119,6 +169,11 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
     const chatHookId = initialChatId || "new-chat";
     const { messages, setMessages, sendMessage, status } = useChat({
         id: chatHookId,
+        onError: (error) => {
+            if (error.message.includes('PAYWALL_LIMIT_REACHED')) {
+                setShowPaywall(true);
+            }
+        },
     });
 
     // Set initial messages on mount (only for existing chats with history)
@@ -204,7 +259,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
 
         // 1. Capture & validate input immediately
         const trimmedInput = input.trim();
-        if (!trimmedInput || status !== "ready" || isCreatingChat) return;
+        if (!trimmedInput || status !== "ready" || isCreatingChat || showPaywall) return;
 
         // 2. Clear input immediately for optimistic UX
         setInput("");
@@ -270,7 +325,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                                 <div className="mb-6">
                                     <OctopusIcon className="w-16 h-16 text-4xl" />
                                 </div>
-                                <h2 className="text-3xl md:text-4xl font-serif font-medium text-foreground mb-3 tracking-tight">
+                                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-serif font-medium text-foreground mb-3 tracking-tight">
                                     Olá, eu sou o Otto.
                                 </h2>
                                 <p className="text-muted-foreground max-w-md text-sm md:text-base font-sans leading-relaxed">
@@ -296,7 +351,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                                     )}
 
                                     <div
-                                        className={`max-w-[90%] md:max-w-[85%] relative ${isUser
+                                        className={`max-w-[95%] sm:max-w-[90%] md:max-w-[85%] relative ${isUser
                                             ? 'bg-card text-foreground rounded-2xl rounded-tr-sm px-5 py-3 border border-border'
                                             : 'text-foreground px-0 py-2'
                                             }`}
@@ -347,12 +402,15 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onSubmit={handleSubmit}
-                            isLoading={isLoading}
-                            placeholder="Pergunte qualquer coisa..."
+                            isLoading={isLoading || showPaywall}
+                            placeholder={showPaywall ? "Limite diário atingido. Faça upgrade para continuar." : "Pergunte qualquer coisa..."}
                         />
                         <p className="text-center text-[10px] text-muted-foreground mt-3 font-sans">Otto pode cometer erros. Verifique informações importantes.</p>
                     </div>
                 </div>
-            </div>
+
+            {/* Paywall Modal */}
+            {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
+        </div>
     );
 }

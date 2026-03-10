@@ -199,7 +199,7 @@ export function FullScreenCalendar({
                                     className={cn(
                                         dayIdx === 0 && colStartClasses[getDay(day)],
                                         !isCurrentMonth && "bg-background text-muted-foreground",
-                                        "relative flex flex-col border-b border-r border-border cursor-pointer transition-colors min-h-[100px]",
+                                        "relative flex flex-col border-b border-r border-border cursor-pointer transition-colors min-h-[60px] md:min-h-[100px]",
                                         !isSelected && isCurrentMonth && "hover:bg-muted",
                                         isSelected && "bg-card"
                                     )}
@@ -274,7 +274,7 @@ export function FullScreenCalendar({
                                     type="button"
                                     className={cn(
                                         !isCurrentMonth && "text-muted-foreground bg-muted/50",
-                                        "flex h-16 flex-col items-center border-b border-r border-border px-1 py-1.5 focus:z-10 relative",
+                                        "flex min-h-[60px] flex-col items-center border-b border-r border-border px-1 py-1.5 focus:z-10 relative",
                                         isSelected && "bg-card"
                                     )}
                                 >

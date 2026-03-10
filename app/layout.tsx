@@ -4,8 +4,8 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
-import { AppSidebar } from "@/components/app-sidebar";
-import { TopNav } from "@/components/top-nav";
+import { LayoutShell } from "@/components/layout-shell";
+import { AuthModalProvider } from "@/components/auth/auth-modal-provider";
 import { createClient } from "@/utils/supabase/server";
 import { LoginButton } from "@/components/LoginButton";
 import Link from "next/link";
@@ -40,7 +40,7 @@ export default async function RootLayout({
   );
 
   const ProfileLink = () => (
-    <Link href="/dashboard" className="h-[34px] flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors">
+    <Link href="/profile" className="h-[34px] flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors">
       Acessar Perfil
     </Link>
   );
@@ -56,16 +56,12 @@ export default async function RootLayout({
           defaultTheme="system"
           enableSystem
         >
-          <div className="flex h-screen overflow-hidden bg-background">
-            <AppSidebar />
-            <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative">
-              <TopNav rightElement={!user ? <HeaderLogin /> : <ProfileLink />} />
-              <div className="flex-1 overflow-auto relative">
-                {children}
-              </div>
-            </div>
-          </div>
-          <Toaster />
+          <AuthModalProvider initialIsAuthenticated={!!user}>
+            <LayoutShell rightElement={!user ? <HeaderLogin /> : <ProfileLink />}>
+              {children}
+            </LayoutShell>
+            <Toaster />
+          </AuthModalProvider>
         </ThemeProvider>
       </body>
     </html >

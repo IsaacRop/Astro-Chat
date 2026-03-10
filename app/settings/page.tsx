@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Monitor, Star, MessageSquarePlus } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
@@ -19,13 +18,11 @@ export default function SettingsPage() {
 
     return (
         <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
-            <Header title="Configurações" />
-
             <main className="flex-1 p-4 md:p-8 max-w-3xl mx-auto w-full space-y-8 md:space-y-12">
                 {/* Theme Section */}
                 <section className="space-y-4">
                     <h2 className="text-xl font-serif font-medium text-foreground border-b border-border pb-3">Aparência</h2>
-                    <div className="grid grid-cols-3 gap-3 md:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                         <button
                             onClick={() => setTheme("light")}
                             className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all aspect-square sm:aspect-auto sm:h-32 ${mounted && theme === "light"
