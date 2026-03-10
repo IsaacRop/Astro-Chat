@@ -60,7 +60,7 @@ export default async function Home() {
         ...notes.slice(0, 4).map((n: any) => ({ type: "note",  title: n.title || "Nota",          action: "Nota atualizada",      time: n.updated_at,  href: "/notes/" + n.id })),
         ...tasks.slice(0, 3).map((t: any) => ({ type: "task",  title: t.title,                    action: "Tarefa " + (t.status === "done" ? "concluída" : "adicionada"), time: t.created_at, href: "/tasks" })),
         ...ideas.slice(0, 3).map((i: any) => ({ type: "idea",  title: i.title || (i.content ? i.content.slice(0, 45) : "Ideia"), action: "Ideia capturada", time: i.created_at, href: "/ideas" })),
-        ...chats.slice(0, 3).map((c: any) => ({ type: "chat",  title: c.title || "Conversa",      action: "Conversa com Otto",    time: c.updated_at,  href: "/dashboard/chat/" + c.id })),
+        ...chats.slice(0, 3).map((c: any) => ({ type: "chat",  title: c.title || "Conversa",      action: "Conversa com Otto",    time: c.updated_at,  href: "/chat/" + c.id })),
     ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 8) : [];
 
     const userName = user 

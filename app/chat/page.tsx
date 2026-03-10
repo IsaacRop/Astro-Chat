@@ -1,45 +1,27 @@
-'use client'
+"use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Loader2, MessageCircle } from "lucide-react";
+import dynamic from "next/dynamic";
+import { ChatSidebar } from "@/components/chat/chat-sidebar";
+import { getUserChats } from "@/app/actions/chat";
+import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 
-/**
- * Public Chat Page - Redirects to authenticated chat
- * 
- * This page previously used localStorage for unauthenticated users.
- * Now it enforces authentication - users must log in to use chat.
- * All data is persisted in Supabase (Single Source of Truth).
- */
+const ChatInterface = dynamic(
+    () => import("@/components/chat-interface").then((m) => ({ default: m.ChatInterface })),
+    { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center bg-background"><div className="text-muted-foreground animate-pulse text-sm">Carregando chat...</div></div> }
+);
+
 export default function ChatPage() {
-    const router = useRouter();
+    const [chats, setChats] = useState<any[]>([]);
 
     useEffect(() => {
-        async function checkAuthAndRedirect() {
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
+        getUserChats().then(setChats);
+    }, []);
 
-            if (user) {
-                // Authenticated: redirect to dashboard chat
-                router.replace('/dashboard/chat');
-            } else {
-                // Not authenticated: redirect to home for login
-                router.replace('/?redirect=chat');
-            }
-        }
-
-        checkAuthAndRedirect();
-    }, [router]);
-
-    // Show loading while checking auth
     return (
-        <div className="min-h-screen min-h-[100dvh] bg-background flex flex-col items-center justify-center text-center p-4">
-            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full border border-border bg-card flex items-center justify-center mb-4 md:mb-6 flex-shrink-0">
-                <MessageCircle size={26} className="text-muted-foreground" />
-            </div>
-            <Loader2 size={22} className="text-muted-foreground animate-spin mb-3 md:mb-4" />
-            <p className="text-muted-foreground text-sm">Redirecionando...</p>
+        <div className="flex h-full">
+            <ChatSidebar chats={chats} className="hidden md:flex" />
+            <ChatInterface chatId={null} initialMessages={[]} />
         </div>
     );
 }

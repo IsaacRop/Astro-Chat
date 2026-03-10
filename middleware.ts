@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/dashboard/:path*',
+        '/chat/:path*',
         '/cadernos/:path*',
         '/api/chat/:path*',
         '/api/graph/:path*',

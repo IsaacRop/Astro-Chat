@@ -25,8 +25,8 @@ export async function updateProfile(formData: FormData) {
         return { error: error.message };
     }
 
-    revalidatePath("/dashboard/profile");
-    revalidatePath("/dashboard"); // Update sidebar name potentially
+    revalidatePath("/profile");
+    revalidatePath("/"); // Update sidebar name potentially
     return { success: "Perfil atualizado com sucesso." };
 }
 

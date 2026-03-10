@@ -34,7 +34,7 @@ export function DashboardGrid({ isLoggedIn }: DashboardGridProps) {
         startTransition(async () => {
             try {
                 const { id } = await createNewChat();
-                router.push(`/dashboard/chat/${id}`);
+                router.push(`/chat/${id}`);
             } catch (error) {
                 console.error("Failed to create chat:", error);
                 // Fallback to regular chat

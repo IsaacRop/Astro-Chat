@@ -241,7 +241,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
             // Silent URL update — uses the native History API so Next.js does NOT
             // trigger a navigation cycle (which would remount this component and
             // kill the active useChat stream).
-            window.history.replaceState(null, '', `/dashboard/chat/${newChatId}`);
+            window.history.replaceState(null, '', `/chat/${newChatId}`);
 
             // Notify sidebar components to prepend this new chat to their list
             window.dispatchEvent(new CustomEvent('chat-created', {

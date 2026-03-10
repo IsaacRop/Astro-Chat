@@ -288,7 +288,7 @@ export default function GraphVisualization() {
                             Nenhuma conversa encontrada. Inicie uma conversa com o Otto para criar seu primeiro nó.
                         </p>
                         <Link
-                            href="/dashboard/chat"
+                            href="/chat"
                             className="flex items-center gap-2 px-5 py-3 min-h-[44px] bg-zinc-100 hover:bg-white text-zinc-900 rounded-xl text-sm font-medium transition-colors"
                         >
                             <MessageCircle size={16} strokeWidth={1.5} />

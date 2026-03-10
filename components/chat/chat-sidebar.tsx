@@ -48,7 +48,7 @@ export function ChatSidebar({ chats, className }: ChatSidebarProps) {
 
     // "New Chat" is 100% local — just navigate to the base chat page
     const handleNewChat = () => {
-        router.push("/dashboard/chat");
+        router.push("/chat");
     };
 
     const handleDelete = async (e: React.MouseEvent, chatId: string) => {
@@ -63,9 +63,9 @@ export function ChatSidebar({ chats, className }: ChatSidebarProps) {
         setLocalChats(prev => prev.filter(c => c.id !== chatId));
 
         // 3. If deleting the active chat, navigate away immediately
-        const isActive = pathname === `/dashboard/chat/${chatId}`;
+        const isActive = pathname === `/chat/${chatId}`;
         if (isActive) {
-            router.push('/dashboard/chat');
+            router.push('/chat');
         }
 
         try {
@@ -100,11 +100,11 @@ export function ChatSidebar({ chats, className }: ChatSidebarProps) {
                     </div>
                 ) : (
                     localChats.map((chat) => {
-                        const isActive = pathname === `/dashboard/chat/${chat.id}`;
+                        const isActive = pathname === `/chat/${chat.id}`;
                         return (
                             <Link
                                 key={chat.id}
-                                href={`/dashboard/chat/${chat.id}`}
+                                href={`/chat/${chat.id}`}
                                 className={cn(
                                     "flex flex-col gap-1 px-3 py-3 rounded-lg transition-all duration-200 group border border-transparent relative",
                                     isActive
