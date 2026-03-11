@@ -1,7 +1,8 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { Moon, Sun, Monitor, Star, MessageSquarePlus } from "lucide-react";
+import { Moon, Sun, Monitor, Star, MessageSquarePlus, Crown } from "lucide-react";
+import Link from "next/link";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { AboutSection } from "@/components/settings/about-section";
 import { useEffect, useState } from "react";
@@ -55,6 +56,29 @@ export default function SettingsPage() {
                             <Monitor size={24} className="mb-3" strokeWidth={1.5} />
                             <span className="font-medium text-sm">Sistema</span>
                         </button>
+                    </div>
+                </section>
+
+                {/* Subscription Section */}
+                <section className="space-y-4">
+                    <h2 className="text-xl font-serif font-medium text-foreground border-b border-border pb-3">Assinatura</h2>
+                    <div className="bg-card border border-border rounded-2xl p-6 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+                        <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                            <Crown className="w-8 h-8 text-primary" strokeWidth={1.5} />
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-lg font-serif font-medium text-foreground mb-1">Plano Gratuito</h3>
+                            <p className="text-muted-foreground text-sm mb-4">
+                                Você está no plano gratuito com limite de 10 mensagens por dia.
+                            </p>
+                            <Link
+                                href="/upgrade"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-primary hover:bg-[#3B8558] text-white text-sm font-semibold rounded-lg transition-colors duration-200"
+                            >
+                                <Crown size={16} />
+                                Fazer upgrade
+                            </Link>
+                        </div>
                     </div>
                 </section>
 

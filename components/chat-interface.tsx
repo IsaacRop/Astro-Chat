@@ -88,7 +88,30 @@ const MarkdownComponents = {
 };
 
 // ── PaywallModal ─────────────────────────────────────────────────────────────
+const PRICE_MONTHLY = "price_1T9Uk7CKO59buulnEpHz9iHj";
+const PRICE_ANNUAL = "price_1T9Uk6CKO59buuln4Pfbrvuq";
+
 function PaywallModal({ onClose }: { onClose: () => void }) {
+    const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null);
+
+    const handleUpgrade = async (priceId: string) => {
+        setUpgradeLoading(priceId);
+        try {
+            const res = await fetch("/api/stripe/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ priceId }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Erro ao iniciar checkout");
+            if (data.url) {
+                window.location.href = data.url;
+            }
+        } catch {
+            setUpgradeLoading(null);
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Dark overlay */}
@@ -109,20 +132,49 @@ function PaywallModal({ onClose }: { onClose: () => void }) {
                     Limite diário atingido
                 </h2>
 
-                <p className="text-sm text-[var(--color-text-sec)] mb-7 leading-relaxed">
+                <p className="text-sm text-[var(--color-text-sec)] mb-5 leading-relaxed">
                     Você atingiu o limite diário do plano Free{" "}
                     <span className="font-semibold text-[var(--color-text)]">(10 mensagens)</span>.
                     <br />
                     Faça upgrade para continuar aprendendo sem limites.
                 </p>
 
-                {/* CTA */}
-                <button
-                    onClick={() => console.log("Redirect to Stripe")}
-                    className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 mb-3"
-                >
-                    Fazer upgrade para o Otto Pro
-                </button>
+                {/* Plan options */}
+                <div className="space-y-2.5 mb-3">
+                    <button
+                        onClick={() => handleUpgrade(PRICE_ANNUAL)}
+                        disabled={upgradeLoading !== null}
+                        className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 disabled:opacity-80 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {upgradeLoading === PRICE_ANNUAL ? (
+                            <>
+                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Redirecionando...
+                            </>
+                        ) : (
+                            <>Assinar Anual — R$ 15,00/mês</>
+                        )}
+                    </button>
+
+                    <button
+                        onClick={() => handleUpgrade(PRICE_MONTHLY)}
+                        disabled={upgradeLoading !== null}
+                        className="w-full bg-[var(--color-surface)] hover:bg-[var(--color-accent-light)] text-[var(--color-accent)] font-semibold py-3 px-4 rounded-lg border border-[var(--color-accent)] transition-colors duration-150 disabled:opacity-80 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {upgradeLoading === PRICE_MONTHLY ? (
+                            <>
+                                <span className="w-4 h-4 border-2 border-[var(--color-accent)]/30 border-t-[var(--color-accent)] rounded-full animate-spin" />
+                                Redirecionando...
+                            </>
+                        ) : (
+                            <>Assinar Mensal — R$ 19,90/mês</>
+                        )}
+                    </button>
+                </div>
+
+                <p className="text-xs text-[var(--color-text-muted)] mb-3">
+                    Economize 25% no plano anual
+                </p>
 
                 {/* Dismiss */}
                 <button
