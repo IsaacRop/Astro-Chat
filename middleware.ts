@@ -35,7 +35,9 @@ export const config = {
     matcher: [
         '/chat/:path*',
         '/cadernos/:path*',
+        '/upgrade',
         '/api/chat/:path*',
         '/api/graph/:path*',
+        '/api/stripe/checkout',
     ],
 }

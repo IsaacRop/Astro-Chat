@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { ArrowLeft, User, Mail, LogOut, AlertTriangle } from "lucide-react";
+import { ArrowLeft, User, Mail, LogOut, AlertTriangle, Crown } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "@/app/actions/profile";
 
@@ -65,9 +66,13 @@ export default function ProfilePage() {
                             <span>{user.email}</span>
                         </div>
                         <div className="pt-2">
-                           <span className="inline-block px-2.5 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full border border-primary/20">
-                               Plano Gratuito
-                           </span>
+                           <Link
+                               href="/upgrade"
+                               className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full border border-primary/20 hover:bg-primary/20 transition-colors"
+                           >
+                               <Crown size={12} />
+                               Plano Gratuito — Fazer upgrade
+                           </Link>
                         </div>
                     </div>
                 </section>

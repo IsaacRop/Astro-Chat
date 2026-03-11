@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Search, LogOut, User, Home, HelpCircle, Settings, Bell,
+    Search, LogOut, User, Home, HelpCircle, Settings, Bell, Crown,
     MessageSquare, BookOpen, FileText, Lightbulb, Star, CheckSquare, CalendarDays,
 } from "lucide-react";
 import Link from "next/link";
@@ -103,6 +103,7 @@ function SidebarContent({
                                 </div>
                                 <div className="py-1">
                                     <DropdownLink href="/profile" icon={<User size={14} />} label="Perfil" onClick={() => { setDropdownOpen(false); onClose?.(); }} />
+                                    <DropdownLink href="/upgrade" icon={<Crown size={14} />} label="Assinatura" onClick={() => { setDropdownOpen(false); onClose?.(); }} />
                                     <DropdownLink href="/settings" icon={<Settings size={14} />} label="Configurações" onClick={() => { setDropdownOpen(false); onClose?.(); }} />
                                     <DropdownLink href="/help" icon={<HelpCircle size={14} />} label="Ajuda" onClick={() => { setDropdownOpen(false); onClose?.(); }} />
                                 </div>
@@ -248,7 +249,10 @@ function MobileSidebarContent({ user, onClose, setSearchOpen }: {
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-[#D0E0D6] text-sm font-medium truncate group-hover:text-white transition-colors">{user?.name ?? "Carregando..."}</p>
-                        <span className="inline-block mt-0.5 px-1.5 py-0.5 bg-[#4A9E6B]/20 text-[#4A9E6B] text-[10px] font-semibold rounded-full border border-[#4A9E6B]/30">Plano Gratuito</span>
+                        <Link href="/upgrade" onClick={onClose} className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 bg-[#4A9E6B]/20 text-[#4A9E6B] text-[10px] font-semibold rounded-full border border-[#4A9E6B]/30 hover:bg-[#4A9E6B]/30 transition-colors">
+                            <Crown size={10} />
+                            Fazer upgrade
+                        </Link>
                     </div>
                 </Link>
                 <form action={signOut}>
