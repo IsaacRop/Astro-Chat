@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Zap, FileText, ImageIcon, Crown, Check, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useAutoScroll } from "@/hooks/use-auto-scroll";
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -275,7 +276,6 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
     const [isUploading, setIsUploading] = useState(false);
     // Track file attachments per message ID for display in bubbles
     const [messageAttachments, setMessageAttachments] = useState<Record<string, FileAttachment>>({});
-    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Keep a ref to the latest activeChatId so async callbacks always see the current value
     const activeChatIdRef = useRef(activeChatId);
@@ -299,6 +299,8 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
             }
         },
     });
+
+    const { containerRef, bottomRef: messagesEndRef } = useAutoScroll([messages]);
 
     // Set initial messages on mount (only for existing chats with history)
     useEffect(() => {
@@ -590,10 +592,6 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
 
     const isLoading = status !== "ready" || isCreatingChat || isUploading;
 
-    // Auto-scroll to bottom
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
 
     const getMessageText = (message: typeof messages[number]): string => {
         // Handle parts array format (AI SDK v6)
@@ -612,9 +610,9 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
     };
 
     return (
-        <div className="flex-1 flex flex-col min-w-0 bg-background h-screen h-[100dvh]">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-background">
             {/* Messages Container */}
-            <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-8 scroll-smooth">
+            <div ref={containerRef} className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-8 scroll-smooth">
                 <div className="max-w-3xl mx-auto">
                     {/* Welcome message */}
                     {messages.length === 0 && (

@@ -21,7 +21,7 @@ export function LayoutShell({ children, rightElement }: LayoutShellProps) {
     }, [pathname]);
 
     return (
-        <div className="flex h-screen overflow-hidden bg-background">
+        <div className="flex h-screen h-[100dvh] overflow-hidden bg-background">
             <AppSidebar
                 mobileOpen={mobileSidebarOpen}
                 onMobileClose={() => setMobileSidebarOpen(false)}
@@ -32,7 +32,7 @@ export function LayoutShell({ children, rightElement }: LayoutShellProps) {
                     rightElement={rightElement}
                     onMobileMenuToggle={() => setMobileSidebarOpen((v) => !v)}
                 />
-                <div className="flex-1 overflow-auto relative">
+                <div className="flex-1 overflow-hidden relative">
                     {children}
                 </div>
             </div>
