@@ -5,7 +5,8 @@
       "Bash(cd \"C:\\\\Users\\\\is4c3\\\\Documents\\\\Astro-Chat\\\\Astro-Chat\" && npx pnpm build 2>&1 | tail -80)",
       "Bash(cd \"C:\\\\Users\\\\is4c3\\\\Documents\\\\Astro-Chat\\\\Astro-Chat\" && rm -rf node_modules/.ignored 2>&1 && rm -rf node_modules 2>&1)",
       "Bash(pnpm add:*)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(find \"C:\\\\Users\\\\is4c3\\\\Documents\\\\Astro-Chat\\\\Astro-Chat\\\\supabase\\\\migrations\" -name \"*.sql\" 2>/dev/null | head -20)"
     ]
   }
 }

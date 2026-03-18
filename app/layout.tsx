@@ -8,6 +8,7 @@ import { LayoutShell } from "@/components/layout-shell";
 import { AuthModalProvider } from "@/components/auth/auth-modal-provider";
 import { createClient } from "@/utils/supabase/server";
 import { LoginButton } from "@/components/LoginButton";
+import { CookieBanner } from "@/components/CookieBanner";
 import Link from "next/link";
 
 const playfair = Playfair_Display({
@@ -61,6 +62,7 @@ export default async function RootLayout({
               {children}
             </LayoutShell>
             <Toaster />
+            <CookieBanner />
           </AuthModalProvider>
         </ThemeProvider>
       </body>

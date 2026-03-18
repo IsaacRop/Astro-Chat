@@ -2,7 +2,9 @@
 
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Zap, FileText, ImageIcon } from "lucide-react";
+import { Zap, FileText, ImageIcon, Crown, Check, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -89,10 +91,17 @@ const MarkdownComponents = {
 
 // ── PaywallModal ─────────────────────────────────────────────────────────────
 const PRICE_MONTHLY = "price_1T9Uk7CKO59buulnEpHz9iHj";
-const PRICE_ANNUAL = "price_1T9Uk6CKO59buuln4Pfbrvuq";
+const PRICE_ANNUAL = "price_1TCHSVCKO59buulnTnbPy8DX";
+
+const PRO_FEATURES = [
+    "Mensagens ilimitadas por dia",
+    "Respostas mais longas e detalhadas",
+    "Suporte prioritário",
+];
 
 function PaywallModal({ onClose }: { onClose: () => void }) {
     const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState<"annual" | "monthly">("annual");
 
     const handleUpgrade = async (priceId: string) => {
         setUpgradeLoading(priceId);
@@ -107,84 +116,136 @@ function PaywallModal({ onClose }: { onClose: () => void }) {
             if (data.url) {
                 window.location.href = data.url;
             }
-        } catch {
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Erro ao iniciar checkout. Tente novamente.");
             setUpgradeLoading(null);
         }
     };
 
+    const activePriceId = selectedPlan === "annual" ? PRICE_ANNUAL : PRICE_MONTHLY;
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Dark overlay */}
-            <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                onClick={onClose}
-                aria-hidden="true"
-            />
-
-            {/* Card */}
-            <div className="relative z-10 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">
-                {/* Icon badge */}
-                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[var(--color-accent-light)] mx-auto mb-5">
-                    <Zap className="w-7 h-7 text-[var(--color-accent)]" />
-                </div>
-
-                <h2 className="text-xl font-serif font-bold text-[var(--color-text)] mb-2">
-                    Limite diário atingido
-                </h2>
-
-                <p className="text-sm text-[var(--color-text-sec)] mb-5 leading-relaxed">
-                    Você atingiu o limite diário do plano Free{" "}
-                    <span className="font-semibold text-[var(--color-text)]">(10 mensagens)</span>.
-                    <br />
-                    Faça upgrade para continuar aprendendo sem limites.
-                </p>
-
-                {/* Plan options */}
-                <div className="space-y-2.5 mb-3">
-                    <button
-                        onClick={() => handleUpgrade(PRICE_ANNUAL)}
-                        disabled={upgradeLoading !== null}
-                        className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 disabled:opacity-80 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        {upgradeLoading === PRICE_ANNUAL ? (
-                            <>
-                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                Redirecionando...
-                            </>
-                        ) : (
-                            <>Assinar Anual — R$ 15,00/mês</>
-                        )}
-                    </button>
-
-                    <button
-                        onClick={() => handleUpgrade(PRICE_MONTHLY)}
-                        disabled={upgradeLoading !== null}
-                        className="w-full bg-[var(--color-surface)] hover:bg-[var(--color-accent-light)] text-[var(--color-accent)] font-semibold py-3 px-4 rounded-lg border border-[var(--color-accent)] transition-colors duration-150 disabled:opacity-80 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        {upgradeLoading === PRICE_MONTHLY ? (
-                            <>
-                                <span className="w-4 h-4 border-2 border-[var(--color-accent)]/30 border-t-[var(--color-accent)] rounded-full animate-spin" />
-                                Redirecionando...
-                            </>
-                        ) : (
-                            <>Assinar Mensal — R$ 19,90/mês</>
-                        )}
-                    </button>
-                </div>
-
-                <p className="text-xs text-[var(--color-text-muted)] mb-3">
-                    Economize 25% no plano anual
-                </p>
-
-                {/* Dismiss */}
-                <button
+        <AnimatePresence>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                {/* Overlay */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0 bg-[#1E2E25] backdrop-blur-sm"
                     onClick={onClose}
-                    className="w-full text-[var(--color-text-muted)] hover:text-[var(--color-text-sec)] text-sm py-2 transition-colors duration-150"
+                    aria-hidden="true"
+                />
+
+                {/* Card */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                    className="relative z-10 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl w-full max-w-[400px] overflow-hidden"
                 >
-                    Voltar amanhã
-                </button>
+                    {/* Header accent bar */}
+                    <div className="h-1.5 w-full bg-gradient-to-r from-[var(--color-accent)] to-[#5B9E9E]" />
+
+                    <div className="p-6 sm:p-8">
+                        {/* Icon + Title */}
+                        <div className="flex flex-col items-center mb-5">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--color-accent)] to-[#5B9E9E] mb-4 shadow-lg shadow-[var(--color-accent)]/20">
+                                <Crown className="w-6 h-6 text-white" />
+                            </div>
+                            <h2 className="text-lg sm:text-xl font-serif font-bold text-[var(--color-text)] text-center">
+                                Seu limite diário acabou
+                            </h2>
+                            <p className="text-sm text-[var(--color-text-sec)] mt-1.5 text-center leading-relaxed max-w-[280px]">
+                                Desbloqueie o Otto Pro e estude sem interrupções.
+                            </p>
+                        </div>
+
+                        {/* Features */}
+                        <div className="bg-[var(--color-surface-alt)] rounded-xl p-4 mb-5 border border-[var(--color-border-light)]">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Sparkles className="w-4 h-4 text-[var(--color-accent)]" />
+                                <span className="text-xs font-semibold text-[var(--color-text)] uppercase tracking-wide">Otto Pro</span>
+                            </div>
+                            <ul className="space-y-2">
+                                {PRO_FEATURES.map((feature) => (
+                                    <li key={feature} className="flex items-center gap-2.5">
+                                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[var(--color-accent-light)] flex-shrink-0">
+                                            <Check className="w-3 h-3 text-[var(--color-accent)]" />
+                                        </div>
+                                        <span className="text-sm text-[var(--color-text-sec)]">{feature}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* Plan selector */}
+                        <div className="grid grid-cols-2 gap-2.5 mb-4">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedPlan("annual")}
+                                className={`relative flex flex-col items-center py-3 px-3 rounded-xl border-2 transition-all duration-200 min-h-[88px] ${
+                                    selectedPlan === "annual"
+                                        ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]"
+                                        : "border-[var(--color-border-light)] bg-[var(--color-surface)] hover:border-[var(--color-border)]"
+                                }`}
+                            >
+                                {/* Discount badge */}
+                                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[var(--color-accent)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                                    -25%
+                                </span>
+                                <span className="text-xs font-medium text-[var(--color-text-sec)] mt-1">Anual</span>
+                                <span className="text-lg font-bold text-[var(--color-text)] leading-tight">R$ 15</span>
+                                <span className="text-[11px] text-[var(--color-text-muted)]">/mês</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setSelectedPlan("monthly")}
+                                className={`flex flex-col items-center py-3 px-3 rounded-xl border-2 transition-all duration-200 min-h-[88px] ${
+                                    selectedPlan === "monthly"
+                                        ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]"
+                                        : "border-[var(--color-border-light)] bg-[var(--color-surface)] hover:border-[var(--color-border)]"
+                                }`}
+                            >
+                                <span className="text-xs font-medium text-[var(--color-text-sec)] mt-1">Mensal</span>
+                                <span className="text-lg font-bold text-[var(--color-text)] leading-tight">R$ 19,90</span>
+                                <span className="text-[11px] text-[var(--color-text-muted)]">/mês</span>
+                            </button>
+                        </div>
+
+                        {/* CTA button */}
+                        <button
+                            onClick={() => handleUpgrade(activePriceId)}
+                            disabled={upgradeLoading !== null}
+                            className="w-full bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent-dark)] hover:from-[var(--color-accent-dark)] hover:to-[var(--color-accent-dark)] text-white font-semibold py-3.5 px-4 rounded-lg transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[48px] shadow-md shadow-[var(--color-accent)]/20 hover:shadow-lg hover:shadow-[var(--color-accent)]/30"
+                        >
+                            {upgradeLoading ? (
+                                <>
+                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Redirecionando para pagamento...
+                                </>
+                            ) : (
+                                <>
+                                    <Zap className="w-4 h-4" />
+                                    Fazer upgrade agora
+                                </>
+                            )}
+                        </button>
+
+                        {/* Dismiss */}
+                        <button
+                            onClick={onClose}
+                            className="w-full text-[var(--color-text-muted)] hover:text-[var(--color-text-sec)] text-sm py-3 mt-1 transition-colors duration-150 min-h-[44px]"
+                        >
+                            Voltar amanhã
+                        </button>
+                    </div>
+                </motion.div>
             </div>
-        </div>
+        </AnimatePresence>
     );
 }
 // ─────────────────────────────────────────────────────────────────────────────
@@ -668,7 +729,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                 </div>
             </div>
 
-            {/* Paywall Modal */}
+            {/* Paywall Modal — dismissable, but server re-blocks on next attempt */}
             {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
         </div>
     );

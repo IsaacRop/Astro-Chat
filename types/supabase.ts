@@ -301,7 +301,9 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          last_login_date: string | null
           last_message_date: string | null
+          login_streak: number
           plan_tier: string | null
           updated_at: string | null
         }
@@ -311,7 +313,9 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          last_login_date?: string | null
           last_message_date?: string | null
+          login_streak?: number
           plan_tier?: string | null
           updated_at?: string | null
         }
@@ -321,7 +325,9 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          last_login_date?: string | null
           last_message_date?: string | null
+          login_streak?: number
           plan_tier?: string | null
           updated_at?: string | null
         }

@@ -78,7 +78,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 
 const PRICE_IDS = {
     monthly: "price_1T9Uk7CKO59buulnEpHz9iHj",
-    yearly: "price_1T9Uk6CKO59buuln4Pfbrvuq",
+    yearly: "price_1TCHSVCKO59buulnTnbPy8DX",
 } as const;
 
 export default function UpgradePage() {

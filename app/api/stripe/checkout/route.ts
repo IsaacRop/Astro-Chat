@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 
 const VALID_PRICE_IDS = new Set([
     "price_1T9Uk7CKO59buulnEpHz9iHj", // Monthly
-    "price_1T9Uk6CKO59buuln4Pfbrvuq", // Annual
+    "price_1TCHSVCKO59buulnTnbPy8DX", // Annual
 ]);
 
 export async function POST(req: Request) {
