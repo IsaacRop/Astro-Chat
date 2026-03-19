@@ -7,6 +7,12 @@ import { redirect } from "next/navigation";
 
 export async function updateProfile(formData: FormData) {
     const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: "Não autenticado." };
+    }
+
     const nickname = formData.get("nickname") as string;
     const fullName = formData.get("fullName") as string;
 
@@ -14,10 +20,11 @@ export async function updateProfile(formData: FormData) {
         return { error: "O apelido deve ter pelo menos 2 caracteres." };
     }
 
+    // Update auth user metadata
     const { error } = await supabase.auth.updateUser({
         data: {
-            full_name: fullName, // Update standard full_name
-            nickname: nickname, // Custom field
+            full_name: fullName,
+            nickname: nickname,
         },
     });
 
@@ -25,8 +32,14 @@ export async function updateProfile(formData: FormData) {
         return { error: error.message };
     }
 
+    // Sync full_name to profiles table
+    await supabase
+        .from("profiles")
+        .update({ full_name: fullName })
+        .eq("id", user.id);
+
     revalidatePath("/profile");
-    revalidatePath("/"); // Update sidebar name potentially
+    revalidatePath("/");
     return { success: "Perfil atualizado com sucesso." };
 }
 

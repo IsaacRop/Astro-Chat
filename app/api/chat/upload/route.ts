@@ -4,32 +4,18 @@ import { createClient } from "@/utils/supabase/server";
 import { PDFParse } from "pdf-parse";
 
 // ── Configuration ────────────────────────────────────────────────────────────
-const SYSTEM_PROMPT = `Você é o Otto, um assistente de inteligência artificial especializado em tutoria educacional.
+const SYSTEM_PROMPT = `Você é Otto, um tutor de elite especializado no exame ENEM (Brasil). Seu tom é direto, acadêmico e encorajador. NUNCA dê exemplos de ensino fundamental (ex: não explique que adição é somar). Aprofunde-se em conceitos reais do ENEM (estequiometria, matrizes energéticas, sociologia contemporânea). Mantenha o contexto rigorosamente. Se você criar uma lista de 10 itens e o usuário pedir o 11º, corrija-o educadamente informando que a lista só tem 10 itens. Não alucine informações.
 
-SUA MISSÃO:
-Ajudar o usuário a dominar qualquer tema de forma clara, rápida e direta.
+DIRETRIZES:
+- Respostas em nível ENEM: Ensino Médio avançado, vestibular e pré-vestibular.
+- Use Markdown para estruturar (listas, **negrito**, títulos).
+- Parágrafos curtos. Clareza sobre completude.
+- Faça perguntas curtas ao final para testar compreensão quando apropriado.
+- Nunca forneça respostas prontas sem explicar o raciocínio.
+- Sempre mantenha o contexto da conversa anterior. Referencie o que já foi discutido.`;
 
-DIRETRIZES DE PERSONALIDADE:
-- **Didático e Objetivo:** Vá direto ao ponto.
-- **Entusiasta:** Demonstre paixão por ensinar.
-- **Linguagem Acessível:** Evite termos técnicos sem explicá-los.
-
-REGRAS DE ATUAÇÃO:
-1. **Explicação em Níveis:** Se o tema for difícil, simplifique primeiro.
-2. **Analogias:** Use analogias do mundo real quando útil.
-3. **Interatividade:** Faça perguntas curtas ao final para testar compreensão.
-4. **Resumo Visual:** Use listas e **negrito** para destacar termos.
-
-FORMATAÇÃO:
-- Use Markdown para estruturar.
-- Parágrafos curtos para leitura fácil.
-
-RESTRIÇÃO CRÍTICA:
-- **Mantenha respostas curtas e focadas.** Evite textos longos. Priorize clareza sobre completude.
-- Nunca forneça respostas prontas sem explicar o raciocínio.`;
-
-const MAX_CONTEXT_MESSAGES = 6;
-const MAX_OUTPUT_TOKENS = 500;
+const MAX_CONTEXT_MESSAGES = 20;
+const MAX_OUTPUT_TOKENS = 1024;
 const FREE_DAILY_LIMIT = 10;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_PDF_TEXT_LENGTH = 12_000; // characters
@@ -67,40 +53,50 @@ export async function POST(request: Request) {
             });
         }
 
+        // ── Paywall Gate (DB-verified, not counter-based) ────────────────
         const { data: profile } = await supabase
             .from("profiles")
-            .select("plan_tier, daily_message_count, last_message_date")
+            .select("plan_tier")
             .eq("id", user.id)
             .single();
 
-        const today = new Date().toISOString().split("T")[0];
         const planTier = profile?.plan_tier ?? "free";
-        let dailyCount = profile?.daily_message_count ?? 0;
 
-        if (profile?.last_message_date !== today) {
-            dailyCount = 0;
-        }
+        if (planTier !== "pro") {
+            const todayStart = new Date();
+            todayStart.setUTCHours(0, 0, 0, 0);
 
-        if (planTier === "free" && dailyCount >= FREE_DAILY_LIMIT) {
-            return new Response(
-                JSON.stringify({ error: "PAYWALL_LIMIT_REACHED" }),
-                { status: 403, headers: { "Content-Type": "application/json" } }
-            );
-        }
+            const { data: userChats } = await supabase
+                .from("chats")
+                .select("id")
+                .eq("user_id", user.id);
 
-        // Increment usage counter (fire-and-forget)
-        supabase
-            .from("profiles")
-            .update({
-                daily_message_count: dailyCount + 1,
-                last_message_date: today,
-            })
-            .eq("id", user.id)
-            .then(() => {
-                console.log(
-                    `[Chat Upload API] Updated message count to ${dailyCount + 1}`
+            const chatIds = (userChats || []).map((c: { id: string }) => c.id);
+
+            let todayMessageCount = 0;
+            if (chatIds.length > 0) {
+                const { count, error: countError } = await supabase
+                    .from("messages")
+                    .select("*", { count: "exact", head: true })
+                    .in("chat_id", chatIds)
+                    .eq("role", "user")
+                    .gte("created_at", todayStart.toISOString());
+
+                if (countError) {
+                    console.error(`[Chat Upload API] Failed to count messages for user ${user.id}:`, countError);
+                }
+                todayMessageCount = count ?? 0;
+            }
+
+            console.log(`[Chat Upload API] User ${user.id} has sent ${todayMessageCount}/${FREE_DAILY_LIMIT} messages today (tier: ${planTier})`);
+
+            if (todayMessageCount >= FREE_DAILY_LIMIT) {
+                return new Response(
+                    JSON.stringify({ error: "PAYWALL_LIMIT_REACHED" }),
+                    { status: 403, headers: { "Content-Type": "application/json" } }
                 );
-            });
+            }
+        }
 
         // ── Parse FormData ───────────────────────────────────────────────
         const formData = await request.formData();

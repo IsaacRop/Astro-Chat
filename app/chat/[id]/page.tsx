@@ -16,7 +16,7 @@ export default async function ChatDetailPage({ params }: { params: Promise<{ id:
     }));
 
     return (
-        <div className="flex h-full">
+        <div className="flex h-full min-h-0">
             <ChatSidebar chats={chats} className="hidden md:flex" />
             <ChatInterface chatId={id} initialMessages={formattedMessages} />
         </div>

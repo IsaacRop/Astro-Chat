@@ -19,7 +19,7 @@ export default function ChatPage() {
     }, []);
 
     return (
-        <div className="flex h-full">
+        <div className="flex h-full min-h-0">
             <ChatSidebar chats={chats} className="hidden md:flex" />
             <ChatInterface chatId={null} initialMessages={[]} />
         </div>

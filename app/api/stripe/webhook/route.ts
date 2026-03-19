@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Service-role client bypasses RLS
 function getServiceClient() {
@@ -20,13 +18,22 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Missing signature" }, { status: 400 });
     }
 
+    const key = process.env.STRIPE_SECRET_KEY;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!key || !webhookSecret) {
+        return NextResponse.json({ error: "Stripe not configured" }, { status: 500 });
+    }
+
+    const StripeSDK = (await import("stripe")).default;
+    const stripe = new StripeSDK(key);
+
     let event: Stripe.Event;
 
     try {
         event = stripe.webhooks.constructEvent(
             body,
             signature,
-            process.env.STRIPE_WEBHOOK_SECRET!
+            webhookSecret
         );
     } catch (err: any) {
         console.error("[stripe/webhook] Signature verification failed:", err.message);

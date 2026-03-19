@@ -1,36 +1,22 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { openai } from '@ai-sdk/openai'
 import { createClient } from "@/utils/supabase/server"
+import { checkCanUse, incrementUsage } from "@/app/actions/usage"
 
-// System prompt for Otto - the educational AI assistant (optimized for conciseness)
-const SYSTEM_PROMPT = `Você é o Otto, um assistente de inteligência artificial especializado em tutoria educacional.
+// System prompt for Otto - ENEM elite tutor
+const SYSTEM_PROMPT = `Você é Otto, um tutor de elite especializado no exame ENEM (Brasil). Seu tom é direto, acadêmico e encorajador. NUNCA dê exemplos de ensino fundamental (ex: não explique que adição é somar). Aprofunde-se em conceitos reais do ENEM (estequiometria, matrizes energéticas, sociologia contemporânea). Mantenha o contexto rigorosamente. Se você criar uma lista de 10 itens e o usuário pedir o 11º, corrija-o educadamente informando que a lista só tem 10 itens. Não alucine informações.
 
-SUA MISSÃO:
-Ajudar o usuário a dominar qualquer tema de forma clara, rápida e direta.
-
-DIRETRIZES DE PERSONALIDADE:
-- **Didático e Objetivo:** Vá direto ao ponto.
-- **Entusiasta:** Demonstre paixão por ensinar.
-- **Linguagem Acessível:** Evite termos técnicos sem explicá-los.
-
-REGRAS DE ATUAÇÃO:
-1. **Explicação em Níveis:** Se o tema for difícil, simplifique primeiro.
-2. **Analogias:** Use analogias do mundo real quando útil.
-3. **Interatividade:** Faça perguntas curtas ao final para testar compreensão.
-4. **Resumo Visual:** Use listas e **negrito** para destacar termos.
-
-FORMATAÇÃO:
-- Use Markdown para estruturar.
-- Parágrafos curtos para leitura fácil.
-
-RESTRIÇÃO CRÍTICA:
-- **Mantenha respostas curtas e focadas.** Evite textos longos. Priorize clareza sobre completude.
-- Nunca forneça respostas prontas sem explicar o raciocínio.`;
+DIRETRIZES:
+- Respostas em nível ENEM: Ensino Médio avançado, vestibular e pré-vestibular.
+- Use Markdown para estruturar (listas, **negrito**, títulos).
+- Parágrafos curtos. Clareza sobre completude.
+- Faça perguntas curtas ao final para testar compreensão quando apropriado.
+- Nunca forneça respostas prontas sem explicar o raciocínio.
+- Sempre mantenha o contexto da conversa anterior. Referencie o que já foi discutido.`;
 
 // Safety & Cost Configuration
-const MAX_CONTEXT_MESSAGES = 6;
-const MAX_OUTPUT_TOKENS = 500;
-const FREE_DAILY_LIMIT = 10;
+const MAX_CONTEXT_MESSAGES = 20;
+const MAX_OUTPUT_TOKENS = 1024;
 
 // Allow streaming responses up to 60 seconds
 export const maxDuration = 60;
@@ -43,7 +29,7 @@ export async function POST(request: Request) {
     console.log('[Chat API] === REQUEST STARTED ===');
 
     try {
-        // ── Paywall Gate ─────────────────────────────────────────────────────
+        // ── Auth ─────────────────────────────────────────────────────────────
         const supabase = await createClient();
 
         const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -54,38 +40,18 @@ export async function POST(request: Request) {
             });
         }
 
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('plan_tier, daily_message_count, last_message_date')
-            .eq('id', user.id)
-            .single();
-
-        const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
-        const planTier = profile?.plan_tier ?? 'free';
-        let dailyCount = profile?.daily_message_count ?? 0;
-
-        // Reset counter if the stored date is not today
-        if (profile?.last_message_date !== today) {
-            dailyCount = 0;
-        }
-
-        // Block free-tier users who have hit the daily limit
-        if (planTier === 'free' && dailyCount >= FREE_DAILY_LIMIT) {
-            console.log(`[Chat API] Paywall triggered for user ${user.id} (count: ${dailyCount})`);
+        // ── Freemium limit check (usage_limits table) ──────────────────────
+        const canUse = await checkCanUse("chat");
+        if (!canUse) {
             return new Response(JSON.stringify({ error: 'PAYWALL_LIMIT_REACHED' }), {
                 status: 403,
                 headers: { 'Content-Type': 'application/json' },
             });
         }
-
-        // Increment usage counter (fire-and-forget — don't block the stream)
-        supabase
-            .from('profiles')
-            .update({ daily_message_count: dailyCount + 1, last_message_date: today })
-            .eq('id', user.id)
-            .then(() => {
-                console.log(`[Chat API] Updated message count to ${dailyCount + 1} for user ${user.id}`);
-            });
+        // Increment usage counter (fire-and-forget)
+        incrementUsage("chat").catch(err =>
+            console.error('[Chat API] Failed to increment usage:', err)
+        );
         // ─────────────────────────────────────────────────────────────────────
 
         const body = await request.json();

@@ -26,18 +26,18 @@ export async function middleware(request: NextRequest) {
     )
 
     // Refreshes the session — do not remove this call
-    await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    // Protege rotas autenticadas
+    if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
+        return NextResponse.redirect(new URL('/login', request.url))
+    }
 
     return supabaseResponse
 }
 
 export const config = {
     matcher: [
-        '/chat/:path*',
-        '/cadernos/:path*',
-        '/upgrade',
-        '/api/chat/:path*',
-        '/api/graph/:path*',
-        '/api/stripe/checkout',
+        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 }

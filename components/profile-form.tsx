@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { User } from "@supabase/supabase-js";
 import { Loader2, Camera, LogOut, Trash2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { updateProfile, deleteAccount, signOut } from "@/app/actions/profile";
-import { useRouter } from "next/navigation";
 import {
     Dialog,
     DialogContent,
@@ -22,13 +21,14 @@ interface ProfileFormProps {
 export function ProfileForm({ user }: ProfileFormProps) {
     const [isPending, startTransition] = useTransition();
     const [isDeleting, startDeleteTransition] = useTransition();
-    const router = useRouter();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Initial values
     const initialName = user.user_metadata.full_name || "";
     const initialNickname = user.user_metadata.nickname || initialName.split(" ")[0] || "";
 
     const [hasChanges, setHasChanges] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(user.user_metadata.avatar_url || null);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
     const handleSubmit = (formData: FormData) => {
         startTransition(async () => {
@@ -40,6 +40,52 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 setHasChanges(false);
             }
         });
+    };
+
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Client-side validation
+        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+            toast.error("Formato inválido. Use JPG, PNG ou WebP.");
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error("Arquivo muito grande. Máximo 2 MB.");
+            return;
+        }
+
+        setUploadingAvatar(true);
+        try {
+            const formData = new FormData();
+            formData.append("avatar", file);
+
+            const res = await fetch("/api/profile/avatar", {
+                method: "POST",
+                body: formData,
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                toast.error(data.error || "Erro ao enviar foto.");
+                return;
+            }
+
+            setAvatarUrl(data.avatarUrl);
+            toast.success("Foto atualizada!");
+        } catch {
+            toast.error("Erro de conexão ao enviar foto.");
+        } finally {
+            setUploadingAvatar(false);
+            // Reset file input so the same file can be re-selected
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
     };
 
     const handleDeleteAccount = () => {
@@ -56,7 +102,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
     const handleSignOut = async () => {
         await signOut();
-    }
+    };
 
     return (
         <div className="space-y-8 md:space-y-12">
@@ -66,22 +112,36 @@ export function ProfileForm({ user }: ProfileFormProps) {
                 <div className="flex flex-col items-center gap-3 md:gap-4">
                     <div className="relative group">
                         <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-border overflow-hidden shadow-2xl">
-                            {user.user_metadata.avatar_url ? (
+                            {avatarUrl ? (
                                 <img
-                                    src={user.user_metadata.avatar_url}
+                                    src={avatarUrl}
                                     alt={initialName}
                                     className="w-full h-full object-cover transition-opacity group-hover:opacity-75"
                                 />
                             ) : (
                                 <div className="w-full h-full bg-primary/10 flex items-center justify-center text-2xl font-serif text-primary">
-                                    {initialName.charAt(0).toUpperCase()}
+                                    {initialName.charAt(0).toUpperCase() || "?"}
+                                </div>
+                            )}
+                            {uploadingAvatar && (
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
+                                    <Loader2 className="w-6 h-6 animate-spin text-white" />
                                 </div>
                             )}
                         </div>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={handleAvatarChange}
+                        />
                         <button
                             type="button"
-                            className="absolute bottom-0 right-0 p-2 min-w-[36px] min-h-[36px] rounded-full bg-muted border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all shadow-lg flex items-center justify-center"
-                            title="Alterar foto (Em breve)"
+                            onClick={handleAvatarClick}
+                            disabled={uploadingAvatar}
+                            className="absolute bottom-0 right-0 p-2 min-w-[36px] min-h-[36px] rounded-full bg-muted border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all shadow-lg flex items-center justify-center disabled:opacity-50"
+                            title="Alterar foto"
                         >
                             <Camera size={14} />
                         </button>

@@ -3,25 +3,7 @@ import { DashboardHome } from "@/components/dashboard-home";
 import { getUserNotes } from "@/app/actions/study";
 import { getTasks, getIdeas } from "@/app/actions/productivity";
 import { getUserChats } from "@/app/actions/chat";
-
-function calcStreak(dates: string[]): number {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const days = new Set(
-        dates.map((d) => {
-            const x = new Date(d);
-            x.setHours(0, 0, 0, 0);
-            return x.getTime();
-        })
-    );
-    let streak = 0;
-    let cur = today.getTime();
-    while (days.has(cur)) {
-        streak++;
-        cur -= 86400000;
-    }
-    return streak;
-}
+import { recordLoginStreak } from "@/app/actions/dashboard";
 
 export default async function Home() {
     const supabase = await createClient();
@@ -48,13 +30,8 @@ export default async function Home() {
     const pendingTasks = tasks.filter((t: any) => t.status !== "done").length;
     const tasksThisWeek = tasks.filter((t: any) => new Date(t.created_at) > weekAgo).length;
     
-    // Fallback static array types since empty arrays map as `any` without definitions
-    const streakDays = user ? calcStreak([
-        ...notes.map((n: any) => n.updated_at),
-        ...tasks.map((t: any) => t.created_at),
-        ...ideas.map((i: any) => i.created_at),
-        ...chats.map((c: any) => c.updated_at),
-    ]) : 0;
+    // Record today's login and get the current streak
+    const streakDays = user ? await recordLoginStreak() : 0;
 
     const recentActivity = user ? [
         ...notes.slice(0, 4).map((n: any) => ({ type: "note",  title: n.title || "Nota",          action: "Nota atualizada",      time: n.updated_at,  href: "/notes/" + n.id })),
