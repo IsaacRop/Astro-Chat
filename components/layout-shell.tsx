@@ -32,7 +32,7 @@ export function LayoutShell({ children, rightElement }: LayoutShellProps) {
                     rightElement={rightElement}
                     onMobileMenuToggle={() => setMobileSidebarOpen((v) => !v)}
                 />
-                <div className="flex-1 overflow-hidden relative">
+                <div className="flex-1 overflow-auto relative">
                     {children}
                 </div>
             </div>

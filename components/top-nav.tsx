@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { MessageSquare, BookOpen, FileText, Lightbulb, Star, CheckSquare, CalendarDays } from "lucide-react";
+import { MessageSquare, BookOpen, FileText, Lightbulb, Star, CheckSquare, CalendarDays, FileCheck, Layers } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 
 interface TabDef {
@@ -27,6 +27,10 @@ const tabs: TabDef[] = [
     { id: "ideias",    label: "Ideias",     icon: Lightbulb,     href: "/ideas",
       textColor: "text-[#9B82B8]", bgColor: "bg-[#EDE3F5]", indicatorColor: "bg-[#9B82B8]" },
     { id: "favoritos",  label: "Favoritos",  icon: Star,          href: "/favorites",
+      textColor: "text-[#B89E6B]", bgColor: "bg-[#F2ECD8]", indicatorColor: "bg-[#B89E6B]" },
+    { id: "provas",    label: "Provas",     icon: FileCheck,     href: "/provas",
+      textColor: "text-[#C17D8A]", bgColor: "bg-[#F5E3E7]", indicatorColor: "bg-[#C17D8A]" },
+    { id: "flashcards",label: "Flashcards", icon: Layers,        href: "/flashcards",
       textColor: "text-[#B89E6B]", bgColor: "bg-[#F2ECD8]", indicatorColor: "bg-[#B89E6B]" },
     { id: "tarefas",   label: "Tarefas",    icon: CheckSquare,   href: "/tasks",          badge: "5",
       textColor: "text-[#C17D8A]", bgColor: "bg-[#F5E3E7]", indicatorColor: "bg-[#C17D8A]" },

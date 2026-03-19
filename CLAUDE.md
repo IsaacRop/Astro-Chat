@@ -169,3 +169,47 @@ Transitions: duration-150 to duration-250 ease
 - Padding: p-4 on mobile, p-6 on md, p-8 on lg+
 - Touch targets: minimum 44x44px for all interactive elements
 - Test targets: iPhone SE (375px), iPhone 14 (390px), Android mid-range (360px), iPad (768px)
+
+### AI-Powered Exams
+Route: /dashboard/provas
+
+User flow:
+1. Setup screen → pick question type, topic, and count
+2. Loading (AI generating) → visual loading feedback
+3. Exam screen → answer questions one by one
+4. Results screen → answer key + AI-generated performance feedback
+
+Question types:
+- Multiple choice: 5 alternatives (A-E), ENEM style
+- True or False: statement + V or F
+
+Count presets: 5, 10, 15, 20, 30, 45 questions
+Topic: free text chosen by the user
+
+Each AI-generated question must contain:
+- Enunciado (may include supporting text)
+- Alternatives (5 for multiple choice) or statement (V/F)
+- Correct answer
+- Detailed explanation
+
+Final results:
+- Score percentage
+- Visual answer key (question by question, correct/wrong)
+- AI-generated feedback analyzing overall performance,
+  strengths, weaknesses, and study recommendations
+
+### AI-Powered Flashcards
+Route: /dashboard/flashcards
+
+User flow:
+1. Setup screen → pick topic and card count
+2. Loading (AI generating) → visual feedback
+3. Review screen → card with front/back, flip on tap
+4. After flip → "Sei" / "Não sei" buttons
+5. Results screen → stats + AI feedback
+
+Card format: front (question/concept) + back (answer/explanation)
+Count presets: 5, 10, 15, 20 cards
+Topic: free text chosen by the user
+
+All UI text must remain in Brazilian Portuguese (pt-BR).

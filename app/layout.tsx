@@ -49,7 +49,7 @@ export default async function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${playfair.variable} antialiased font-sans bg-background text-foreground`}
+        className={`${inter.variable} ${playfair.variable} antialiased font-sans bg-background text-foreground overflow-x-hidden`}
         suppressHydrationWarning
       >
         <ThemeProvider

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
     MessageSquare, BookOpen, FileText, Lightbulb, Star, CheckSquare,
-    CalendarDays, Send, StickyNote, ListTodo
+    CalendarDays, Send, StickyNote, ListTodo, FileCheck, Layers
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -47,6 +47,10 @@ const features = [
       text: "text-accent-purple", bg: "bg-accent-purple/10", border: "border-accent-purple/20", hov: "hover:border-accent-purple/50 hover:bg-accent-purple/20" },
     { id: "favoritos",  label: "Favoritos",  icon: Star,          href: "/favorites",      desc: "Itens salvos",
       text: "text-accent-yellow", bg: "bg-accent-yellow/10", border: "border-accent-yellow/20", hov: "hover:border-accent-yellow/50 hover:bg-accent-yellow/20" },
+    { id: "provas",     label: "Provas",     icon: FileCheck,     href: "/provas",         desc: "Simulados com IA",
+      text: "text-[#C17D8A]", bg: "bg-[#F5E3E7]", border: "border-[#C17D8A]/20", hov: "hover:border-[#C17D8A]/50 hover:bg-[#F5E3E7]" },
+    { id: "flashcards", label: "Flashcards", icon: Layers,        href: "/flashcards",     desc: "Cards de estudo",
+      text: "text-[#B89E6B]", bg: "bg-[#F2ECD8]", border: "border-[#B89E6B]/20", hov: "hover:border-[#B89E6B]/50 hover:bg-[#F2ECD8]" },
     { id: "tarefas",    label: "Tarefas",    icon: CheckSquare,   href: "/tasks",          desc: "Kanban Board",
       text: "text-accent-red", bg: "bg-accent-red/10", border: "border-accent-red/20", hov: "hover:border-accent-red/50 hover:bg-accent-red/20" },
     { id: "calendario", label: "Calendário", icon: CalendarDays,  href: "/calendar",       desc: "Eventos e prazos",
