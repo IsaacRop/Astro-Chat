@@ -1,6 +1,7 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { openai } from '@ai-sdk/openai'
 import { createClient } from "@/utils/supabase/server"
+import { checkCanUse, incrementUsage } from "@/app/actions/usage"
 
 // System prompt for Otto - ENEM elite tutor
 const SYSTEM_PROMPT = `Você é Otto, um tutor de elite especializado no exame ENEM (Brasil). Seu tom é direto, acadêmico e encorajador. NUNCA dê exemplos de ensino fundamental (ex: não explique que adição é somar). Aprofunde-se em conceitos reais do ENEM (estequiometria, matrizes energéticas, sociologia contemporânea). Mantenha o contexto rigorosamente. Se você criar uma lista de 10 itens e o usuário pedir o 11º, corrija-o educadamente informando que a lista só tem 10 itens. Não alucine informações.
@@ -16,7 +17,6 @@ DIRETRIZES:
 // Safety & Cost Configuration
 const MAX_CONTEXT_MESSAGES = 20;
 const MAX_OUTPUT_TOKENS = 1024;
-const FREE_DAILY_LIMIT = 10;
 
 // Allow streaming responses up to 60 seconds
 export const maxDuration = 60;
@@ -40,52 +40,18 @@ export async function POST(request: Request) {
             });
         }
 
-        // ── Paywall Gate (DB-verified, not counter-based) ────────────────────
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('plan_tier')
-            .eq('id', user.id)
-            .single();
-
-        const planTier = profile?.plan_tier ?? 'free';
-
-        if (planTier !== 'pro') {
-            // Count ACTUAL user messages saved in DB today — not a soft counter.
-            // messages has no user_id, so we go through chats.user_id.
-            const todayStart = new Date();
-            todayStart.setUTCHours(0, 0, 0, 0);
-
-            const { data: userChats } = await supabase
-                .from('chats')
-                .select('id')
-                .eq('user_id', user.id);
-
-            const chatIds = (userChats || []).map((c: { id: string }) => c.id);
-
-            let todayMessageCount = 0;
-            if (chatIds.length > 0) {
-                const { count, error: countError } = await supabase
-                    .from('messages')
-                    .select('*', { count: 'exact', head: true })
-                    .in('chat_id', chatIds)
-                    .eq('role', 'user')
-                    .gte('created_at', todayStart.toISOString());
-
-                if (countError) {
-                    console.error(`[Chat API] Failed to count messages for user ${user.id}:`, countError);
-                }
-                todayMessageCount = count ?? 0;
-            }
-
-            console.log(`[Chat API] User ${user.id} has sent ${todayMessageCount}/${FREE_DAILY_LIMIT} messages today (tier: ${planTier})`);
-
-            if (todayMessageCount >= FREE_DAILY_LIMIT) {
-                return new Response(JSON.stringify({ error: 'PAYWALL_LIMIT_REACHED' }), {
-                    status: 403,
-                    headers: { 'Content-Type': 'application/json' },
-                });
-            }
+        // ── Freemium limit check (usage_limits table) ──────────────────────
+        const canUse = await checkCanUse("chat");
+        if (!canUse) {
+            return new Response(JSON.stringify({ error: 'PAYWALL_LIMIT_REACHED' }), {
+                status: 403,
+                headers: { 'Content-Type': 'application/json' },
+            });
         }
+        // Increment usage counter (fire-and-forget)
+        incrementUsage("chat").catch(err =>
+            console.error('[Chat API] Failed to increment usage:', err)
+        );
         // ─────────────────────────────────────────────────────────────────────
 
         const body = await request.json();

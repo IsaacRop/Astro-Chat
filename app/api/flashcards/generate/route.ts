@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { createClient } from "@/utils/supabase/server";
+import { checkCanUse, incrementUsage } from "@/app/actions/usage";
 
 export const maxDuration = 60;
 
@@ -32,6 +33,15 @@ export async function POST(request: Request) {
 
         if (!topic || !cardCount) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+        }
+
+        // ── Freemium limit check ───────────────────────────────────────────
+        const canUse = await checkCanUse("flashcard");
+        if (!canUse) {
+            return NextResponse.json({
+                error: "USAGE_LIMIT_REACHED",
+                message: "Você atingiu o limite de 3 decks por dia no plano gratuito. Faça upgrade para o Pro para flashcards ilimitados.",
+            }, { status: 403 });
         }
 
         const result = await generateText({
@@ -85,6 +95,9 @@ export async function POST(request: Request) {
             await sb.from("flashcard_decks").delete().eq("id", deck.id);
             return NextResponse.json({ error: "Failed to save cards" }, { status: 500 });
         }
+
+        // Increment usage counter after successful generation
+        await incrementUsage("flashcard");
 
         return NextResponse.json({ deckId: deck.id });
     } catch (error) {

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
 import {
     Loader2,
     ArrowLeft,
@@ -23,6 +24,7 @@ import {
     type FlashcardCard,
     type DeckWithCards,
 } from "@/app/actions/flashcards";
+import { getUserUsage } from "@/app/actions/usage";
 import { toast } from "sonner";
 
 // ============================================
@@ -75,6 +77,11 @@ export default function FlashcardsPage() {
     const [detailDeck, setDetailDeck] = useState<DeckWithCards | null>(null);
     const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
+    // Usage limits
+    const [usageRemaining, setUsageRemaining] = useState<number | null>(null);
+    const [usageResetsAt, setUsageResetsAt] = useState("");
+    const [isPro, setIsPro] = useState(false);
+
     // Auth
     useEffect(() => {
         async function init() {
@@ -89,6 +96,11 @@ export default function FlashcardsPage() {
                 setIsAuthenticated(true);
                 const data = await getUserDecks();
                 setDecks(data);
+                // Fetch usage limits
+                const usage = await getUserUsage("flashcard");
+                setUsageRemaining(usage.remaining);
+                setUsageResetsAt(usage.resetsAt);
+                setIsPro(usage.isPro);
             } catch (error) {
                 console.error("[Flashcards] Failed to load:", error);
             } finally {
@@ -127,7 +139,17 @@ export default function FlashcardsPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ topic: topic.trim(), cardCount }),
             });
-            if (!res.ok) throw new Error("Failed to generate");
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                if (data.error === "USAGE_LIMIT_REACHED") {
+                    toast.error(data.message || "Limite diário atingido.");
+                    const usage = await getUserUsage("flashcard");
+                    setUsageRemaining(usage.remaining);
+                    setUsageResetsAt(usage.resetsAt);
+                    return;
+                }
+                throw new Error("Failed to generate");
+            }
             const { deckId } = await res.json();
             const deck = await getDeckWithCards(deckId);
             if (!deck) throw new Error("Failed to load deck");
@@ -136,9 +158,12 @@ export default function FlashcardsPage() {
             setCurrentCardIndex(0);
             setIsFlipped(false);
             setScreen("review");
-            // Refresh list
+            // Refresh list and usage
             const updated = await getUserDecks();
             setDecks(updated);
+            const usage = await getUserUsage("flashcard");
+            setUsageRemaining(usage.remaining);
+            setUsageResetsAt(usage.resetsAt);
         } catch (error) {
             console.error("[Flashcards] Generate failed:", error);
             toast.error("Não foi possível gerar os flashcards. Tente novamente.");
@@ -287,6 +312,9 @@ export default function FlashcardsPage() {
                             onGenerate={handleGenerate}
                             decks={decks}
                             onOpenDeck={handleOpenDeck}
+                            usageRemaining={usageRemaining}
+                            usageResetsAt={usageResetsAt}
+                            isPro={isPro}
                         />
                     </motion.div>
                 )}
@@ -368,6 +396,9 @@ function SetupScreen({
     onGenerate,
     decks,
     onOpenDeck,
+    usageRemaining,
+    usageResetsAt,
+    isPro,
 }: {
     topic: string;
     setTopic: (t: string) => void;
@@ -377,8 +408,12 @@ function SetupScreen({
     onGenerate: () => void;
     decks: FlashcardDeck[];
     onOpenDeck: (d: FlashcardDeck) => void;
+    usageRemaining: number | null;
+    usageResetsAt: string;
+    isPro: boolean;
 }) {
     const isFormComplete = topic.trim().length > 0 && cardCount !== null;
+    const limitReached = !isPro && usageRemaining !== null && usageRemaining <= 0;
 
     return (
         <div className="p-4 md:p-8 max-w-md mx-auto w-full space-y-8">
@@ -446,6 +481,32 @@ function SetupScreen({
                 </div>
             </motion.section>
 
+            {/* Limit reached card */}
+            {limitReached && (
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-[#F2ECD8] border border-[#B89E6B] rounded-xl p-4 space-y-2"
+                >
+                    <p className="text-sm font-semibold text-foreground">Limite diário atingido</p>
+                    <p className="text-xs text-muted-foreground">
+                        Faça upgrade para o Pro para flashcards ilimitados
+                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                        <a
+                            href="/upgrade"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-white text-xs font-semibold transition-all min-h-[44px]"
+                            style={{ backgroundColor: WARM }}
+                        >
+                            Fazer upgrade
+                        </a>
+                        {usageResetsAt && (
+                            <span className="text-xs text-muted-foreground">{usageResetsAt}</span>
+                        )}
+                    </div>
+                </motion.div>
+            )}
+
             {/* Generate */}
             <AnimatePresence mode="wait">
                 {isGenerating ? (
@@ -462,18 +523,21 @@ function SetupScreen({
                         </p>
                     </motion.div>
                 ) : (
-                    <motion.button
-                        key="button"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onGenerate}
-                        disabled={!isFormComplete}
-                        className="w-full py-3.5 rounded-xl text-white text-sm font-semibold transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] shadow-sm hover:shadow-md"
-                        style={{ backgroundColor: isFormComplete ? WARM : "#a0a0a0" }}
-                    >
-                        ✨ Gerar Flashcards
-                    </motion.button>
+                    <motion.div key="button" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-2">
+                        <motion.button
+                            onClick={onGenerate}
+                            disabled={!isFormComplete || limitReached}
+                            className="w-full py-3.5 rounded-xl text-white text-sm font-semibold transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] shadow-sm hover:shadow-md"
+                            style={{ backgroundColor: isFormComplete && !limitReached ? WARM : "#a0a0a0" }}
+                        >
+                            ✨ Gerar Flashcards
+                        </motion.button>
+                        {!isPro && usageRemaining !== null && usageRemaining > 0 && (
+                            <p className="text-center text-xs text-muted-foreground">
+                                Você tem {usageRemaining} {usageRemaining === 1 ? "deck restante" : "decks restantes"} hoje
+                            </p>
+                        )}
+                    </motion.div>
                 )}
             </AnimatePresence>
 
@@ -827,9 +891,22 @@ function ResultsScreen({
                     <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                         🤖 Feedback do Otto
                     </h3>
-                    <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                        {deck.ai_feedback}
-                    </p>
+                    <div className="text-sm leading-relaxed prose-feedback">
+                        <ReactMarkdown
+                            components={{
+                                h1: ({children}) => <h1 className="text-lg font-bold mb-2 mt-4 text-[var(--color-text)]">{children}</h1>,
+                                h2: ({children}) => <h2 className="text-base font-bold mb-1.5 mt-3.5 text-[var(--color-text)]">{children}</h2>,
+                                h3: ({children}) => <h3 className="text-[15px] font-semibold mb-1.5 mt-3 text-[var(--color-text)]">{children}</h3>,
+                                p: ({children}) => <p className="text-sm leading-relaxed text-[var(--color-text-sec)] mb-2">{children}</p>,
+                                strong: ({children}) => <strong className="font-semibold text-[var(--color-text)]">{children}</strong>,
+                                ul: ({children}) => <ul className="pl-5 mb-2">{children}</ul>,
+                                ol: ({children}) => <ol className="pl-5 mb-2 list-decimal">{children}</ol>,
+                                li: ({children}) => <li className="text-sm leading-relaxed text-[var(--color-text-sec)] mb-1">{children}</li>,
+                            }}
+                        >
+                            {deck.ai_feedback}
+                        </ReactMarkdown>
+                    </div>
                 </motion.div>
             )}
 

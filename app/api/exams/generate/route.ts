@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { createClient } from "@/utils/supabase/server";
+import { checkCanUse, incrementUsage } from "@/app/actions/usage";
 
 export const maxDuration = 60;
 
@@ -49,6 +50,15 @@ export async function POST(request: Request) {
 
         if (!["multiple_choice", "true_false"].includes(examType)) {
             return NextResponse.json({ error: "Invalid exam type" }, { status: 400 });
+        }
+
+        // ── Freemium limit check ───────────────────────────────────────────
+        const canUse = await checkCanUse("exam");
+        if (!canUse) {
+            return NextResponse.json({
+                error: "USAGE_LIMIT_REACHED",
+                message: "Você atingiu o limite de 3 provas por dia no plano gratuito. Faça upgrade para o Pro para provas ilimitadas.",
+            }, { status: 403 });
         }
 
         const systemPrompt = examType === "multiple_choice"
@@ -123,6 +133,9 @@ export async function POST(request: Request) {
             await sb.from("exams").delete().eq("id", exam.id);
             return NextResponse.json({ error: "Failed to save questions" }, { status: 500 });
         }
+
+        // Increment usage counter after successful generation
+        await incrementUsage("exam");
 
         return NextResponse.json({ examId: exam.id });
     } catch (error) {
