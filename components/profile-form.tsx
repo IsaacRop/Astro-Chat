@@ -24,7 +24,6 @@ export function ProfileForm({ user }: ProfileFormProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const initialName = user.user_metadata.full_name || "";
-    const initialNickname = user.user_metadata.nickname || initialName.split(" ")[0] || "";
 
     const [hasChanges, setHasChanges] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(user.user_metadata.avatar_url || null);
@@ -165,20 +164,6 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-xs uppercase tracking-wider text-muted-foreground font-medium ml-1">
-                            Como quer ser chamado?
-                        </label>
-                        <input
-                            name="nickname"
-                            defaultValue={initialNickname}
-                            className="w-full bg-muted border border-border rounded-xl px-4 py-3 min-h-[44px] text-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all placeholder:text-muted-foreground"
-                            placeholder="Apelido ou primeiro nome"
-                        />
-                        <p className="text-[11px] text-muted-foreground pl-1">
-                            Isso é como o Otto vai chamar você nas conversas.
-                        </p>
-                    </div>
                 </div>
 
                 {/* Save Button */}

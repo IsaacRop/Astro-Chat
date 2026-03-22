@@ -5,7 +5,12 @@ import { getTasks, getIdeas } from "@/app/actions/productivity";
 import { getUserChats } from "@/app/actions/chat";
 import { recordLoginStreak } from "@/app/actions/dashboard";
 
-export default async function Home() {
+export default async function Home({
+    searchParams,
+}: {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+    const params = await searchParams;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -50,6 +55,7 @@ export default async function Home() {
             stats={{ notesCount: notes.length, notesThisWeek, pendingTasks, tasksThisWeek, ideasCount: ideas.length, streakDays }}
             recentActivity={recentActivity}
             latestChatId={chats[0]?.id ?? null}
+            autoOpenAuth={params.authRequired === 'true' && !user}
         />
     );
 }

@@ -1,6 +1,7 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { createClient } from "@/utils/supabase/server";
+import { getUserUsage, incrementUsage } from "@/app/actions/usage";
 import { PDFParse } from "pdf-parse";
 
 // ── Configuration ────────────────────────────────────────────────────────────
@@ -16,7 +17,6 @@ DIRETRIZES:
 
 const MAX_CONTEXT_MESSAGES = 20;
 const MAX_OUTPUT_TOKENS = 1024;
-const FREE_DAILY_LIMIT = 10;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_PDF_TEXT_LENGTH = 12_000; // characters
 
@@ -53,50 +53,20 @@ export async function POST(request: Request) {
             });
         }
 
-        // ── Paywall Gate (DB-verified, not counter-based) ────────────────
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("plan_tier")
-            .eq("id", user.id)
-            .single();
-
-        const planTier = profile?.plan_tier ?? "free";
-
-        if (planTier !== "pro") {
-            const todayStart = new Date();
-            todayStart.setUTCHours(0, 0, 0, 0);
-
-            const { data: userChats } = await supabase
-                .from("chats")
-                .select("id")
-                .eq("user_id", user.id);
-
-            const chatIds = (userChats || []).map((c: { id: string }) => c.id);
-
-            let todayMessageCount = 0;
-            if (chatIds.length > 0) {
-                const { count, error: countError } = await supabase
-                    .from("messages")
-                    .select("*", { count: "exact", head: true })
-                    .in("chat_id", chatIds)
-                    .eq("role", "user")
-                    .gte("created_at", todayStart.toISOString());
-
-                if (countError) {
-                    console.error(`[Chat Upload API] Failed to count messages for user ${user.id}:`, countError);
-                }
-                todayMessageCount = count ?? 0;
-            }
-
-            console.log(`[Chat Upload API] User ${user.id} has sent ${todayMessageCount}/${FREE_DAILY_LIMIT} messages today (tier: ${planTier})`);
-
-            if (todayMessageCount >= FREE_DAILY_LIMIT) {
-                return new Response(
-                    JSON.stringify({ error: "PAYWALL_LIMIT_REACHED" }),
-                    { status: 403, headers: { "Content-Type": "application/json" } }
-                );
-            }
+        // ── Freemium limit check (5-hour rolling window) ────────────────
+        const usage = await getUserUsage("chat");
+        if (!usage.isPro && usage.remaining <= 0) {
+            const resetAt = usage.resetAt ?? new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
+            console.log(`[Chat Upload API] User ${user.id} hit the limit. Resets at: ${resetAt}`);
+            return new Response(
+                JSON.stringify({ error: "PAYWALL_LIMIT_REACHED", reset_at: resetAt }),
+                { status: 429, headers: { "Content-Type": "application/json" } }
+            );
         }
+        // Increment usage counter (fire-and-forget)
+        incrementUsage("chat").catch(err =>
+            console.error("[Chat Upload API] Failed to increment usage:", err)
+        );
 
         // ── Parse FormData ───────────────────────────────────────────────
         const formData = await request.formData();

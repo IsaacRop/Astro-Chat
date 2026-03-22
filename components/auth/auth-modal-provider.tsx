@@ -5,6 +5,7 @@ import {
     useCallback,
     useContext,
     useEffect,
+    useRef,
     useState,
     type ReactNode,
 } from "react";
@@ -139,6 +140,9 @@ export function AuthModalProvider({
 }: AuthModalProviderProps) {
     const [isAuthenticated, setIsAuthenticated] = useState(initialIsAuthenticated);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    // Stores an action the user intended to perform before being prompted to log in.
+    // After login succeeds, this action is executed automatically.
+    const pendingAction = useRef<(() => void) | null>(null);
 
     useEffect(() => {
         const supabase = createClient();
@@ -154,6 +158,13 @@ export function AuthModalProvider({
             if (session?.user) {
                 // Auto-close the modal on successful login
                 setIsModalOpen(false);
+                // Execute the action the user originally attempted, if any
+                if (pendingAction.current) {
+                    const action = pendingAction.current;
+                    pendingAction.current = null;
+                    // Small delay to let auth state fully propagate before navigation
+                    setTimeout(action, 150);
+                }
             }
         });
 
@@ -167,6 +178,8 @@ export function AuthModalProvider({
             if (isAuthenticated) {
                 callback?.();
             } else {
+                // Save the intended action so it can run after login
+                pendingAction.current = callback ?? null;
                 setIsModalOpen(true);
             }
         },

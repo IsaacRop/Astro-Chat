@@ -53,7 +53,7 @@ export default function TasksPage() {
 
                 if (!user) {
                     setIsAuthenticated(false);
-                    router.replace("/?redirect=tasks");
+                    router.replace("/?authRequired=true");
                     return;
                 }
 

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
     MessageSquare, BookOpen, FileText, Lightbulb, Star, CheckSquare,
-    CalendarDays, Send, StickyNote, ListTodo, FileCheck, Layers
+    CalendarDays, StickyNote, ListTodo, FileCheck, Layers
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -34,6 +34,7 @@ interface Props {
     stats: Stats;
     recentActivity: ActivityItem[];
     latestChatId: string | null;
+    autoOpenAuth?: boolean;
 }
 
 const features = [
@@ -48,9 +49,9 @@ const features = [
     { id: "favoritos",  label: "Favoritos",  icon: Star,          href: "/favorites",      desc: "Itens salvos",
       text: "text-accent-yellow", bg: "bg-accent-yellow/10", border: "border-accent-yellow/20", hov: "hover:border-accent-yellow/50 hover:bg-accent-yellow/20" },
     { id: "provas",     label: "Provas",     icon: FileCheck,     href: "/provas",         desc: "Simulados com IA",
-      text: "text-[#C17D8A]", bg: "bg-[#F5E3E7]", border: "border-[#C17D8A]/20", hov: "hover:border-[#C17D8A]/50 hover:bg-[#F5E3E7]" },
+      text: "text-[#C17D8A] dark:text-[#E8BDC4]", bg: "bg-[#F5E3E7] dark:bg-[#C17D8A]/20", border: "border-[#C17D8A]/20 dark:border-[#C17D8A]/30", hov: "hover:border-[#C17D8A]/50 hover:bg-[#F5E3E7] dark:hover:border-[#E8BDC4]/50 dark:hover:bg-[#C17D8A]/40" },
     { id: "flashcards", label: "Flashcards", icon: Layers,        href: "/flashcards",     desc: "Cards de estudo",
-      text: "text-[#B89E6B]", bg: "bg-[#F2ECD8]", border: "border-[#B89E6B]/20", hov: "hover:border-[#B89E6B]/50 hover:bg-[#F2ECD8]" },
+      text: "text-[#B89E6B] dark:text-[#D4C098]", bg: "bg-[#F2ECD8] dark:bg-[#B89E6B]/20", border: "border-[#B89E6B]/20 dark:border-[#B89E6B]/30", hov: "hover:border-[#B89E6B]/50 hover:bg-[#F2ECD8] dark:hover:border-[#D4C098]/50 dark:hover:bg-[#B89E6B]/40" },
     { id: "tarefas",    label: "Tarefas",    icon: CheckSquare,   href: "/tasks",          desc: "Kanban Board",
       text: "text-accent-red", bg: "bg-accent-red/10", border: "border-accent-red/20", hov: "hover:border-accent-red/50 hover:bg-accent-red/20" },
     { id: "calendario", label: "Calendário", icon: CalendarDays,  href: "/calendar",       desc: "Eventos e prazos",
@@ -156,27 +157,6 @@ function ActivityRow({ act, delay }: { act: ActivityItem; delay: number }) {
  */
 function ChatWidget({ latestChatId, userName }: { latestChatId: string | null; userName: string }) {
     const router = useRouter();
-    const { requireAuth, isAuthenticated } = useAuthModal();
-    const [msg, setMsg] = useState("");
-
-    const submit = () => {
-        if (!msg.trim()) return;
-        requireAuth(() => router.push("/chat"));
-    };
-
-    const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-        if (!isAuthenticated) {
-            // Prevent the input from staying focused so the modal doesn't compete
-            e.target.blur();
-            requireAuth();
-        }
-    };
-
-    const handleInputClick = () => {
-        if (!isAuthenticated) {
-            requireAuth();
-        }
-    };
 
     return (
         <div className="bg-card border border-border rounded-2xl flex flex-col h-full overflow-hidden">
@@ -202,30 +182,19 @@ function ChatWidget({ latestChatId, userName }: { latestChatId: string | null; u
                 )}
             </div>
             <div className="p-3 md:p-4 border-t border-border bg-background">
-                <div className="flex items-center gap-2 bg-accent/5 border border-border rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/40 transition-all">
-                    <input
-                        value={msg}
-                        onChange={(e) => setMsg(e.target.value)}
-                        onFocus={handleInputFocus}
-                        onClick={handleInputClick}
-                        onKeyDown={(e) => e.key === "Enter" && submit()}
-                        placeholder="Pergunte ao Otto..."
-                        className="flex-1 bg-transparent text-[14px] text-foreground placeholder:text-muted-foreground outline-none"
-                        readOnly={!isAuthenticated}
-                    />
-                    <button
-                        onClick={submit}
-                        className="flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex-shrink-0"
-                    >
-                        <Send size={15} />
-                    </button>
-                </div>
+                <button
+                    onClick={() => router.push("/chat")}
+                    className="w-full rounded-lg bg-primary text-primary-foreground py-3 text-sm font-medium transition-opacity hover:opacity-90"
+                >
+                    Ir para o Chat →
+                </button>
             </div>
         </div>
     );
 }
 
-export function DashboardHome({ userName, stats, recentActivity, latestChatId }: Props) {
+export function DashboardHome({ userName, stats, recentActivity, latestChatId, autoOpenAuth }: Props) {
+    const { openModal } = useAuthModal();
     const [greeting, setGreeting] = useState("Bom dia");
 
     useEffect(() => {
@@ -233,10 +202,13 @@ export function DashboardHome({ userName, stats, recentActivity, latestChatId }:
         setGreeting(h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite");
     }, []);
 
+    // Open the login modal when arriving via a middleware-protected redirect
+    useEffect(() => {
+        if (autoOpenAuth) openModal();
+    }, [autoOpenAuth, openModal]);
+
     const statCards = [
-        { label: "Notas",     value: stats.notesCount, trend: stats.notesThisWeek > 0 ? `+${stats.notesThisWeek} esta semana` : "", trendColor: "text-accent-green" },
         { label: "Pendentes", value: stats.pendingTasks, trend: stats.pendingTasks > 0 ? `${stats.pendingTasks} para hoje` : "",  trendColor: "text-accent-red" },
-        { label: "Ideias",    value: stats.ideasCount, trend: "", trendColor: "" },
         { label: "Sequência", value: `${stats.streakDays} dias`, trend: "Recorde!", trendColor: "text-accent-blue" },
     ];
 
@@ -252,7 +224,7 @@ export function DashboardHome({ userName, stats, recentActivity, latestChatId }:
             </motion.div>
 
             {/* Stats row */}
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+            <div className="grid grid-cols-2 gap-2 md:gap-3">
                 {statCards.map((s, i) => (
                     <StatCard key={s.label} label={s.label} value={s.value} trend={s.trend} trendColor={s.trendColor} delay={0.1 + i * 0.07} />
                 ))}

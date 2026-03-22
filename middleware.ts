@@ -1,6 +1,24 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// All routes that require authentication
+const PROTECTED_ROUTES = [
+    '/dashboard',
+    '/chat',
+    '/cadernos',
+    '/notes',
+    '/ideas',
+    '/favorites',
+    '/tasks',
+    '/calendar',
+    '/flashcards',
+    '/provas',
+    '/profile',
+    '/settings',
+    '/upgrade',
+    '/help',
+]
+
 export async function middleware(request: NextRequest) {
     let supabaseResponse = NextResponse.next({ request })
 
@@ -28,9 +46,16 @@ export async function middleware(request: NextRequest) {
     // Refreshes the session — do not remove this call
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Protege rotas autenticadas
-    if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-        return NextResponse.redirect(new URL('/login', request.url))
+    const { pathname } = request.nextUrl
+    const isProtected = PROTECTED_ROUTES.some(
+        (r) => pathname === r || pathname.startsWith(r + '/')
+    )
+
+    if (!user && isProtected) {
+        // Redirect to home and signal the UI to open the login modal
+        const url = new URL('/', request.url)
+        url.searchParams.set('authRequired', 'true')
+        return NextResponse.redirect(url)
     }
 
     return supabaseResponse

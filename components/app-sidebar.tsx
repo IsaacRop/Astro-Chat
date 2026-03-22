@@ -7,10 +7,11 @@ import {
     MessageSquare, BookOpen, FileText, Lightbulb, Star, CheckSquare, CalendarDays,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { signOut } from "@/app/actions/profile";
 import { SearchDialog } from "@/components/search-dialog";
+import { useAuthModal } from "@/components/auth/auth-modal-provider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,7 +60,7 @@ function SidebarIconButton({ icon, tooltip, onClick, href, badge }: IconButtonPr
 // ─── Desktop sidebar content (icon-only, 68px) ────────────────────────────────
 
 function SidebarContent({
-    user, dropdownOpen, setDropdownOpen, setSearchOpen, dropdownRef, onClose,
+    user, dropdownOpen, setDropdownOpen, setSearchOpen, dropdownRef, onClose, isAuthenticated, openModal,
 }: {
     user: SidebarUser | null;
     dropdownOpen: boolean;
@@ -67,6 +68,8 @@ function SidebarContent({
     setSearchOpen: (v: boolean) => void;
     dropdownRef: React.RefObject<HTMLDivElement | null>;
     onClose?: () => void;
+    isAuthenticated: boolean;
+    openModal: () => void;
 }) {
     return (
         <>
@@ -81,7 +84,7 @@ function SidebarContent({
             <div className="flex flex-col items-center gap-1">
                 <div className="relative" ref={dropdownRef}>
                     <button
-                        onClick={() => setDropdownOpen((v) => !v)}
+                        onClick={() => isAuthenticated ? setDropdownOpen((v) => !v) : openModal()}
                         className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-[#4A9E6B] to-[#3B8558] text-white text-sm font-bold hover:opacity-90 transition-opacity select-none"
                         aria-label="Menu do perfil"
                     >
@@ -154,11 +157,14 @@ const mobileTabs: Array<{
 
 // ─── Mobile sidebar content (full navigation, 288px / w-72) ──────────────────
 
-function MobileSidebarContent({ user, onClose, setSearchOpen }: {
+function MobileSidebarContent({ user, onClose, setSearchOpen, isAuthenticated, requireAuth }: {
     user: SidebarUser | null;
     onClose?: () => void;
     setSearchOpen: (v: boolean) => void;
+    isAuthenticated: boolean;
+    requireAuth: (callback?: () => void) => void;
 }) {
+    const router = useRouter();
     const pathname = usePathname();
 
     const isActive = (href: string) => {
@@ -197,17 +203,13 @@ function MobileSidebarContent({ user, onClose, setSearchOpen }: {
                 {mobileTabs.map((tab) => {
                     const Icon = tab.icon;
                     const active = isActive(tab.href);
-                    return (
-                        <Link
-                            key={tab.id}
-                            href={tab.href}
-                            onClick={onClose}
-                            className={`flex items-center gap-3 py-3 pr-4 min-h-[44px] rounded-lg transition-colors duration-150 ${
-                                active
-                                    ? `${tab.textClass} ${tab.bgClass} border-l-[3px] ${tab.borderClass} pl-[13px]`
-                                    : "text-[#D0E0D6] hover:bg-[#2A3E32] pl-4"
-                            }`}
-                        >
+                    const tabClassName = `flex items-center gap-3 py-3 pr-4 min-h-[44px] rounded-lg transition-colors duration-150 w-full text-left ${
+                        active
+                            ? `${tab.textClass} ${tab.bgClass} border-l-[3px] ${tab.borderClass} pl-[13px]`
+                            : "text-[#D0E0D6] hover:bg-[#2A3E32] pl-4"
+                    }`;
+                    const tabContent = (
+                        <>
                             <Icon size={18} strokeWidth={active ? 2.2 : 1.8} className="flex-shrink-0" />
                             <span className="flex-1 text-sm font-medium">{tab.label}</span>
                             {tab.badge && (
@@ -219,48 +221,95 @@ function MobileSidebarContent({ user, onClose, setSearchOpen }: {
                                     {tab.badge}
                                 </span>
                             )}
+                        </>
+                    );
+                    return isAuthenticated ? (
+                        <Link
+                            key={tab.id}
+                            href={tab.href}
+                            onClick={onClose}
+                            className={tabClassName}
+                        >
+                            {tabContent}
                         </Link>
+                    ) : (
+                        <button
+                            key={tab.id}
+                            onClick={() => requireAuth(() => { router.push(tab.href); onClose?.(); })}
+                            className={tabClassName}
+                        >
+                            {tabContent}
+                        </button>
                     );
                 })}
             </nav>
 
             {/* Utility links */}
             <div className="border-t border-[#2A3E32] px-3 py-2 space-y-0.5 flex-shrink-0">
-                <button className="w-full flex items-center gap-3 px-4 py-2.5 min-h-[44px] rounded-lg text-[#6B8574] hover:text-[#D0E0D6] hover:bg-[#2A3E32] transition-colors duration-150 text-sm relative">
+                <button
+                    onClick={() => requireAuth()}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 min-h-[44px] rounded-lg text-[#6B8574] hover:text-[#D0E0D6] hover:bg-[#2A3E32] transition-colors duration-150 text-sm relative"
+                >
                     <Bell size={18} strokeWidth={1.8} className="flex-shrink-0" />
                     <span>Notificações</span>
                     <span className="absolute top-3.5 left-[26px] w-2 h-2 rounded-full bg-[#4A9E6B] ring-2 ring-[#1E2E25]" />
                 </button>
-                <Link href="/help" onClick={onClose} className="flex items-center gap-3 px-4 py-2.5 min-h-[44px] rounded-lg text-[#6B8574] hover:text-[#D0E0D6] hover:bg-[#2A3E32] transition-colors duration-150 text-sm">
-                    <HelpCircle size={18} strokeWidth={1.8} className="flex-shrink-0" />
-                    <span>Ajuda</span>
-                </Link>
-                <Link href="/settings" onClick={onClose} className="flex items-center gap-3 px-4 py-2.5 min-h-[44px] rounded-lg text-[#6B8574] hover:text-[#D0E0D6] hover:bg-[#2A3E32] transition-colors duration-150 text-sm">
-                    <Settings size={18} strokeWidth={1.8} className="flex-shrink-0" />
-                    <span>Configurações</span>
-                </Link>
+                {isAuthenticated ? (
+                    <Link href="/help" onClick={onClose} className="flex items-center gap-3 px-4 py-2.5 min-h-[44px] rounded-lg text-[#6B8574] hover:text-[#D0E0D6] hover:bg-[#2A3E32] transition-colors duration-150 text-sm">
+                        <HelpCircle size={18} strokeWidth={1.8} className="flex-shrink-0" />
+                        <span>Ajuda</span>
+                    </Link>
+                ) : (
+                    <button onClick={() => requireAuth(() => { router.push('/help'); onClose?.(); })} className="w-full text-left flex items-center gap-3 px-4 py-2.5 min-h-[44px] rounded-lg text-[#6B8574] hover:text-[#D0E0D6] hover:bg-[#2A3E32] transition-colors duration-150 text-sm">
+                        <HelpCircle size={18} strokeWidth={1.8} className="flex-shrink-0" />
+                        <span>Ajuda</span>
+                    </button>
+                )}
+                {isAuthenticated ? (
+                    <Link href="/settings" onClick={onClose} className="flex items-center gap-3 px-4 py-2.5 min-h-[44px] rounded-lg text-[#6B8574] hover:text-[#D0E0D6] hover:bg-[#2A3E32] transition-colors duration-150 text-sm">
+                        <Settings size={18} strokeWidth={1.8} className="flex-shrink-0" />
+                        <span>Configurações</span>
+                    </Link>
+                ) : (
+                    <button onClick={() => requireAuth(() => { router.push('/settings'); onClose?.(); })} className="w-full text-left flex items-center gap-3 px-4 py-2.5 min-h-[44px] rounded-lg text-[#6B8574] hover:text-[#D0E0D6] hover:bg-[#2A3E32] transition-colors duration-150 text-sm">
+                        <Settings size={18} strokeWidth={1.8} className="flex-shrink-0" />
+                        <span>Configurações</span>
+                    </button>
+                )}
             </div>
 
             {/* Profile section */}
             <div className="border-t border-[#2A3E32] px-4 py-4 flex-shrink-0">
-                <Link href="/profile" onClick={onClose} className="flex items-center gap-3 min-w-0 mb-3 group">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#4A9E6B] to-[#3B8558] text-white text-sm font-bold flex-shrink-0">
-                        {user?.initials ?? "??"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-[#D0E0D6] text-sm font-medium truncate group-hover:text-white transition-colors">{user?.name ?? "Carregando..."}</p>
-                        <Link href="/upgrade" onClick={onClose} className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 bg-[#4A9E6B]/20 text-[#4A9E6B] text-[10px] font-semibold rounded-full border border-[#4A9E6B]/30 hover:bg-[#4A9E6B]/30 transition-colors">
-                            <Crown size={10} />
-                            Fazer upgrade
+                {isAuthenticated ? (
+                    <>
+                        <Link href="/profile" onClick={onClose} className="flex items-center gap-3 min-w-0 mb-3 group">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#4A9E6B] to-[#3B8558] text-white text-sm font-bold flex-shrink-0">
+                                {user?.initials ?? "??"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[#D0E0D6] text-sm font-medium truncate group-hover:text-white transition-colors">{user?.name ?? "Carregando..."}</p>
+                                <Link href="/upgrade" onClick={onClose} className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 bg-[#4A9E6B]/20 text-[#4A9E6B] text-[10px] font-semibold rounded-full border border-[#4A9E6B]/30 hover:bg-[#4A9E6B]/30 transition-colors">
+                                    <Crown size={10} />
+                                    Fazer upgrade
+                                </Link>
+                            </div>
                         </Link>
-                    </div>
-                </Link>
-                <form action={signOut}>
-                    <button type="submit" className="w-full flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-[#6B8574] hover:text-red-400 hover:bg-red-500/10 transition-colors duration-150 text-sm">
-                        <LogOut size={16} strokeWidth={1.8} className="flex-shrink-0" />
-                        <span>Sair da conta</span>
+                        <form action={signOut}>
+                            <button type="submit" className="w-full flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] rounded-lg text-[#6B8574] hover:text-red-400 hover:bg-red-500/10 transition-colors duration-150 text-sm">
+                                <LogOut size={16} strokeWidth={1.8} className="flex-shrink-0" />
+                                <span>Sair da conta</span>
+                            </button>
+                        </form>
+                    </>
+                ) : (
+                    <button
+                        onClick={() => requireAuth()}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-lg bg-[#4A9E6B]/20 text-[#4A9E6B] hover:bg-[#4A9E6B]/30 transition-colors duration-150 text-sm font-medium"
+                    >
+                        <LogOut size={16} strokeWidth={1.8} className="flex-shrink-0 rotate-180" />
+                        <span>Entrar na conta</span>
                     </button>
-                </form>
+                )}
             </div>
 
         </div>
@@ -279,6 +328,7 @@ export function AppSidebar({ mobileOpen = false, onMobileClose }: AppSidebarProp
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const { isAuthenticated, requireAuth, openModal } = useAuthModal();
 
     useEffect(() => {
         const supabase = createClient();
@@ -304,7 +354,7 @@ export function AppSidebar({ mobileOpen = false, onMobileClose }: AppSidebarProp
         return () => { document.body.style.overflow = ""; };
     }, [mobileOpen]);
 
-    const sharedProps = { user, dropdownOpen, setDropdownOpen, setSearchOpen, dropdownRef };
+    const sharedProps = { user, dropdownOpen, setDropdownOpen, setSearchOpen, dropdownRef, isAuthenticated, openModal };
 
     return (
         <>
@@ -337,6 +387,8 @@ export function AppSidebar({ mobileOpen = false, onMobileClose }: AppSidebarProp
                                 user={user}
                                 onClose={onMobileClose}
                                 setSearchOpen={setSearchOpen}
+                                isAuthenticated={isAuthenticated}
+                                requireAuth={requireAuth}
                             />
                         </motion.aside>
                     </>

@@ -1,7 +1,7 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { openai } from '@ai-sdk/openai'
 import { createClient } from "@/utils/supabase/server"
-import { checkCanUse, incrementUsage } from "@/app/actions/usage"
+import { getUserUsage, incrementUsage } from "@/app/actions/usage"
 
 // System prompt for Otto - ENEM elite tutor
 const SYSTEM_PROMPT = `Você é Otto, um tutor de elite especializado no exame ENEM (Brasil). Seu tom é direto, acadêmico e encorajador. NUNCA dê exemplos de ensino fundamental (ex: não explique que adição é somar). Aprofunde-se em conceitos reais do ENEM (estequiometria, matrizes energéticas, sociologia contemporânea). Mantenha o contexto rigorosamente. Se você criar uma lista de 10 itens e o usuário pedir o 11º, corrija-o educadamente informando que a lista só tem 10 itens. Não alucine informações.
@@ -40,11 +40,12 @@ export async function POST(request: Request) {
             });
         }
 
-        // ── Freemium limit check (usage_limits table) ──────────────────────
-        const canUse = await checkCanUse("chat");
-        if (!canUse) {
-            return new Response(JSON.stringify({ error: 'PAYWALL_LIMIT_REACHED' }), {
-                status: 403,
+        // ── Freemium limit check (5-hour rolling window) ───────────────────
+        const usage = await getUserUsage("chat");
+        if (!usage.isPro && usage.remaining <= 0) {
+            const resetAt = usage.resetAt ?? new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
+            return new Response(JSON.stringify({ error: 'PAYWALL_LIMIT_REACHED', reset_at: resetAt }), {
+                status: 429,
                 headers: { 'Content-Type': 'application/json' },
             });
         }

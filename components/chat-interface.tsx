@@ -2,7 +2,9 @@
 
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Zap, FileText, ImageIcon, Crown, Check, Sparkles } from "lucide-react";
+import { Zap, FileText, ImageIcon, Crown, Check, Sparkles, Lock } from "lucide-react";
+import Link from "next/link";
+import { useCountdown } from "@/hooks/useCountdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useAutoScroll } from "@/hooks/use-auto-scroll";
@@ -251,6 +253,33 @@ function PaywallModal({ onClose }: { onClose: () => void }) {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── LimitBanner ───────────────────────────────────────────────────────────────
+
+function LimitBanner({ resetAt }: { resetAt: string }) {
+    const timeLeft = useCountdown(resetAt);
+
+    return (
+        <div className="mx-4 mb-3 p-4 rounded-xl border border-destructive/30 bg-destructive/10 flex flex-col gap-3">
+            <div className="flex items-center gap-2 text-destructive font-medium">
+                <Lock className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm">Limite de mensagens atingido (100%)</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+                Seus créditos renovam em{" "}
+                <span className="font-semibold tabular-nums text-foreground">{timeLeft}</span>
+            </p>
+            <Link
+                href="/upgrade"
+                className="w-full text-center py-2.5 px-4 min-h-[44px] flex items-center justify-center bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white text-sm font-semibold rounded-lg transition-colors duration-150"
+            >
+                Fazer upgrade para Otto Pro
+            </Link>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 // File metadata stored in-memory per message for display
 interface FileAttachment {
     name: string;
@@ -272,6 +301,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
     const [activeChatId, setActiveChatId] = useState<string | null>(initialChatId);
     const [isCreatingChat, setIsCreatingChat] = useState(false);
     const [showPaywall, setShowPaywall] = useState(false);
+    const [limitResetAt, setLimitResetAt] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     // Track file attachments per message ID for display in bubbles
@@ -295,7 +325,20 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
         id: chatHookId,
         onError: (error) => {
             if (error.message.includes('PAYWALL_LIMIT_REACHED')) {
-                setShowPaywall(true);
+                // Remove the blocked user message (it was optimistically added)
+                setMessages(prev => {
+                    const lastUserIdx = prev.reduce((acc, m, i) => m.role === 'user' ? i : acc, -1);
+                    return lastUserIdx >= 0
+                        ? [...prev.slice(0, lastUserIdx), ...prev.slice(lastUserIdx + 1)]
+                        : prev;
+                });
+                // Extract reset_at from the error payload
+                let resetAt = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
+                try {
+                    const match = error.message.match(/"reset_at"\s*:\s*"([^"]+)"/);
+                    if (match) resetAt = match[1];
+                } catch { /* keep fallback */ }
+                setLimitResetAt(resetAt);
             }
         },
     });
@@ -447,7 +490,10 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                 const errorData = await response.json().catch(() => ({ error: "Erro desconhecido" }));
 
                 if (errorData.error === "PAYWALL_LIMIT_REACHED") {
-                    setShowPaywall(true);
+                    // Remove the user message that was already added
+                    setMessages(prev => prev.filter(m => m.id !== userMsgId));
+                    const resetAt = errorData.reset_at ?? new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
+                    setLimitResetAt(resetAt);
                     return;
                 }
 
@@ -554,7 +600,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
         const currentFile = selectedFile;
 
         if (!trimmedInput && !currentFile) return;
-        if (status !== "ready" || isCreatingChat || showPaywall || isUploading) return;
+        if (status !== "ready" || isCreatingChat || showPaywall || isUploading || limitResetAt) return;
 
         // 2. Clear input immediately for optimistic UX
         setInput("");
@@ -590,6 +636,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
         }
     };
 
+    const isLimitReached = limitResetAt !== null;
     const isLoading = status !== "ready" || isCreatingChat || isUploading;
 
 
@@ -712,6 +759,11 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                 </div>
             </div>
 
+            {/* Inline limit banner — shown instead of the input when limit is reached */}
+            {isLimitReached && limitResetAt ? (
+                <LimitBanner resetAt={limitResetAt} />
+            ) : null}
+
             {/* Input Area */}
             <div className="bg-background px-4 pb-6 pt-2">
                 <div className="max-w-3xl mx-auto">
@@ -720,8 +772,8 @@ export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatIn
                         onChange={(e) => setInput(e.target.value)}
                         onSubmit={handleSubmit}
                         onFileChange={setSelectedFile}
-                        isLoading={isLoading || showPaywall}
-                        placeholder={showPaywall ? "Limite diário atingido. Faça upgrade para continuar." : "Pergunte qualquer coisa..."}
+                        isLoading={isLoading || showPaywall || isLimitReached}
+                        placeholder={isLimitReached ? "Limite atingido. Aguarde a renovação ou faça upgrade." : "Pergunte qualquer coisa..."}
                     />
                     <p className="text-center text-[10px] text-muted-foreground mt-3 font-sans">Otto pode cometer erros. Verifique informações importantes.</p>
                 </div>
