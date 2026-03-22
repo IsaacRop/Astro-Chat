@@ -17,7 +17,7 @@ const GraphVisualization = dynamic(
 
 export default function CadernosPage() {
     return (
-            <div className="flex-1 relative overflow-hidden bg-[#F5F9F6]">
+            <div className="h-full relative overflow-hidden bg-[#F5F9F6]">
                 <GraphVisualization />
             </div>
     );

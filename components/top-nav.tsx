@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuthModal } from "@/components/auth/auth-modal-provider";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageSquare, BookOpen, FileText, Lightbulb, Star, CheckSquare, CalendarDays, FileCheck, Layers, Grid } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { usePendingTasksCount } from "@/hooks/usePendingTasksCount";
 
 interface TabDef {
     id: string;
@@ -21,13 +23,13 @@ interface TabDef {
 const primaryTabs: TabDef[] = [
     { id: "chat",      label: "Chat",       icon: MessageSquare, href: "/chat", badge: "Online",
       textColor: "text-[#4A9E6B]", bgColor: "bg-[#DFF0E5]", indicatorColor: "bg-[#4A9E6B]" },
-    { id: "cadernos",  label: "Cadernos",   icon: BookOpen,      href: "/cadernos",       badge: "3",
+    { id: "cadernos",  label: "Cadernos",   icon: BookOpen,      href: "/cadernos",
       textColor: "text-[#5B9E9E]", bgColor: "bg-[#DFF0F0]", indicatorColor: "bg-[#5B9E9E]" },
     { id: "provas",    label: "Provas",     icon: FileCheck,     href: "/provas",
-      textColor: "text-[#C17D8A]", bgColor: "bg-[#F5E3E7]", indicatorColor: "bg-[#C17D8A]" },
+      textColor: "text-[#C17D8A] dark:text-[#E8BDC4]", bgColor: "bg-[#F5E3E7] dark:bg-[#C17D8A]/20", indicatorColor: "bg-[#C17D8A] dark:bg-[#E8BDC4]" },
     { id: "flashcards",label: "Flashcards", icon: Layers,        href: "/flashcards",
-      textColor: "text-[#B89E6B]", bgColor: "bg-[#F2ECD8]", indicatorColor: "bg-[#B89E6B]" },
-    { id: "tarefas",   label: "Tarefas",    icon: CheckSquare,   href: "/tasks",          badge: "5",
+      textColor: "text-[#B89E6B] dark:text-[#D4C098]", bgColor: "bg-[#F2ECD8] dark:bg-[#B89E6B]/20", indicatorColor: "bg-[#B89E6B] dark:bg-[#D4C098]" },
+    { id: "tarefas",   label: "Tarefas",    icon: CheckSquare,   href: "/tasks",
       textColor: "text-[#C17D8A]", bgColor: "bg-[#F5E3E7]", indicatorColor: "bg-[#C17D8A]" },
 ];
 
@@ -58,22 +60,36 @@ function TabBadge({ label, color }: { label: string; color: string }) {
     );
 }
 
-function NavTab({ tab, isActive }: { tab: TabDef; isActive: boolean }) {
+function NavTab({ tab, isActive, dynamicBadge, isAuthenticated, requireAuth }: {
+    tab: TabDef;
+    isActive: boolean;
+    dynamicBadge?: number;
+    isAuthenticated: boolean;
+    requireAuth: (callback?: () => void) => void;
+}) {
     const Icon = tab.icon;
-    return (
-        <Link
-            href={tab.href}
-            className={"relative flex items-center gap-1.5 px-3 py-2 min-h-[44px] text-[13px] font-medium rounded-lg transition-colors duration-150 select-none shrink-0 " +
-                (isActive
-                    ? tab.textColor + " " + tab.bgColor
-                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground")}
-        >
+    const router = useRouter();
+
+    const className = "relative flex items-center gap-1.5 px-3 py-2 min-h-[44px] text-[13px] font-medium rounded-lg transition-colors duration-150 select-none shrink-0 " +
+        (isActive
+            ? tab.textColor + " " + tab.bgColor
+            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground");
+
+    const content = (
+        <>
             <Icon size={15} strokeWidth={isActive ? 2.2 : 1.8} />
             <span>{tab.label}</span>
 
             {tab.badge && (
                 <TabBadge
                     label={tab.badge}
+                    color={isActive ? tab.textColor + " bg-white/60" : "text-muted-foreground bg-muted"}
+                />
+            )}
+
+            {dynamicBadge !== undefined && dynamicBadge > 0 && (
+                <TabBadge
+                    label={dynamicBadge > 99 ? "99+" : String(dynamicBadge)}
                     color={isActive ? tab.textColor + " bg-white/60" : "text-muted-foreground bg-muted"}
                 />
             )}
@@ -85,11 +101,31 @@ function NavTab({ tab, isActive }: { tab: TabDef; isActive: boolean }) {
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                 />
             )}
+        </>
+    );
+
+    if (!isAuthenticated) {
+        return (
+            <button onClick={() => requireAuth(() => router.push(tab.href))} className={className}>
+                {content}
+            </button>
+        );
+    }
+
+    return (
+        <Link href={tab.href} className={className}>
+            {content}
         </Link>
     );
 }
 
-function MoreDropdown({ isActive, checkActive }: { isActive: boolean; checkActive: (href: string) => boolean }) {
+function MoreDropdown({ isActive, checkActive, isAuthenticated, requireAuth }: {
+    isActive: boolean;
+    checkActive: (href: string) => boolean;
+    isAuthenticated: boolean;
+    requireAuth: (callback?: () => void) => void;
+}) {
+    const router = useRouter();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
@@ -140,18 +176,28 @@ function MoreDropdown({ isActive, checkActive }: { isActive: boolean; checkActiv
                         {moreTabs.map((tab) => {
                             const Icon = tab.icon;
                             const active = checkActive(tab.href);
-                            return (
-                                <Link
-                                    key={tab.id}
-                                    href={tab.href}
-                                    className={"flex flex-col items-center justify-center gap-1 px-3 py-2.5 min-h-[44px] text-[13px] font-medium rounded-lg transition-colors duration-150 " +
-                                        (active
-                                            ? tab.textColor + " " + tab.bgColor
-                                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground")}
-                                >
+                            const cls = "flex flex-col items-center justify-center gap-1 px-3 py-2.5 min-h-[44px] text-[13px] font-medium rounded-lg transition-colors duration-150 " +
+                                (active
+                                    ? tab.textColor + " " + tab.bgColor
+                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground");
+                            const tabContent = (
+                                <>
                                     <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
                                     <span>{tab.label}</span>
+                                </>
+                            );
+                            return isAuthenticated ? (
+                                <Link key={tab.id} href={tab.href} className={cls}>
+                                    {tabContent}
                                 </Link>
+                            ) : (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => requireAuth(() => { router.push(tab.href); setOpen(false); })}
+                                    className={cls}
+                                >
+                                    {tabContent}
+                                </button>
                             );
                         })}
                     </motion.div>
@@ -169,6 +215,8 @@ interface TopNavProps {
 export function TopNav({ rightElement, onMobileMenuToggle }: TopNavProps = {}) {
     const isActive = useActiveTab();
     const moreIsActive = moreTabs.some((tab) => isActive(tab.href));
+    const pendingTasksCount = usePendingTasksCount();
+    const { isAuthenticated, requireAuth } = useAuthModal();
 
     return (
         <header className="hidden md:flex items-center h-[52px] px-3 md:px-4 bg-background border-b border-border flex-shrink-0 gap-2 md:gap-4">
@@ -186,9 +234,16 @@ export function TopNav({ rightElement, onMobileMenuToggle }: TopNavProps = {}) {
             {/* Center: Feature tabs */}
             <nav className="flex items-center justify-center gap-1 flex-1">
                 {primaryTabs.map((tab) => (
-                    <NavTab key={tab.id} tab={tab} isActive={isActive(tab.href)} />
+                    <NavTab
+                        key={tab.id}
+                        tab={tab}
+                        isActive={isActive(tab.href)}
+                        dynamicBadge={tab.id === "tarefas" ? pendingTasksCount : undefined}
+                        isAuthenticated={isAuthenticated}
+                        requireAuth={requireAuth}
+                    />
                 ))}
-                <MoreDropdown isActive={moreIsActive} checkActive={isActive} />
+                <MoreDropdown isActive={moreIsActive} checkActive={isActive} isAuthenticated={isAuthenticated} requireAuth={requireAuth} />
             </nav>
 
             {/* Right: Feedback (desktop only) & right element */}

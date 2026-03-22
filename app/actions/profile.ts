@@ -13,18 +13,12 @@ export async function updateProfile(formData: FormData) {
         return { error: "Não autenticado." };
     }
 
-    const nickname = formData.get("nickname") as string;
     const fullName = formData.get("fullName") as string;
-
-    if (!nickname || nickname.length < 2) {
-        return { error: "O apelido deve ter pelo menos 2 caracteres." };
-    }
 
     // Update auth user metadata
     const { error } = await supabase.auth.updateUser({
         data: {
             full_name: fullName,
-            nickname: nickname,
         },
     });
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, MessageSquare, BookOpen, FileText, Lightbulb, Star, CheckSquare, CalendarDays, Settings, HelpCircle, User } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuthModal } from "@/components/auth/auth-modal-provider";
 
 interface SearchItem {
     id: string;
@@ -28,6 +29,7 @@ const allItems: SearchItem[] = [
 
 export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
     const router = useRouter();
+    const { requireAuth } = useAuthModal();
     const inputRef = useRef<HTMLInputElement>(null);
     const [query, setQuery] = useState("");
     const [selectedIndex, setSelectedIndex] = useState(0);
@@ -63,6 +65,12 @@ export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChan
         return () => document.removeEventListener("keydown", handler);
     }, [open, onOpenChange]);
 
+    // Navigate to a search result — gated behind auth for all protected pages
+    const navigateTo = useCallback((href: string) => {
+        onOpenChange(false);
+        requireAuth(() => router.push(href));
+    }, [router, onOpenChange, requireAuth]);
+
     // Arrow key navigation
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === "ArrowDown") {
@@ -73,10 +81,9 @@ export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChan
             setSelectedIndex((i) => (i - 1 + filtered.length) % filtered.length);
         } else if (e.key === "Enter" && filtered[selectedIndex]) {
             e.preventDefault();
-            router.push(filtered[selectedIndex].href);
-            onOpenChange(false);
+            navigateTo(filtered[selectedIndex].href);
         }
-    }, [filtered, selectedIndex, router, onOpenChange]);
+    }, [filtered, selectedIndex, navigateTo]);
 
     // Reset selected index when query changes
     useEffect(() => {
@@ -156,10 +163,7 @@ export function SearchDialog({ open, onOpenChange }: { open: boolean; onOpenChan
                                             return (
                                                 <button
                                                     key={item.id}
-                                                    onClick={() => {
-                                                        router.push(item.href);
-                                                        onOpenChange(false);
-                                                    }}
+                                                    onClick={() => navigateTo(item.href)}
                                                     onMouseEnter={() => setSelectedIndex(currentFlatIndex)}
                                                     className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-100 ${
                                                         isSelected

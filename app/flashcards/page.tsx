@@ -25,6 +25,7 @@ import {
     type DeckWithCards,
 } from "@/app/actions/flashcards";
 import { getUserUsage } from "@/app/actions/usage";
+import { useCountdown } from "@/hooks/useCountdown";
 import { toast } from "sonner";
 
 // ============================================
@@ -79,7 +80,9 @@ export default function FlashcardsPage() {
 
     // Usage limits
     const [usageRemaining, setUsageRemaining] = useState<number | null>(null);
-    const [usageResetsAt, setUsageResetsAt] = useState("");
+    const [usageUsed, setUsageUsed] = useState(0);
+    const [usageLimit, setUsageLimit] = useState(3);
+    const [usageResetAt, setUsageResetAt] = useState<string | null>(null);
     const [isPro, setIsPro] = useState(false);
 
     // Auth
@@ -99,7 +102,9 @@ export default function FlashcardsPage() {
                 // Fetch usage limits
                 const usage = await getUserUsage("flashcard");
                 setUsageRemaining(usage.remaining);
-                setUsageResetsAt(usage.resetsAt);
+                setUsageUsed(usage.used);
+                setUsageLimit(usage.limit);
+                setUsageResetAt(usage.resetAt);
                 setIsPro(usage.isPro);
             } catch (error) {
                 console.error("[Flashcards] Failed to load:", error);
@@ -142,10 +147,12 @@ export default function FlashcardsPage() {
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
                 if (data.error === "USAGE_LIMIT_REACHED") {
-                    toast.error(data.message || "Limite diário atingido.");
+                    toast.error(data.message || "Limite atingido.");
                     const usage = await getUserUsage("flashcard");
                     setUsageRemaining(usage.remaining);
-                    setUsageResetsAt(usage.resetsAt);
+                    setUsageUsed(usage.used);
+                    setUsageLimit(usage.limit);
+                    setUsageResetAt(usage.resetAt);
                     return;
                 }
                 throw new Error("Failed to generate");
@@ -163,7 +170,9 @@ export default function FlashcardsPage() {
             setDecks(updated);
             const usage = await getUserUsage("flashcard");
             setUsageRemaining(usage.remaining);
-            setUsageResetsAt(usage.resetsAt);
+            setUsageUsed(usage.used);
+            setUsageLimit(usage.limit);
+            setUsageResetAt(usage.resetAt);
         } catch (error) {
             console.error("[Flashcards] Generate failed:", error);
             toast.error("Não foi possível gerar os flashcards. Tente novamente.");
@@ -313,7 +322,9 @@ export default function FlashcardsPage() {
                             decks={decks}
                             onOpenDeck={handleOpenDeck}
                             usageRemaining={usageRemaining}
-                            usageResetsAt={usageResetsAt}
+                            usageUsed={usageUsed}
+                            usageLimit={usageLimit}
+                            usageResetAt={usageResetAt}
                             isPro={isPro}
                         />
                     </motion.div>
@@ -397,7 +408,9 @@ function SetupScreen({
     decks,
     onOpenDeck,
     usageRemaining,
-    usageResetsAt,
+    usageUsed,
+    usageLimit,
+    usageResetAt,
     isPro,
 }: {
     topic: string;
@@ -409,11 +422,16 @@ function SetupScreen({
     decks: FlashcardDeck[];
     onOpenDeck: (d: FlashcardDeck) => void;
     usageRemaining: number | null;
-    usageResetsAt: string;
+    usageUsed: number;
+    usageLimit: number;
+    usageResetAt: string | null;
     isPro: boolean;
 }) {
+    const timeLeft = useCountdown(usageResetAt);
     const isFormComplete = topic.trim().length > 0 && cardCount !== null;
     const limitReached = !isPro && usageRemaining !== null && usageRemaining <= 0;
+    const usagePct = usageLimit > 0 ? Math.round(Math.min(usageUsed / usageLimit, 1) * 100) : 0;
+    const barColor = usagePct >= 100 ? "var(--destructive, #ef4444)" : usagePct >= 80 ? "#f59e0b" : WARM;
 
     return (
         <div className="p-4 md:p-8 max-w-md mx-auto w-full space-y-8">
@@ -486,24 +504,20 @@ function SetupScreen({
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-[#F2ECD8] border border-[#B89E6B] rounded-xl p-4 space-y-2"
+                    className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 space-y-2"
                 >
-                    <p className="text-sm font-semibold text-foreground">Limite diário atingido</p>
+                    <p className="text-sm font-semibold text-destructive">Limite atingido (100%)</p>
                     <p className="text-xs text-muted-foreground">
-                        Faça upgrade para o Pro para flashcards ilimitados
+                        Seus créditos renovam em{" "}
+                        <span className="font-semibold tabular-nums text-foreground">{timeLeft}</span>
                     </p>
-                    <div className="flex items-center justify-between gap-3">
-                        <a
-                            href="/upgrade"
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-white text-xs font-semibold transition-all min-h-[44px]"
-                            style={{ backgroundColor: WARM }}
-                        >
-                            Fazer upgrade
-                        </a>
-                        {usageResetsAt && (
-                            <span className="text-xs text-muted-foreground">{usageResetsAt}</span>
-                        )}
-                    </div>
+                    <a
+                        href="/upgrade"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-white text-xs font-semibold transition-all min-h-[44px]"
+                        style={{ backgroundColor: WARM }}
+                    >
+                        Fazer upgrade para Pro
+                    </a>
                 </motion.div>
             )}
 
@@ -532,10 +546,19 @@ function SetupScreen({
                         >
                             ✨ Gerar Flashcards
                         </motion.button>
-                        {!isPro && usageRemaining !== null && usageRemaining > 0 && (
-                            <p className="text-center text-xs text-muted-foreground">
-                                Você tem {usageRemaining} {usageRemaining === 1 ? "deck restante" : "decks restantes"} hoje
-                            </p>
+                        {!isPro && usageLimit > 0 && (
+                            <div className="space-y-1 px-1">
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                    <span>Flashcards usados</span>
+                                    <span className="tabular-nums">{usagePct}%</span>
+                                </div>
+                                <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                                    <div
+                                        className="h-full rounded-full transition-all duration-500"
+                                        style={{ width: `${usagePct}%`, backgroundColor: barColor }}
+                                    />
+                                </div>
+                            </div>
                         )}
                     </motion.div>
                 )}

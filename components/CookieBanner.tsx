@@ -27,19 +27,19 @@ export function CookieBanner() {
                     exit={{ y: 80, opacity: 0 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-lg z-50
-                               bg-[var(--surface,#FFFFFF)] border border-[var(--border,#D0E0D6)]
+                               bg-card border border-border
                                rounded-2xl shadow-lg p-4 flex flex-col md:flex-row items-start
                                md:items-center gap-4"
                 >
-                    <p className="text-sm text-[var(--text-sec,#5A7565)] flex-1">
+                    <p className="text-sm text-muted-foreground flex-1">
                         O Otto usa cookies para manter sua sessão ativa e melhorar a experiência.
-                        Conforme a <strong className="text-[var(--foreground,#1E2E25)]">LGPD</strong>, você pode aceitar ou recusar.
+                        Conforme a <strong className="text-foreground">LGPD</strong>, você pode aceitar ou recusar.
                     </p>
                     <div className="flex gap-2 shrink-0">
                         <button
                             onClick={() => handleConsent(false)}
-                            className="text-sm px-4 py-2 rounded-xl border border-[var(--border,#D0E0D6)]
-                                       text-[var(--text-sec,#5A7565)] hover:bg-[var(--surface-alt,#EDF4EF)]
+                            className="text-sm px-4 py-2 rounded-xl border border-border
+                                       text-muted-foreground hover:bg-muted hover:text-foreground
                                        transition-colors duration-150 cursor-pointer"
                         >
                             Recusar

@@ -6,19 +6,15 @@ import { Check, ChevronDown, Loader2, Lock, RotateCcw, Zap } from "lucide-react"
 import { toast } from "sonner";
 
 const freeFeatures = [
-    "Chat com Otto (limite diário)",
-    "3 Cadernos",
-    "Notas básicas",
-    "5 tarefas ativas",
+    "10 mensagens com Otto",
+    "Até 3 provas e 3 flashcards",
+    "Ferramentas básicas de organização",
 ];
 
 const proFeatures = [
-    "Chat ilimitado com Otto",
-    "Cadernos ilimitados",
-    "Notas com editor completo",
-    "Tarefas e Kanban ilimitados",
-    "Calendário integrado",
-    "Ideias e Favoritos",
+    "Todas as funções ilimitadas",
+    "Mapa de desenvolvimento",
+    "Estatísticas detalhadas",
     "Suporte prioritário",
 ];
 
