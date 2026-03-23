@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ChevronDown, Loader2, Lock, RotateCcw, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { createClient } from "@/utils/supabase/client";
+import { SubscriptionManagement } from "@/components/subscription/SubscriptionManagement";
 
 const freeFeatures = [
     "10 mensagens com Otto",
@@ -80,6 +82,27 @@ const PRICE_IDS = {
 export default function UpgradePage() {
     const [billing, setBilling] = useState<"monthly" | "yearly">("yearly");
     const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [profile, setProfile] = useState<{
+        plan_tier: string | null;
+        subscription_status: string | null;
+        current_period_end: string | null;
+    } | null>(null);
+    const [profileLoading, setProfileLoading] = useState(true);
+
+    useEffect(() => {
+        const supabase = createClient();
+        supabase.auth.getUser().then(async ({ data: { user } }) => {
+            if (user) {
+                const { data } = await supabase
+                    .from("profiles")
+                    .select("plan_tier, subscription_status, current_period_end")
+                    .eq("id", user.id)
+                    .single();
+                setProfile(data);
+            }
+            setProfileLoading(false);
+        });
+    }, []);
 
     const handleCheckout = async () => {
         setCheckoutLoading(true);
@@ -106,6 +129,36 @@ export default function UpgradePage() {
             setCheckoutLoading(false);
         }
     };
+
+    if (profileLoading) {
+        return (
+            <div className="min-h-screen min-h-[100dvh] bg-background flex items-center justify-center">
+                <Loader2 size={24} className="animate-spin text-[#4A9E6B]" />
+            </div>
+        );
+    }
+
+    if (profile?.plan_tier === "pro") {
+        return (
+            <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
+                <main className="flex-1 px-4 md:px-8 py-8 md:py-12 max-w-3xl mx-auto w-full">
+                    <div className="text-center mb-8 md:mb-10">
+                        <h1 className="font-serif text-2xl md:text-3xl font-bold text-[#1E2E25] dark:text-foreground">
+                            Sua assinatura
+                        </h1>
+                        <p className="mt-2 text-[#8BA698] text-sm md:text-base">
+                            Gerencie seu plano Otto Pro
+                        </p>
+                    </div>
+                    <SubscriptionManagement
+                        planTier={profile.plan_tier}
+                        subscriptionStatus={profile.subscription_status}
+                        currentPeriodEnd={profile.current_period_end}
+                    />
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col overflow-x-hidden">
