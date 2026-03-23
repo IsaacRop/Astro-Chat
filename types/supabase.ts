@@ -297,6 +297,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          current_period_end: string | null
           daily_message_count: number
           email: string | null
           full_name: string | null
@@ -305,10 +306,13 @@ export type Database = {
           last_message_date: string | null
           login_streak: number
           plan_tier: string | null
+          stripe_customer_id: string | null
+          subscription_status: string | null
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
+          current_period_end?: string | null
           daily_message_count?: number
           email?: string | null
           full_name?: string | null
@@ -317,10 +321,13 @@ export type Database = {
           last_message_date?: string | null
           login_streak?: number
           plan_tier?: string | null
+          stripe_customer_id?: string | null
+          subscription_status?: string | null
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
+          current_period_end?: string | null
           daily_message_count?: number
           email?: string | null
           full_name?: string | null
@@ -329,6 +336,8 @@ export type Database = {
           last_message_date?: string | null
           login_streak?: number
           plan_tier?: string | null
+          stripe_customer_id?: string | null
+          subscription_status?: string | null
           updated_at?: string | null
         }
         Relationships: []

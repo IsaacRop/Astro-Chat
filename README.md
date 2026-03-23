@@ -1,6 +1,6 @@
 # Astro - Next Gen AI Assistant
 
-![Astro Mascot](public/favicon.ico)
+![Astro Mascot]
 
 Astro is a futuristic AI specialized in educational tutoring and knowledge management. Built with Next.js 16 and the Vercel AI SDK, it features a dynamic chat interface, a connected knowledge graph, and a robust note-taking system.
 

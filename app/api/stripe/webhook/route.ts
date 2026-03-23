@@ -40,6 +40,8 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
+    const supabase = getServiceClient();
+
     if (event.type === "checkout.session.completed") {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.client_reference_id;
@@ -49,11 +51,28 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Missing user ID" }, { status: 400 });
         }
 
-        const supabase = getServiceClient();
+        // Retrieve subscription details from Stripe
+        const subscriptionId = session.subscription as string | null;
+        let subscriptionStatus: string = "active";
+        let currentPeriodEnd: string | null = null;
+
+        if (subscriptionId) {
+            const sub = await stripe.subscriptions.retrieve(subscriptionId);
+            subscriptionStatus = sub.status;
+            const item = sub.items.data[0];
+            if (item) {
+                currentPeriodEnd = new Date(item.current_period_end * 1000).toISOString();
+            }
+        }
 
         const { error } = await supabase
             .from("profiles")
-            .update({ plan_tier: "pro" })
+            .update({
+                plan_tier: "pro",
+                stripe_customer_id: session.customer as string,
+                subscription_status: subscriptionStatus,
+                current_period_end: currentPeriodEnd,
+            })
             .eq("id", userId);
 
         if (error) {
@@ -62,6 +81,26 @@ export async function POST(req: Request) {
         }
 
         console.log(`[stripe/webhook] User ${userId} upgraded to pro`);
+    }
+
+    if (event.type === "customer.subscription.deleted") {
+        const subscription = event.data.object as Stripe.Subscription;
+        const customerId = subscription.customer as string;
+
+        const { error } = await supabase
+            .from("profiles")
+            .update({
+                plan_tier: "free",
+                subscription_status: "canceled",
+            })
+            .eq("stripe_customer_id", customerId);
+
+        if (error) {
+            console.error("[stripe/webhook] Failed to downgrade profile:", error.message);
+            return NextResponse.json({ error: "DB update failed" }, { status: 500 });
+        }
+
+        console.log(`[stripe/webhook] Customer ${customerId} downgraded to free`);
     }
 
     return NextResponse.json({ received: true });

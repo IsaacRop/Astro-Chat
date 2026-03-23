@@ -15,7 +15,7 @@ import { useAuthModal } from "@/components/auth/auth-modal-provider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface SidebarUser { name: string; email: string; initials: string; }
+interface SidebarUser { name: string; email: string; initials: string; planTier: string; }
 
 function getInitials(name: string | null | undefined, email: string): string {
     if (name && name.trim()) {
@@ -102,7 +102,7 @@ function SidebarContent({
                                 <div className="px-4 py-3 border-b border-border">
                                     <p className="text-popover-foreground text-sm font-semibold truncate">{user?.name ?? "Carregando..."}</p>
                                     <p className="text-muted-foreground text-xs truncate mt-0.5">{user?.email ?? ""}</p>
-                                    <span className="inline-block mt-1.5 px-1.5 py-0.5 bg-primary/20 text-primary text-[10px] font-semibold rounded-full border border-primary/30">Plano Gratuito</span>
+                                    <span className="inline-block mt-1.5 px-1.5 py-0.5 bg-primary/20 text-primary text-[10px] font-semibold rounded-full border border-primary/30">{user?.planTier === "pro" ? "Plano Pro" : "Plano Gratuito"}</span>
                                 </div>
                                 <div className="py-1">
                                     <DropdownLink href="/profile" icon={<User size={14} />} label="Perfil" onClick={() => { setDropdownOpen(false); onClose?.(); }} />
@@ -332,10 +332,17 @@ export function AppSidebar({ mobileOpen = false, onMobileClose }: AppSidebarProp
 
     useEffect(() => {
         const supabase = createClient();
-        supabase.auth.getUser().then(({ data: { user } }) => {
+        supabase.auth.getUser().then(async ({ data: { user } }) => {
             if (user) {
                 const name = user.user_metadata?.full_name ?? user.user_metadata?.name ?? null;
-                setUser({ name: name ?? user.email ?? "Usuário", email: user.email ?? "", initials: getInitials(name, user.email ?? "") });
+                let planTier = "free";
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("plan_tier")
+                    .eq("id", user.id)
+                    .single();
+                if (profile?.plan_tier) planTier = profile.plan_tier;
+                setUser({ name: name ?? user.email ?? "Usuário", email: user.email ?? "", initials: getInitials(name, user.email ?? ""), planTier });
             }
         });
     }, []);
