@@ -51,8 +51,8 @@ export function SubscriptionManagement({
 
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
-                console.error("[portal] Error response:", err);
-                toast.error(err.error || "Erro ao abrir portal. Tente novamente.");
+                console.error("Portal full error:", JSON.stringify(err, null, 2));
+                toast.error(`Erro: ${err.detail || err.error}`);
                 return;
             }
 
