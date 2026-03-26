@@ -33,9 +33,11 @@ export interface ExamQuestion {
     alternative_d: string | null;
     alternative_e: string | null;
     correct_answer: string;
-    explanation: string;
+    explanation: string | null;
     user_answer: string | null;
     is_correct: boolean | null;
+    source: string;
+    exam_year: number | null;
     created_at: string;
 }
 

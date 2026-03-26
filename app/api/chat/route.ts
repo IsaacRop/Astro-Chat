@@ -2,17 +2,7 @@ import { streamText, convertToModelMessages, type UIMessage } from "ai"
 import { openai } from '@ai-sdk/openai'
 import { createClient } from "@/utils/supabase/server"
 import { getUserUsage, incrementUsage } from "@/app/actions/usage"
-
-// System prompt for Otto - ENEM elite tutor
-const SYSTEM_PROMPT = `Você é Otto, um tutor de elite especializado no exame ENEM (Brasil). Seu tom é direto, acadêmico e encorajador. NUNCA dê exemplos de ensino fundamental (ex: não explique que adição é somar). Aprofunde-se em conceitos reais do ENEM (estequiometria, matrizes energéticas, sociologia contemporânea). Mantenha o contexto rigorosamente. Se você criar uma lista de 10 itens e o usuário pedir o 11º, corrija-o educadamente informando que a lista só tem 10 itens. Não alucine informações.
-
-DIRETRIZES:
-- Respostas em nível ENEM: Ensino Médio avançado, vestibular e pré-vestibular.
-- Use Markdown para estruturar (listas, **negrito**, títulos).
-- Parágrafos curtos. Clareza sobre completude.
-- Faça perguntas curtas ao final para testar compreensão quando apropriado.
-- Nunca forneça respostas prontas sem explicar o raciocínio.
-- Sempre mantenha o contexto da conversa anterior. Referencie o que já foi discutido.`;
+import { buildSystemPrompt } from "@/lib/prompts/otto-system"
 
 // Safety & Cost Configuration
 const MAX_CONTEXT_MESSAGES = 20;
@@ -86,9 +76,22 @@ export async function POST(request: Request) {
         const modelMessages = await convertToModelMessages(normalizedMessages);
         console.log('[Chat API] Calling OpenAI with', modelMessages.length, 'messages');
 
+        // Extract last user message for dynamic context injection
+        const lastUserMsg = [...normalizedMessages]
+            .reverse()
+            .find((m) => m.role === 'user');
+        const lastUserText = lastUserMsg?.parts
+            ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+            .map((p) => p.text)
+            .join(' ') ?? '';
+
+        const systemPrompt = buildSystemPrompt(lastUserText);
+        // Debug: ~800 base, +~500 per area block, +~400 for redação
+        console.log('[Chat API] System prompt length:', systemPrompt.length, 'chars');
+
         const result = streamText({
             model: openai('gpt-4o-mini'),
-            system: SYSTEM_PROMPT,
+            system: systemPrompt,
             messages: modelMessages,
             maxOutputTokens: MAX_OUTPUT_TOKENS,
         });

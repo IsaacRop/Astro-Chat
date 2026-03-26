@@ -3,20 +3,39 @@ import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { createClient } from "@/utils/supabase/server";
 import { checkCanUse, incrementUsage } from "@/app/actions/usage";
+import { retrieveEnemQuestions, EnemQuestion } from "@/lib/rag/enem-retriever";
 
 export const maxDuration = 60;
 
 const FLASHCARDS_PROMPT = (topic: string, cardCount: number) =>
-    `Você é um professor especialista criando flashcards de estudo sobre o tema: ${topic}. Gere ${cardCount} flashcards.
+    `You are an ENEM flashcard generator. Create flashcards that prepare students for the ENEM exam.
 
-Cada flashcard DEVE ter:
-- front: uma pergunta, conceito ou termo (curto e direto)
-- back: a resposta ou explicação (clara, 2-3 frases máximo)
+Gere ${cardCount} flashcards sobre o tema: ${topic}.
 
-Cubra os pontos mais importantes do tema. Varie entre definições, fórmulas, datas, conceitos e aplicações práticas.
+STRICT RULES:
+- Write in clear, concise Brazilian Portuguese
+- Front (frente): a question or incomplete sentence that tests a specific ENEM-relevant concept — phrased the way ENEM would test it, not as a textbook definition
+- Back (verso): a direct, complete answer — include the key reasoning or mechanism, not just a keyword
+- Difficulty and framing must match ENEM: applied, contextual, interdisciplinary when relevant
+- Do NOT generate flashcards that ask "O que é X" — always test application or interpretation
+- Do NOT mention that you are an AI
+
+The ## Contexto ENEM section below contains real ENEM questions on this topic. Use them to calibrate the concepts, vocabulary, and cognitive level of your flashcards.
+
+Cada flashcard DEVE ter no JSON:
+- front: a pergunta ou frase incompleta (curta e direta)
+- back: a resposta completa (clara, 2-3 frases máximo, com raciocínio)
 
 Responda APENAS com JSON array:
 [{"front":"...","back":"..."}]`;
+
+function formatEnemContext(questions: EnemQuestion[]): string {
+    if (questions.length === 0) return "";
+    const items = questions.map((q, i) => {
+        return `${i + 1}. [${q.exam_year}] ${q.question}\n   Resposta: ${q.answer}`;
+    }).join("\n\n");
+    return `\n\n## Contexto ENEM\nUse the following real ENEM questions as factual grounding for the flashcard content. Align difficulty and language to the ENEM standard.\n\n${items}`;
+}
 
 export async function POST(request: Request) {
     try {
@@ -44,12 +63,22 @@ export async function POST(request: Request) {
             }, { status: 403 });
         }
 
+        // Retrieve real ENEM questions as RAG context
+        let enemContext = "";
+        try {
+            const ragQuery = `${topic} ENEM contextualizado`;
+            const enemQuestions = await retrieveEnemQuestions({ query: ragQuery, matchCount: 4 });
+            enemContext = formatEnemContext(enemQuestions);
+        } catch (e) {
+            console.error("[Flashcards Generate] RAG retrieval failed, continuing without context:", e);
+        }
+
         const result = await generateText({
             model: openai("gpt-4o-mini"),
-            system: FLASHCARDS_PROMPT(topic, cardCount),
+            system: FLASHCARDS_PROMPT(topic, cardCount) + enemContext,
             messages: [{ role: "user", content: `Gere ${cardCount} flashcards sobre: ${topic}` }],
             maxOutputTokens: cardCount * 200,
-            temperature: 0.7,
+            temperature: 0.3,
         });
 
         // Parse JSON response
