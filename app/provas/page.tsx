@@ -797,9 +797,16 @@ function ExamScreen({
                     >
                         {/* Question card */}
                         <div className="bg-card rounded-2xl border border-border p-5 md:p-7">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                Questão {currentIndex + 1}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Questão {currentIndex + 1}
+                                </span>
+                                {question.source === 'enem_real' && question.exam_year && (
+                                    <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">
+                                        ENEM {question.exam_year}
+                                    </span>
+                                )}
+                            </div>
                             <p className="mt-3 text-[15px] leading-[1.7] text-foreground whitespace-pre-wrap">
                                 {question.enunciado}
                             </p>

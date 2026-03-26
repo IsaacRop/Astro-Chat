@@ -25,7 +25,7 @@ Next.js 16 App Router application called "Astro" / "Otto" — a Portuguese-langu
 
 ### Storage: Supabase is the single source of truth
 
-All data lives in Supabase. There is no localStorage data layer. The Supabase tables are: `chats`, `messages`, `notes`, `tasks`, `ideas`, `bookmarks`, `calendar_events`, `feedbacks`, `profiles`.
+All data lives in Supabase. There is no localStorage data layer. The Supabase tables are: `chats`, `messages`, `notes`, `tasks`, `ideas`, `bookmarks`, `calendar_events`, `feedbacks`, `profiles`, `exams`, `exam_questions`, `flashcard_decks`, `flashcard_cards`, `enem_questions`, `usage_limits`.
 
 - `utils/supabase/server.ts` — server-side client (used in Server Components, server actions, route handlers)
 - `utils/supabase/client.ts` — browser client (used in Client Components)
@@ -55,6 +55,8 @@ Auth uses a **lazy/interaction-gate** model: unauthenticated users can see all d
 | `productivity.ts` | Tasks, ideas, bookmarks, calendar events |
 | `profile.ts` | `updateProfile`, `deleteAccount`, `signOut` |
 | `submit-feedback.ts` | `submitFeedback` |
+| `exams.ts` | `getUserExams`, `getExamWithQuestions`, `generateExam`, `submitAnswer`, `finishExam` |
+| `usage.ts` | `getUserPlan`, `getUserUsage`, `checkCanUse`, `incrementUsage` — freemium usage tracking |
 
 All delete operations in `study.ts` and `chat.ts` perform an ownership check (`.eq("user_id", user.id)`) **before** deleting child records, to prevent cross-user data deletion.
 
@@ -69,37 +71,36 @@ All delete operations in `study.ts` and `chat.ts` perform an ownership check (`.
 
 ### AI Chat (`/dashboard/chat`)
 
-`POST /api/chat` streams responses via Vercel AI SDK (`streamText`, `gpt-4o-mini`). Context is capped at the last 6 messages; output at 500 tokens. `POST /api/chat/save` persists messages to Supabase and triggers auto-title + embedding generation on the first assistant reply.
+`POST /api/chat` streams responses via Vercel AI SDK (`streamText`, `gpt-4o-mini`). Context is capped at the last 6 messages; output at 500 tokens. The system prompt is now **dynamically built** by `buildSystemPrompt()` from `lib/prompts/otto-system.ts` — it detects ENEM-related keywords in the user's message and injects subject-specific context blocks (Linguagens, Humanas, Natureza, Matemática, Redação) on top of the base Otto prompt. `POST /api/chat/save` persists messages to Supabase and triggers auto-title + embedding generation on the first assistant reply.
 
 `components/chat-interface.tsx` handles lazy chat creation: the Supabase `chats` row is only inserted when the user sends their first message (`POST /api/chat/create`), not on page load.
 
-### Freemium Paywall
+### Freemium Usage System
 
-Free-tier users are limited to **10 AI messages per day**. The gate is enforced server-side in `POST /api/chat`.
+Usage is tracked per-resource with a **rolling 5-hour window** via `app/actions/usage.ts` and the `usage_limits` table.
 
-**Database columns on `profiles`** (run `supabase/migrations/20260309_add_paywall_columns.sql`):
-- `plan_tier` (text, default `'free'`) — `'free'` or `'pro'`
-- `daily_message_count` (integer, default `0`) — resets each day
-- `last_message_date` (date) — tracks which calendar day the counter belongs to
+**Free-tier limits:**
+| Resource | Limit | Window |
+|---|---|---|
+| Chat messages | 10 | 5 hours |
+| Exams | 3 | 5 hours |
+| Flashcard decks | 3 | 5 hours |
 
-**Backend flow** (`app/api/chat/route.ts`):
-1. Authenticate via Supabase; return 401 if no session.
-2. Fetch `plan_tier`, `daily_message_count`, `last_message_date` from `profiles`.
-3. If `last_message_date ≠ today`, reset counter to 0.
-4. If `plan_tier === 'free'` and `count >= 10`, return **HTTP 403** `{ error: "PAYWALL_LIMIT_REACHED" }`.
-5. Otherwise increment counter (fire-and-forget) and stream the AI response.
+Pro users have unlimited access. The `usage_limits` table stores `(user_id, resource_type, usage_count, reset_at)`. When `now > reset_at`, the counter auto-resets.
 
-**Frontend** (`components/chat-interface.tsx`):
-- `useChat` `onError` callback detects `PAYWALL_LIMIT_REACHED` and sets `showPaywall(true)`.
-- `<PaywallModal>` renders with an upgrade CTA ("Fazer upgrade para o Otto Pro") and a dismiss option.
-- Input is disabled (`isLoading || showPaywall`) while the paywall is active.
+**Chat paywall** (`app/api/chat/route.ts`):
+- Authenticates via Supabase; returns 401 if no session.
+- If free-tier and limit reached, returns **HTTP 403** `{ error: "PAYWALL_LIMIT_REACHED" }`.
+- Frontend (`components/chat-interface.tsx`): `useChat` `onError` detects the error and shows `<PaywallModal>`.
+
+**Exam/Flashcard gates**: `checkCanUse("exam")` / `checkCanUse("flashcard")` is called at the start of their respective `/api/` routes. Returns 403 with usage info if exceeded.
 
 ### Route Structure
 
 - `/` — Landing page with OctopusMascot
 - `/chat` — Redirects authenticated users to `/dashboard/chat`, unauthenticated to home
 - `/cadernos` — Knowledge graph; `/cadernos/[nodeId]` shows node detail + Supabase-backed notes editor
-- `/dashboard` — Auth-protected shell; contains `/dashboard/chat/[id]`, `/dashboard/notes/[id]`, tasks, calendar, ideas, favorites, settings
+- `/dashboard` — Auth-protected shell; contains `/dashboard/chat/[id]`, `/dashboard/notes/[id]`, `/dashboard/provas`, `/dashboard/flashcards`, tasks, calendar, ideas, favorites, settings
 
 ### UI Conventions
 
@@ -110,7 +111,63 @@ Free-tier users are limited to **10 AI messages per day**. The gate is enforced 
 - Toasts: Sonner (`<Toaster>` in root layout)
 - Fonts: `Inter` (sans, `--font-sans`) and `Playfair Display` (serif, `--font-serif`) via CSS variables
 
+### Dynamic System Prompts (`lib/prompts/otto-system.ts`)
 
+Layered prompt system that injects ENEM-specific context into Otto's responses based on user queries.
+
+- `BASE_SYSTEM_PROMPT` — Defines Otto as an ENEM specialist (~800 tokens)
+- `CONTEXT_LINGUAGENS`, `CONTEXT_HUMANAS`, `CONTEXT_NATUREZA`, `CONTEXT_MATEMATICA`, `CONTEXT_REDACAO` — Subject-specific context blocks (~500 tokens each)
+- `getContextForMessage(userMessage)` — Keyword matcher that selects relevant context blocks
+- `buildSystemPrompt(userMessage)` — Combines base prompt + matched context blocks
+
+Used in `POST /api/chat` to adapt system prompt per message without massive token bloat.
+
+### ENEM RAG Pipeline (`lib/rag/enem-retriever.ts`)
+
+Retrieves real ENEM questions from Supabase using pgvector semantic search.
+
+**`retrieveEnemQuestions({ query, area?, yearMin?, matchCount? })`**:
+1. Embeds query via OpenAI `text-embedding-3-small`
+2. Calls `match_enem_questions()` RPC (cosine similarity)
+3. Fetches 4× pool, shuffles for year diversity, returns deduplicated results
+
+**`enem_questions` table** (migration: `supabase/migrations/20260326_create_enem_questions.sql`):
+- Columns: `id`, `source` (`enem_challenge` | `maritaca`), `exam_year`, `question_number`, `area` (linguagens/humanas/natureza/matematica), `question`, `choices` (jsonb), `answer`, `has_image`, `image_url`, `image_description`, `embedding` (vector 1536)
+- HNSW index on embedding for fast ANN search
+- RPC: `match_enem_questions(query_embedding, match_count, filter_area, filter_year_min)`
+- RLS: authenticated read-only
+
+Used by both exam generation and flashcard generation APIs as grounding context.
+
+### ENEM Data Ingestion (`scripts/`)
+
+`scripts/ingest_enem.py` — Python script to load ENEM questions from HuggingFace datasets, generate embeddings, and upsert into Supabase.
+
+**Data sources:**
+- `eduagarcia/enem_challenge` — 2009–2017 (~9k questions, text-only)
+- `maritaca-ai/enem` — 2022–2024 (~3k questions, includes images)
+
+**Dependencies:** `scripts/requirements.txt` (`datasets`, `openai`, `supabase`, `python-dotenv`)
+
+### Exam API Routes
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/exams/generate` | POST | Generate exam via AI (with RAG). Body: `{ examType, topic, questionCount, subject? }`. Returns `{ examId }` |
+| `/api/exams/[examId]/answer` | POST | Submit answer. Body: `{ questionId, answer }`. Returns `{ isCorrect, correctAnswer, explanation }` |
+| `/api/exams/[examId]/finish` | POST | Finalize exam. Computes score, generates AI feedback. Returns `{ exam, questions }` |
+
+**Exam generation modes:**
+- **Direct mode**: If multiple-choice AND enough real ENEM questions found via RAG → uses real questions directly (`source: "enem_real"`)
+- **AI generation mode**: Falls back to GPT-4o-mini with RAG context as reference (`source: "ai_generated"`)
+
+### Flashcard API Route
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/flashcards/generate` | POST | Generate flashcard deck. Body: `{ topic, cardCount }`. Returns `{ deckId }` |
+
+Uses RAG retrieval for grounding, then GPT-4o-mini generates ENEM-style flashcards (front: question/concept, back: answer with reasoning). Stored in `flashcard_decks` + `flashcard_cards` tables.
 
 ## Redesign V2 — Design System
 
@@ -171,45 +228,35 @@ Transitions: duration-150 to duration-250 ease
 - Test targets: iPhone SE (375px), iPhone 14 (390px), Android mid-range (360px), iPad (768px)
 
 ### AI-Powered Exams
-Route: /dashboard/provas
+Route: `/dashboard/provas` — UI in `app/provas/page.tsx` (client component)
 
-User flow:
-1. Setup screen → pick question type, topic, and count
-2. Loading (AI generating) → visual loading feedback
-3. Exam screen → answer questions one by one
-4. Results screen → answer key + AI-generated performance feedback
+**User flow:**
+1. **Setup screen** → pick question type (multiple choice / true-false), topic, count (5/10/15/20/30/45). Shows past exams list and usage bar for free users.
+2. **Loading** → calls `POST /api/exams/generate` (RAG + AI generation)
+3. **Exam screen** → one question at a time with progress bar, question navigator dots, prev/next navigation. Confirm locks answer via `POST /api/exams/[id]/answer`.
+4. **Results screen** → animated score percentage, correct/total badge, AI-generated feedback, expandable answer key per question, retake/new exam buttons.
 
-Question types:
-- Multiple choice: 5 alternatives (A-E), ENEM style
-- True or False: statement + V or F
+**Backend pipeline:**
+- `POST /api/exams/generate` → freemium check → RAG retrieval → direct real questions OR AI generation → creates `exams` + `exam_questions` rows
+- `POST /api/exams/[examId]/answer` → validates ownership → compares answer → updates `exam_questions`
+- `POST /api/exams/[examId]/finish` → scores exam → GPT-4o-mini feedback (max 200 words, pt-BR) → updates exam status to `completed`
 
-Count presets: 5, 10, 15, 20, 30, 45 questions
-Topic: free text chosen by the user
+**Server actions** (`app/actions/exams.ts`): `getUserExams`, `getExamWithQuestions`, `generateExam`, `submitAnswer`, `finishExam`
 
-Each AI-generated question must contain:
-- Enunciado (may include supporting text)
-- Alternatives (5 for multiple choice) or statement (V/F)
-- Correct answer
-- Detailed explanation
-
-Final results:
-- Score percentage
-- Visual answer key (question by question, correct/wrong)
-- AI-generated feedback analyzing overall performance,
-  strengths, weaknesses, and study recommendations
+**Question sources:** Real ENEM questions from `enem_questions` table (via RAG) or AI-generated with RAG context as reference. Each question row tracks `source: "enem_real" | "ai_generated"` and optional `exam_year`.
 
 ### AI-Powered Flashcards
-Route: /dashboard/flashcards
+Route: `/dashboard/flashcards`
 
-User flow:
-1. Setup screen → pick topic and card count
-2. Loading (AI generating) → visual feedback
+**User flow:**
+1. Setup screen → pick topic and card count (5/10/15/20)
+2. Loading → calls `POST /api/flashcards/generate` (RAG + AI generation)
 3. Review screen → card with front/back, flip on tap
 4. After flip → "Sei" / "Não sei" buttons
 5. Results screen → stats + AI feedback
 
-Card format: front (question/concept) + back (answer/explanation)
-Count presets: 5, 10, 15, 20 cards
-Topic: free text chosen by the user
+**Backend:** `POST /api/flashcards/generate` → freemium check → RAG retrieval from `enem_questions` → GPT-4o-mini generates ENEM-style flashcards → creates `flashcard_decks` + `flashcard_cards` rows.
+
+Card format: front (question/concept at ENEM cognitive level) + back (answer with reasoning). Grounded in real ENEM content via RAG.
 
 All UI text must remain in Brazilian Portuguese (pt-BR).

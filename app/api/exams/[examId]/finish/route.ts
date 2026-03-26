@@ -49,31 +49,56 @@ export async function POST(
             ? Math.round((correctCount / totalQuestions) * 10000) / 100
             : 0;
 
-        // Build wrong questions summary
-        const wrongQuestions = questions
-            .filter((q: { is_correct: boolean | null }) => q.is_correct === false)
-            .map((q: { question_number: number; enunciado: string }) => `Q${q.question_number}: ${q.enunciado.slice(0, 100)}`)
-            .join("\n");
+        // Build detailed question-by-question context for feedback
+        const questionDetails = questions.map((q: {
+            question_number: number;
+            enunciado: string;
+            correct_answer: string;
+            explanation: string | null;
+            user_answer: string | null;
+            is_correct: boolean | null;
+        }) => {
+            const status = q.is_correct ? "✓ ACERTOU" : "✗ ERROU";
+            const lines = [
+                `Q${q.question_number} [${status}]: ${q.enunciado.slice(0, 200)}`,
+                `  Resposta do aluno: ${q.user_answer ?? "sem resposta"} | Resposta correta: ${q.correct_answer}`,
+            ];
+            if (q.explanation) {
+                lines.push(`  Explicação: ${q.explanation}`);
+            }
+            return lines.join("\n");
+        }).join("\n\n");
 
         // Generate AI feedback
-        const feedbackPrompt = `Você é um tutor educacional analisando o desempenho de um estudante em uma prova sobre ${exam.topic}.
+        const feedbackSystemPrompt = `You are Otto, an ENEM study assistant. The student just completed a practice exam. Analyze their performance and give direct, specific feedback in Brazilian Portuguese.
 
+You have access to:
+- Each question they answered
+- Whether they got it right or wrong
+- The correct answer and explanation for each question
+
+Your feedback MUST:
+- Start by acknowledging their score directly ("Você acertou X de Y questões")
+- Identify the 1-2 specific topics where they made mistakes (not just "revise math" — say "você errou as questões de funções quadráticas e geometria plana")
+- For each wrong answer, briefly explain the key concept they missed in 1-2 sentences
+- End with one concrete study recommendation tied to their specific weak points
+- Be direct and encouraging, like a tutor who knows the student — not a generic chatbot
+- Maximum 200 words total
+
+Do NOT give generic advice like "continue studying" or "review the subject". Be specific to what THIS student got wrong in THIS exam.`;
+
+        const feedbackUserPrompt = `Tema da prova: ${exam.topic}
 Resultado: ${correctCount}/${totalQuestions} (${scorePercentage}%)
-Questões erradas: ${wrongQuestions || "Nenhuma — acertou tudo!"}
 
-Gere um feedback personalizado em português com:
-1. Avaliação geral do desempenho (2-3 frases)
-2. Pontos fortes identificados
-3. Pontos fracos e o que precisa revisar
-4. Recomendação prática de próximos passos de estudo
-
-Seja motivador mas honesto. Máximo 200 palavras.`;
+Detalhes questão por questão:
+${questionDetails}`;
 
         const feedbackResult = await generateText({
             model: openai("gpt-4o-mini"),
-            messages: [{ role: "user", content: feedbackPrompt }],
+            system: feedbackSystemPrompt,
+            messages: [{ role: "user", content: feedbackUserPrompt }],
             maxOutputTokens: 500,
-            temperature: 0.7,
+            temperature: 0.3,
         });
 
         const aiFeedback = feedbackResult.text.trim();
