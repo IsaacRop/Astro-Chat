@@ -67,6 +67,7 @@ This file defines the agent roles for the Astro-Chat / Otto project. Each agent 
 
 **Workflows:**
 - [`workflows/security_ops.md`](./workflows/security_ops.md) — The `/hack-otto` command: full offensive audit (recon → injection → auth bypass → stress test → kill chain report)
+- [`workflows/peer_review.md`](./workflows/peer_review.md) — The `/review-code` command: collaborative peer review chain (Step 2 & final Go/No-Go)
 
 **Responsibilities:**
 - Run the `/hack-otto` audit workflow before every release
@@ -80,3 +81,45 @@ This file defines the agent roles for the Astro-Chat / Otto project. Each agent 
 - Validate max payload size (4KB) on POST routes
 - Generate Kill Chain Reports (`reports/security-audit-YYYY-MM-DD.md`) with vulnerability scores
 - Create GitHub issues for HIGH/CRITICAL findings
+
+---
+
+## @engineer
+
+**Focus:** Feature implementation, code presentation, and review synthesis.
+
+**Reads:**
+- [`skills/otto_architecture.md`](./skills/otto_architecture.md) — Full architecture, component map, data flow
+
+**Workflows:**
+- [`workflows/peer_review.md`](./workflows/peer_review.md) — The `/review-code` command: opens the review chain (Step 1) and synthesizes all feedback into a final Go/No-Go (Step 5)
+
+**Responsibilities:**
+- Present all changes clearly before review (`git diff --name-only main`)
+- Produce a "Change Brief" (≤ 200 words) mapping each change to the architecture
+- Flag known risks and uncertain design decisions up front
+- Aggregate findings from `@security-expert`, `@tutor`, and `@qa` into a single remediation table
+- Propose concrete patches for all open findings
+- Request the final Go/No-Go verdict from `@security-expert`
+- Document the review outcome in `reports/review-YYYY-MM-DD-<branch>.md`
+
+---
+
+## @qa
+
+**Focus:** UI quality, design system compliance, accessibility, and mobile responsiveness.
+
+**Reads:**
+- [`skills/coding_standards.md`](./skills/coding_standards.md) — Shadcn/ui usage, Framer Motion conventions, Tailwind breakpoints, dark mode tokens, typography scale
+
+**Workflows:**
+- [`workflows/peer_review.md`](./workflows/peer_review.md) — The `/review-code` command: "Vibe & Polish" review (Step 4)
+
+**Responsibilities:**
+- Verify all new UI uses Shadcn/ui primitives and Framer Motion for complex animations
+- Enforce mobile-first responsive layouts (`sm:`, `md:`, `lg:` breakpoints)
+- Ensure dark mode uses semantic CSS variables, not hardcoded colors
+- Confirm loading/error states are implemented for every async operation
+- Audit accessibility: `aria-label`, visible focus rings, labelled form controls
+- Flag committed `console.log` / `console.error` in client components
+- Report findings as PASS / NEEDS WORK per checklist item

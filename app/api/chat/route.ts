@@ -3,6 +3,7 @@ import { openai } from '@ai-sdk/openai'
 import { createClient } from "@/utils/supabase/server"
 import { getUserUsage, incrementUsage } from "@/app/actions/usage"
 import { buildSystemPrompt } from "@/lib/prompts/otto-system"
+import { addXP } from "@/lib/xp/actions"
 
 // Safety & Cost Configuration
 const MAX_CONTEXT_MESSAGES = 20;
@@ -43,6 +44,8 @@ export async function POST(request: Request) {
         incrementUsage("chat").catch(err =>
             console.error('[Chat API] Failed to increment usage:', err)
         );
+        // XP: +1 por mensagem enviada pelo usuário
+        addXP('chat_message').catch(console.error);
         // ─────────────────────────────────────────────────────────────────────
 
         const body = await request.json();
