@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Zap, Map, Trophy, ChevronRight, X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const STEPS = [
   {
@@ -44,10 +45,10 @@ export function MapaTutorial({ onClose }: { onClose: () => void }) {
             </div>
           ))}
         </div>
-        <button onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size="icon-sm" onClick={onClose}
+          className="absolute right-4 top-4 rounded-full">
           <X size={16} />
-        </button>
+        </Button>
         <AnimatePresence mode="wait">
           <motion.div key={step} className="px-8 py-8 text-center"
             initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
@@ -60,13 +61,14 @@ export function MapaTutorial({ onClose }: { onClose: () => void }) {
           </motion.div>
         </AnimatePresence>
         <div className="px-6 pb-8">
-          <button
+          <Button
             onClick={() => isLast ? onClose() : setStep(s => s + 1)}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-primary)] py-3.5 font-bold text-white transition-opacity hover:opacity-90"
+            size="lg"
+            className="w-full rounded-2xl bg-[var(--color-primary)] py-3.5 font-bold text-white hover:bg-[var(--color-primary)]/90"
           >
             {isLast ? 'Começar a explorar' : 'Próximo'}
             <ChevronRight size={18} />
-          </button>
+          </Button>
         </div>
       </motion.div>
     </motion.div>

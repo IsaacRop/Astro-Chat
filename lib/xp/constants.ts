@@ -13,6 +13,7 @@ export const AREAS = {
   ch: { slug: 'ch', nome: 'Ciências Humanas',  cor: '#60A5FA', corDark: '#2563EB', icone: '🌍' },
   cn: { slug: 'cn', nome: 'Ciências Natureza', cor: '#F472B6', corDark: '#DB2777', icone: '🔬' },
   mt: { slug: 'mt', nome: 'Matemática',        cor: '#FBBF24', corDark: '#D97706', icone: '📐' },
+  rd: { slug: 'rd', nome: 'Redação',           cor: '#A78BFA', corDark: '#7C3AED', icone: '✍️' },
 } as const
 
 export type AreaSlug = keyof typeof AREAS

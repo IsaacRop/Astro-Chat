@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Lock } from 'lucide-react'
-import { AREAS, type UserXPData, type AreaSlug } from '@/lib/xp/constants'
+import { AREAS, NIVEIS, type UserXPData, type AreaSlug } from '@/lib/xp/constants'
 
 interface Competencia {
   id: number
@@ -19,7 +19,7 @@ interface HexGridProps {
 }
 
 const HEX_SIZE  = 52
-const COMP_SIZE = 28
+const COMP_SIZE = 34
 
 function hexCorners(cx: number, cy: number, size: number): string {
   return Array.from({ length: 6 }, (_, i) => {
@@ -29,10 +29,11 @@ function hexCorners(cx: number, cy: number, size: number): string {
 }
 
 const AREA_POSITIONS: Record<AreaSlug, [number, number]> = {
-  lc: [200, 100],
-  ch: [90,  220],
-  mt: [310, 220],
-  cn: [200, 340],
+  lc: [200, 80],
+  ch: [80,  190],
+  mt: [320, 190],
+  cn: [120, 340],
+  rd: [280, 340],
 }
 
 function getCompPositions(cx: number, cy: number, count: number): [number, number][] {
@@ -63,6 +64,9 @@ function HexCell({ cx, cy, size, fill, stroke, opacity = 1, locked, label, icone
       onMouseEnter={() => !locked && setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => !locked && onClick?.()}
+      role={locked ? undefined : 'button'}
+      tabIndex={locked ? undefined : 0}
+      onKeyDown={(e) => { if (!locked && (e.key === 'Enter' || e.key === ' ')) onClick?.() }}
     >
       {hovered && (
         <polygon
@@ -110,7 +114,7 @@ function HexCell({ cx, cy, size, fill, stroke, opacity = 1, locked, label, icone
 
 export function HexGrid({ userXP, competencias, onSelectArea }: HexGridProps) {
   const areasSlugs = Object.keys(AREAS) as AreaSlug[]
-  const areaIds: Record<AreaSlug, number> = { lc: 1, ch: 2, cn: 3, mt: 4 }
+  const areaIds: Record<AreaSlug, number> = { lc: 1, ch: 2, cn: 3, mt: 4, rd: 5 }
 
   const compsByArea = useMemo(() => {
     const map: Record<number, Competencia[]> = {}
@@ -121,14 +125,18 @@ export function HexGrid({ userXP, competencias, onSelectArea }: HexGridProps) {
     return map
   }, [competencias])
 
-  function compDesbloqueada(areaSlug: AreaSlug, idx: number) {
+  function compDesbloqueada(areaSlug: AreaSlug, idx: number, totalComps: number) {
     if (!userXP) return false
-    return (userXP.xp_por_area[areaSlug] ?? 0) >= idx * 20
+    const areaNivel = userXP.nivel_por_area[areaSlug] ?? 1
+    const maxNivel = NIVEIS.length
+    // Unlock competencies proportionally: at level N out of 10, unlock N/10 of total comps
+    const unlocked = Math.floor((areaNivel / maxNivel) * totalComps)
+    return idx < unlocked
   }
 
   return (
     <div className="w-full overflow-x-auto">
-      <svg viewBox="0 0 400 450" className="w-full max-w-lg mx-auto" aria-label="Mapa de Desenvolvimento">
+      <svg viewBox="0 0 400 460" className="w-full max-w-lg mx-auto" aria-label="Mapa de Desenvolvimento">
         {areasSlugs.map((slug, i) =>
           areasSlugs.slice(i + 1).map((slug2) => {
             const [x1, y1] = AREA_POSITIONS[slug]
@@ -150,7 +158,7 @@ export function HexGrid({ userXP, competencias, onSelectArea }: HexGridProps) {
 
           return comps.map((comp, idx) => {
             const [px, py] = positions[idx]
-            const desbloqueada = compDesbloqueada(slug, idx)
+            const desbloqueada = compDesbloqueada(slug, idx, comps.length)
             return (
               <HexCell key={comp.id}
                 cx={px} cy={py} size={COMP_SIZE}

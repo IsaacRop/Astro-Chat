@@ -15,7 +15,7 @@ import { useXP }          from '@/hooks/useXP'
 import { AREAS, type AreaSlug } from '@/lib/xp/constants'
 import type { UserXPData } from '@/lib/xp/constants'
 
-const TUTORIAL_KEY = 'otto_mapa_tutorial_done'
+const TUTORIAL_KEY = 'teo-mapa-tutorial-done'
 
 interface Competencia {
   id: number; area_id: number; codigo: string; nome: string
@@ -28,7 +28,7 @@ interface MapaClientProps {
 }
 
 export function MapaClient({ isPro, initialXP, competencias }: MapaClientProps) {
-  const { xp, loading, levelUpEvent, clearLevelUp } = useXP()
+  const { xp, loading, error, levelUpEvent, clearLevelUp } = useXP()
   const [showTutorial, setShowTutorial] = useState(false)
   const [selectedArea, setSelectedArea] = useState<AreaSlug | null>(null)
 
@@ -75,7 +75,13 @@ export function MapaClient({ isPro, initialXP, competencias }: MapaClientProps) 
       <div className="mx-auto max-w-xl px-4 py-6 space-y-6">
         {xpData && !loading && <XPBar xp={xpData} />}
 
-        {!xpData && !loading && isPro && (
+        {error && (
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-center text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        {!xpData && !loading && !error && isPro && (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
             Comece uma conversa no chat para ganhar XP e desbloquear o mapa!
           </div>

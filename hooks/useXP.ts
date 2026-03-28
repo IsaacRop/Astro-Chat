@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import {
   calcularNivel,
@@ -14,6 +14,7 @@ import {
 interface UseXPReturn {
   xp:              UserXPData | null
   loading:         boolean
+  error:           string | null
   levelUpEvent:    AddXPResult | null
   clearLevelUp:    () => void
   progressoGlobal: number
@@ -25,7 +26,9 @@ interface UseXPReturn {
 export function useXP(): UseXPReturn {
   const [xp, setXP]                     = useState<UserXPData | null>(null)
   const [loading, setLoading]           = useState(true)
+  const [error, setError]               = useState<string | null>(null)
   const [levelUpEvent, setLevelUpEvent] = useState<AddXPResult | null>(null)
+  const nivelRef = useRef(1)
 
   const supabase = createClient()
 
@@ -34,13 +37,19 @@ export function useXP(): UseXPReturn {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
 
-      const { data } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('user_xp')
         .select('*')
         .eq('user_id', user.id)
         .single()
 
-      if (data) setXP(data as UserXPData)
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        setError('Erro ao carregar XP. Tente recarregar a página.')
+      } else if (data) {
+        const d = data as UserXPData
+        setXP(d)
+        nivelRef.current = d.nivel_global
+      }
       setLoading(false)
     }
     load()
@@ -65,9 +74,10 @@ export function useXP(): UseXPReturn {
           },
           (payload) => {
             const novo     = payload.new as UserXPData
-            const anterior = xp?.nivel_global ?? 1
+            const anterior = nivelRef.current
 
             setXP(novo)
+            nivelRef.current = novo.nivel_global
 
             if (novo.nivel_global > anterior) {
               setLevelUpEvent({
@@ -88,7 +98,7 @@ export function useXP(): UseXPReturn {
 
     subscribe()
     return () => { channel?.unsubscribe() }
-  }, [xp?.nivel_global])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- subscribe once, uses ref-stable callback
 
   const clearLevelUp = useCallback(() => setLevelUpEvent(null), [])
 
@@ -100,6 +110,7 @@ export function useXP(): UseXPReturn {
   return {
     xp,
     loading,
+    error,
     levelUpEvent,
     clearLevelUp,
     progressoGlobal: progresso,

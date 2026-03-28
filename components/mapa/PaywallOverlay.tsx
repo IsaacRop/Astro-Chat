@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Lock, Sparkles } from 'lucide-react'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 export function PaywallOverlay() {
   return (
@@ -34,11 +35,13 @@ export function PaywallOverlay() {
             </li>
           ))}
         </ul>
-        <Link href="/planos"
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-primary)] py-3.5 font-bold text-white transition-opacity hover:opacity-90">
-          <Sparkles size={16} />
-          Assinar Otto Pro
-        </Link>
+        <Button asChild size="lg"
+          className="w-full rounded-2xl bg-[var(--color-primary)] py-3.5 font-bold text-white hover:bg-[var(--color-primary)]/90">
+          <Link href="/planos">
+            <Sparkles size={16} />
+            Assinar Otto Pro
+          </Link>
+        </Button>
         <p className="mt-3 text-xs text-muted-foreground">R$19,90/mês · Cancele quando quiser</p>
       </motion.div>
     </motion.div>
