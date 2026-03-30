@@ -45,7 +45,7 @@ export function LoginButton({ className, nextUrl, ...props }: LoginButtonProps) 
             className={cn(
                 "relative flex items-center justify-center gap-3 px-6 py-3 w-full sm:w-auto",
                 "bg-white text-black rounded-xl font-medium transition-all duration-200",
-                "hover:bg-zinc-200 active:scale-[0.98]",
+                "hover:bg-[#f0f0f0] active:scale-[0.98]",
                 "disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100",
                 className
             )}

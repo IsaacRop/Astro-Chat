@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
-import { generateText } from "ai";
+import { generateText, embed } from "ai";
 import { openai } from "@ai-sdk/openai";
 
 export async function POST(request: Request) {
@@ -74,20 +74,31 @@ export async function POST(request: Request) {
                     // Generate a short title
                     const titleResult = await generateText({
                         model: openai('gpt-4o-mini'),
-                        prompt: `Summarize this conversation in 3 to 5 words. Plain text only. No quotes. No punctuation at the end.
-
-User message: "${userContent.slice(0, 200)}"
-Assistant response: "${content.slice(0, 200)}"`,
+                        system: `Você é um gerador de títulos. Extraia APENAS o tema central de estudo em no máximo 4 palavras.
+Regras: ignore saudações e descrições de ações. Retorne o nome da matéria ou conceito (ex: "Revolução Francesa"). Se não houver assunto claro, retorne "Assunto Indefinido". Sem aspas, sem pontuação final.`,
+                        messages: [
+                            { role: "user", content: userContent.slice(0, 200) },
+                            { role: "assistant", content: content.slice(0, 200) },
+                        ],
                         maxOutputTokens: 20,
                     });
 
                     const generatedTitle = titleResult.text.trim().slice(0, 50);
                     console.log("[Chat Save] Generated title:", generatedTitle);
 
-                    // Update the chat title
+                    // Generate Vector Embedding for the title using OpenAI
+                    const { embedding } = await embed({
+                        model: openai.embedding('text-embedding-3-small'),
+                        value: generatedTitle,
+                    });
+
+                    // Update the chat title and embedding vector
                     await supabase
                         .from("chats")
-                        .update({ title: generatedTitle })
+                        .update({
+                            title: generatedTitle,
+                            embedding: embedding
+                        })
                         .eq("id", chatId);
                 }
             } catch (titleError) {

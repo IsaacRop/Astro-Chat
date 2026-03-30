@@ -1,36 +1,23 @@
 "use client";
 
 import { useChat, type UIMessage } from "@ai-sdk/react";
-import { useEffect, useRef, useState } from "react";
-import { Plus, Network } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Zap, FileText, ImageIcon, Crown, Check, Sparkles, Lock } from "lucide-react";
 import Link from "next/link";
+import { useCountdown } from "@/hooks/useCountdown";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { useAutoScroll } from "@/hooks/use-auto-scroll";
+
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Header } from "@/components/Header";
 import { AstroChatInput } from "@/components/ui/astro-chat-input";
 
 // Octopus Icon for Otto branding
-const OctopusIcon = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
-    <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-    >
-        <ellipse cx="12" cy="9" rx="5" ry="4" />
-        <circle cx="10" cy="8.5" r="0.5" fill="currentColor" />
-        <circle cx="14" cy="8.5" r="0.5" fill="currentColor" />
-        <path d="M7 12c-1 1.5-1.5 3.5-1 5" />
-        <path d="M9 13c-.5 1.5-.5 3.5 0 5" />
-        <path d="M12 13c0 1.5 0 3.5 0 5" />
-        <path d="M15 13c.5 1.5.5 3.5 0 5" />
-        <path d="M17 12c1 1.5 1.5 3.5 1 5" />
-    </svg>
+const OctopusIcon = ({ className = "" }: { size?: number; className?: string }) => (
+    <div className={`flex flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#4A9E6B] to-[#5B9E9E] shadow-sm ${className}`}>
+        <span className="text-white font-serif font-bold leading-none select-none">O</span>
+    </div>
 );
 
 // Markdown styling
@@ -42,7 +29,7 @@ const MarkdownComponents = {
         if (isInline) {
             return (
                 <code
-                    className="bg-accent-purple/10 text-accent-purple px-1.5 py-0.5 rounded text-xs md:text-sm font-mono border border-accent-purple/20"
+                    className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-xs md:text-sm font-mono border border-primary/20"
                     {...props}
                 >
                     {children}
@@ -92,7 +79,7 @@ const MarkdownComponents = {
         </a>
     ),
     blockquote: ({ children }: React.ComponentProps<'blockquote'>) => (
-        <blockquote className="border-l-4 border-accent-purple pl-3 md:pl-4 my-3 italic text-muted-foreground text-sm md:text-base">
+        <blockquote className="border-l-4 border-primary pl-3 md:pl-4 my-3 italic text-muted-foreground text-sm md:text-base">
             {children}
         </blockquote>
     ),
@@ -105,8 +92,203 @@ const MarkdownComponents = {
     hr: () => <hr className="my-4 border-border" />,
 };
 
+// ── PaywallModal ─────────────────────────────────────────────────────────────
+const PRICE_MONTHLY = "price_1T9Uk7CKO59buulnEpHz9iHj";
+const PRICE_ANNUAL = "price_1TCHSVCKO59buulnTnbPy8DX";
+
+const PRO_FEATURES = [
+    "Mensagens ilimitadas por dia",
+    "Respostas mais longas e detalhadas",
+    "Suporte prioritário",
+];
+
+function PaywallModal({ onClose }: { onClose: () => void }) {
+    const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState<"annual" | "monthly">("annual");
+
+    const handleUpgrade = async (priceId: string) => {
+        setUpgradeLoading(priceId);
+        try {
+            const res = await fetch("/api/stripe/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ priceId }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Erro ao iniciar checkout");
+            if (data.url) {
+                window.location.href = data.url;
+            }
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Erro ao iniciar checkout. Tente novamente.");
+            setUpgradeLoading(null);
+        }
+    };
+
+    const activePriceId = selectedPlan === "annual" ? PRICE_ANNUAL : PRICE_MONTHLY;
+
+    return (
+        <AnimatePresence>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                {/* Overlay */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0 bg-[#1E2E25] backdrop-blur-sm"
+                    onClick={onClose}
+                    aria-hidden="true"
+                />
+
+                {/* Card */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                    className="relative z-10 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl w-full max-w-[400px] overflow-hidden"
+                >
+                    {/* Header accent bar */}
+                    <div className="h-1.5 w-full bg-gradient-to-r from-[var(--color-accent)] to-[#5B9E9E]" />
+
+                    <div className="p-6 sm:p-8">
+                        {/* Icon + Title */}
+                        <div className="flex flex-col items-center mb-5">
+                            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--color-accent)] to-[#5B9E9E] mb-4 shadow-lg shadow-[var(--color-accent)]/20">
+                                <Crown className="w-6 h-6 text-white" />
+                            </div>
+                            <h2 className="text-lg sm:text-xl font-serif font-bold text-[var(--color-text)] text-center">
+                                Seu limite diário acabou
+                            </h2>
+                            <p className="text-sm text-[var(--color-text-sec)] mt-1.5 text-center leading-relaxed max-w-[280px]">
+                                Desbloqueie o Otto Pro e estude sem interrupções.
+                            </p>
+                        </div>
+
+                        {/* Features */}
+                        <div className="bg-[var(--color-surface-alt)] rounded-xl p-4 mb-5 border border-[var(--color-border-light)]">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Sparkles className="w-4 h-4 text-[var(--color-accent)]" />
+                                <span className="text-xs font-semibold text-[var(--color-text)] uppercase tracking-wide">Otto Pro</span>
+                            </div>
+                            <ul className="space-y-2">
+                                {PRO_FEATURES.map((feature) => (
+                                    <li key={feature} className="flex items-center gap-2.5">
+                                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[var(--color-accent-light)] flex-shrink-0">
+                                            <Check className="w-3 h-3 text-[var(--color-accent)]" />
+                                        </div>
+                                        <span className="text-sm text-[var(--color-text-sec)]">{feature}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* Plan selector */}
+                        <div className="grid grid-cols-2 gap-2.5 mb-4">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedPlan("annual")}
+                                className={`relative flex flex-col items-center py-3 px-3 rounded-xl border-2 transition-all duration-200 min-h-[88px] ${
+                                    selectedPlan === "annual"
+                                        ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]"
+                                        : "border-[var(--color-border-light)] bg-[var(--color-surface)] hover:border-[var(--color-border)]"
+                                }`}
+                            >
+                                {/* Discount badge */}
+                                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-[var(--color-accent)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                                    -25%
+                                </span>
+                                <span className="text-xs font-medium text-[var(--color-text-sec)] mt-1">Anual</span>
+                                <span className="text-lg font-bold text-[var(--color-text)] leading-tight">R$ 15</span>
+                                <span className="text-[11px] text-[var(--color-text-muted)]">/mês</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setSelectedPlan("monthly")}
+                                className={`flex flex-col items-center py-3 px-3 rounded-xl border-2 transition-all duration-200 min-h-[88px] ${
+                                    selectedPlan === "monthly"
+                                        ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]"
+                                        : "border-[var(--color-border-light)] bg-[var(--color-surface)] hover:border-[var(--color-border)]"
+                                }`}
+                            >
+                                <span className="text-xs font-medium text-[var(--color-text-sec)] mt-1">Mensal</span>
+                                <span className="text-lg font-bold text-[var(--color-text)] leading-tight">R$ 19,90</span>
+                                <span className="text-[11px] text-[var(--color-text-muted)]">/mês</span>
+                            </button>
+                        </div>
+
+                        {/* CTA button */}
+                        <button
+                            onClick={() => handleUpgrade(activePriceId)}
+                            disabled={upgradeLoading !== null}
+                            className="w-full bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent-dark)] hover:from-[var(--color-accent-dark)] hover:to-[var(--color-accent-dark)] text-white font-semibold py-3.5 px-4 rounded-lg transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[48px] shadow-md shadow-[var(--color-accent)]/20 hover:shadow-lg hover:shadow-[var(--color-accent)]/30"
+                        >
+                            {upgradeLoading ? (
+                                <>
+                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    Redirecionando para pagamento...
+                                </>
+                            ) : (
+                                <>
+                                    <Zap className="w-4 h-4" />
+                                    Fazer upgrade agora
+                                </>
+                            )}
+                        </button>
+
+                        {/* Dismiss */}
+                        <button
+                            onClick={onClose}
+                            className="w-full text-[var(--color-text-muted)] hover:text-[var(--color-text-sec)] text-sm py-3 mt-1 transition-colors duration-150 min-h-[44px]"
+                        >
+                            Voltar amanhã
+                        </button>
+                    </div>
+                </motion.div>
+            </div>
+        </AnimatePresence>
+    );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── LimitBanner ───────────────────────────────────────────────────────────────
+
+function LimitBanner({ resetAt }: { resetAt: string }) {
+    const timeLeft = useCountdown(resetAt);
+
+    return (
+        <div className="mx-4 mb-3 p-4 rounded-xl border border-destructive/30 bg-destructive/10 flex flex-col gap-3">
+            <div className="flex items-center gap-2 text-destructive font-medium">
+                <Lock className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm">Limite de mensagens atingido (100%)</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+                Seus créditos renovam em{" "}
+                <span className="font-semibold tabular-nums text-foreground">{timeLeft}</span>
+            </p>
+            <Link
+                href="/upgrade"
+                className="w-full text-center py-2.5 px-4 min-h-[44px] flex items-center justify-center bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white text-sm font-semibold rounded-lg transition-colors duration-150"
+            >
+                Fazer upgrade para Otto Pro
+            </Link>
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+// File metadata stored in-memory per message for display
+interface FileAttachment {
+    name: string;
+    type: string; // "image" | "pdf"
+    previewUrl?: string; // blob URL for image preview
+}
+
 interface ChatInterfaceProps {
-    chatId: string;
+    chatId: string | null;
     initialMessages: Array<{
         id: string;
         role: "user" | "assistant";
@@ -114,9 +296,20 @@ interface ChatInterfaceProps {
     }>;
 }
 
-export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
+export function ChatInterface({ chatId: initialChatId, initialMessages }: ChatInterfaceProps) {
     const [input, setInput] = useState("");
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [activeChatId, setActiveChatId] = useState<string | null>(initialChatId);
+    const [isCreatingChat, setIsCreatingChat] = useState(false);
+    const [showPaywall, setShowPaywall] = useState(false);
+    const [limitResetAt, setLimitResetAt] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    // Track file attachments per message ID for display in bubbles
+    const [messageAttachments, setMessageAttachments] = useState<Record<string, FileAttachment>>({});
+
+    // Keep a ref to the latest activeChatId so async callbacks always see the current value
+    const activeChatIdRef = useRef(activeChatId);
+    activeChatIdRef.current = activeChatId;
 
     // Convert initial messages to the format expected by useChat
     const formattedInitialMessages: UIMessage[] = initialMessages.map(msg => ({
@@ -125,25 +318,51 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
         parts: [{ type: 'text' as const, text: msg.content }],
     }));
 
-    // AI SDK useChat hook
-    // Note: Messages are saved to Supabase via /api/chat/save endpoint
-    // Auto-titling is triggered when saving the assistant's response
+    // AI SDK useChat hook — use a STABLE id so the hook never resets mid-conversation.
+    // The id is only for client-side cache keying; the AI API route doesn't use it.
+    const chatHookId = initialChatId || "new-chat";
     const { messages, setMessages, sendMessage, status } = useChat({
-        id: chatId,
+        id: chatHookId,
+        onError: (error) => {
+            if (error.message.includes('PAYWALL_LIMIT_REACHED')) {
+                // Remove the blocked user message (it was optimistically added)
+                setMessages(prev => {
+                    const lastUserIdx = prev.reduce((acc, m, i) => m.role === 'user' ? i : acc, -1);
+                    return lastUserIdx >= 0
+                        ? [...prev.slice(0, lastUserIdx), ...prev.slice(lastUserIdx + 1)]
+                        : prev;
+                });
+                // Extract reset_at from the error payload
+                let resetAt = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
+                try {
+                    const match = error.message.match(/"reset_at"\s*:\s*"([^"]+)"/);
+                    if (match) resetAt = match[1];
+                } catch { /* keep fallback */ }
+                setLimitResetAt(resetAt);
+            }
+        },
     });
 
-    // Set initial messages on mount
+    const { containerRef, bottomRef: messagesEndRef } = useAutoScroll([messages]);
+
+    // Set initial messages on mount (only for existing chats with history)
     useEffect(() => {
         if (formattedInitialMessages.length > 0 && messages.length === 0) {
             setMessages(formattedInitialMessages);
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // When the component receives a new chatId prop (e.g. navigating to an existing chat), sync state
+    useEffect(() => {
+        setActiveChatId(initialChatId);
+    }, [initialChatId]);
+
     // Save messages to Supabase after AI response completes
     const prevStatusRef = useRef(status);
     useEffect(() => {
+        const currentChatId = activeChatIdRef.current;
         // When status transitions from streaming to ready, save the AI response
-        if (prevStatusRef.current !== 'ready' && status === 'ready' && messages.length > 0) {
+        if (prevStatusRef.current !== 'ready' && status === 'ready' && messages.length > 0 && currentChatId) {
             const lastMessage = messages[messages.length - 1];
             if (lastMessage.role === 'assistant') {
                 // Save AI response to database
@@ -151,7 +370,7 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        chatId,
+                        chatId: currentChatId,
                         role: 'assistant',
                         content: getMessageText(lastMessage),
                     }),
@@ -159,38 +378,267 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
             }
         }
         prevStatusRef.current = status;
-    }, [status, messages, chatId]);
+    }, [status, messages]);
+
+    /**
+     * Lazy Chat Creation: creates the chat row in Supabase only when the user
+     * actually sends their first message. Returns the new chatId.
+     */
+    const ensureChatExists = useCallback(async (): Promise<string> => {
+        // Always read from the ref — it's the source of truth
+        if (activeChatIdRef.current) {
+            return activeChatIdRef.current;
+        }
+
+        setIsCreatingChat(true);
+        try {
+            const res = await fetch('/api/chat/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to create chat');
+            }
+
+            const { id: newChatId } = await res.json();
+
+            // Update BOTH the ref (immediate, for async code) and state (for re-renders)
+            activeChatIdRef.current = newChatId;
+            setActiveChatId(newChatId);
+
+            // Silent URL update — uses the native History API so Next.js does NOT
+            // trigger a navigation cycle (which would remount this component and
+            // kill the active useChat stream).
+            window.history.replaceState(null, '', `/chat/${newChatId}`);
+
+            // Notify sidebar components to prepend this new chat to their list
+            window.dispatchEvent(new CustomEvent('chat-created', {
+                detail: { id: newChatId, title: 'Nova Conversa', updated_at: new Date().toISOString() },
+            }));
+
+            return newChatId;
+        } finally {
+            setIsCreatingChat(false);
+        }
+    }, []);
+
+    /**
+     * Handle file upload flow — sends FormData to /api/chat/upload
+     * and manually processes the streaming response.
+     */
+    const handleFileUpload = useCallback(async (messageText: string, file: File, chatId: string) => {
+        setIsUploading(true);
+
+        // Create a temporary user message ID
+        const userMsgId = `user-${Date.now()}`;
+
+        // Track file attachment for display
+        const isImage = file.type.startsWith("image/");
+        let previewUrl: string | undefined;
+        if (isImage) {
+            // Convert to base64 data URL (persistent across renders, no blob leak)
+            const buf = await file.arrayBuffer();
+            const base64 = btoa(
+                new Uint8Array(buf).reduce((s, b) => s + String.fromCharCode(b), "")
+            );
+            previewUrl = `data:${file.type};base64,${base64}`;
+        }
+        const attachment: FileAttachment = {
+            name: file.name,
+            type: isImage ? "image" : "pdf",
+            previewUrl,
+        };
+        setMessageAttachments(prev => ({ ...prev, [userMsgId]: attachment }));
+
+        // The display text for the user bubble (don't show extracted PDF text)
+        const displayText = messageText || (isImage ? "📷 Imagem enviada" : `📄 ${file.name}`);
+
+        // Add user message to the chat UI immediately
+        const userMessage: UIMessage = {
+            id: userMsgId,
+            role: "user",
+            parts: [{ type: "text" as const, text: displayText }],
+        };
+        setMessages(prev => [...prev, userMessage]);
+
+        // Save user message to DB (fire-and-forget)
+        fetch('/api/chat/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chatId,
+                role: 'user',
+                content: displayText,
+            }),
+        }).catch(err => console.error('[ChatInterface] Failed to save user message:', err));
+
+        try {
+            // Build FormData
+            const formData = new FormData();
+            formData.append("message", messageText);
+            formData.append("file", file);
+            formData.append("messages", JSON.stringify(messages));
+
+            const response = await fetch("/api/chat/upload", {
+                method: "POST",
+                body: formData,
+                // Do NOT set Content-Type — browser sets it with boundary
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: "Erro desconhecido" }));
+
+                if (errorData.error === "PAYWALL_LIMIT_REACHED") {
+                    // Remove the user message that was already added
+                    setMessages(prev => prev.filter(m => m.id !== userMsgId));
+                    const resetAt = errorData.reset_at ?? new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString();
+                    setLimitResetAt(resetAt);
+                    return;
+                }
+
+                // Show error as assistant message
+                const errorMsg: UIMessage = {
+                    id: `error-${Date.now()}`,
+                    role: "assistant",
+                    parts: [{ type: "text" as const, text: `⚠️ ${errorData.error || "Erro ao processar arquivo."}` }],
+                };
+                setMessages(prev => [...prev, errorMsg]);
+                return;
+            }
+
+            // Read the streaming response
+            const reader = response.body?.getReader();
+            if (!reader) throw new Error("No response body");
+
+            const decoder = new TextDecoder();
+            const assistantMsgId = `assistant-${Date.now()}`;
+            let fullText = "";
+            let lineBuffer = "";
+
+            // Add empty assistant message that we'll stream into
+            setMessages(prev => [
+                ...prev,
+                {
+                    id: assistantMsgId,
+                    role: "assistant" as const,
+                    parts: [{ type: "text" as const, text: "" }],
+                },
+            ]);
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+
+                // Parse AI SDK UI stream protocol
+                // Format: "type:data\n" — we look for text parts ("0:text\n")
+                // Buffer partial lines across chunks to avoid splitting mid-JSON
+                const lines = (lineBuffer + chunk).split("\n");
+                // Last element may be incomplete — keep it for next chunk
+                lineBuffer = lines.pop() ?? "";
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+
+                    // AI SDK UI message stream format: "0:string" for text deltas
+                    if (line.startsWith("0:")) {
+                        try {
+                            const textDelta = JSON.parse(line.slice(2));
+                            if (typeof textDelta === "string") {
+                                fullText += textDelta;
+                            }
+                        } catch {
+                            // Not valid JSON, skip
+                        }
+                    }
+                }
+
+                // Update the assistant message with accumulated text
+                setMessages(prev =>
+                    prev.map(msg =>
+                        msg.id === assistantMsgId
+                            ? {
+                                ...msg,
+                                parts: [{ type: "text" as const, text: fullText }],
+                            }
+                            : msg
+                    )
+                );
+            }
+
+            // Save assistant response to DB
+            if (fullText) {
+                fetch('/api/chat/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chatId,
+                        role: 'assistant',
+                        content: fullText,
+                    }),
+                }).catch(err => console.error('[ChatInterface] Failed to save AI message:', err));
+            }
+        } catch (err) {
+            console.error("[ChatInterface] File upload error:", err);
+            const errorMsg: UIMessage = {
+                id: `error-${Date.now()}`,
+                role: "assistant",
+                parts: [{ type: "text" as const, text: "⚠️ Ocorreu um erro ao processar o arquivo. Tente novamente." }],
+            };
+            setMessages(prev => [...prev, errorMsg]);
+        } finally {
+            setIsUploading(false);
+        }
+    }, [messages, setMessages]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (input.trim() && status === "ready") {
-            // Save user message to database first
-            try {
-                await fetch('/api/chat/save', {
+
+        // 1. Capture & validate input immediately
+        const trimmedInput = input.trim();
+        const currentFile = selectedFile;
+
+        if (!trimmedInput && !currentFile) return;
+        if (status !== "ready" || isCreatingChat || showPaywall || isUploading || limitResetAt) return;
+
+        // 2. Clear input immediately for optimistic UX
+        setInput("");
+        setSelectedFile(null);
+
+        try {
+            // 3. Lazy creation: get the definitive chatId
+            const chatId = await ensureChatExists();
+
+            if (currentFile) {
+                // ── File upload flow ─────────────────────────────────────
+                await handleFileUpload(trimmedInput, currentFile, chatId);
+            } else {
+                // ── Normal text flow (unchanged) ─────────────────────────
+                // Fire-and-forget: persist user message to Supabase
+                fetch('/api/chat/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         chatId,
                         role: 'user',
-                        content: input.trim(),
+                        content: trimmedInput,
                     }),
-                });
-            } catch (err) {
-                console.error('[ChatInterface] Failed to save user message:', err);
-            }
+                }).catch(err => console.error('[ChatInterface] Failed to save user message:', err));
 
-            // Then send to AI
-            sendMessage({ text: input });
-            setInput("");
+                // Send to AI
+                sendMessage({ text: trimmedInput });
+            }
+        } catch (err) {
+            console.error('[ChatInterface] Failed to send message:', err);
+            // Restore input on failure so the user doesn't lose their text
+            setInput(trimmedInput);
         }
     };
 
-    const isLoading = status !== "ready";
+    const isLimitReached = limitResetAt !== null;
+    const isLoading = status !== "ready" || isCreatingChat || isUploading;
 
-    // Auto-scroll to bottom
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
 
     const getMessageText = (message: typeof messages[number]): string => {
         // Handle parts array format (AI SDK v6)
@@ -209,106 +657,130 @@ export function ChatInterface({ chatId, initialMessages }: ChatInterfaceProps) {
     };
 
     return (
-        <div className="flex h-screen h-[100dvh] bg-[#0C0C0D] text-foreground overflow-hidden">
-
-
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0 bg-[#0C0C0D]">
-                <Header title="Otto" />
-
-                {/* Messages Container */}
-                <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-8 scroll-smooth">
-                    <div className="max-w-3xl mx-auto">
-                        {/* Welcome message */}
-                        {messages.length === 0 && (
-                            <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center px-4">
-                                <div className="w-16 h-16 rounded-full border border-white/[0.05] bg-[#1A1A1C] flex items-center justify-center mb-6">
-                                    <OctopusIcon size={28} className="text-zinc-100" />
-                                </div>
-                                <h2 className="text-3xl md:text-4xl font-serif font-medium text-zinc-100 mb-3 tracking-tight">
-                                    Olá, eu sou o Otto.
-                                </h2>
-                                <p className="text-zinc-500 max-w-md text-sm md:text-base font-sans leading-relaxed">
-                                    Seu explorador do conhecimento. Como posso ajudar você hoje?
-                                </p>
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-background">
+            {/* Messages Container */}
+            <div ref={containerRef} className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-8 scroll-smooth">
+                <div className="max-w-3xl mx-auto">
+                    {/* Welcome message */}
+                    {messages.length === 0 && (
+                        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center px-4">
+                            <div className="mb-6">
+                                <OctopusIcon className="w-16 h-16 text-4xl" />
                             </div>
-                        )}
+                            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-serif font-medium text-foreground mb-3 tracking-tight">
+                                Olá, eu sou o Otto.
+                            </h2>
+                            <p className="text-muted-foreground max-w-md text-sm md:text-base font-sans leading-relaxed">
+                                Seu explorador do conhecimento. Como posso ajudar você hoje?
+                            </p>
+                        </div>
+                    )}
 
-                        {/* Message bubbles */}
-                        {messages.map((message) => {
-                            const isUser = message.role === 'user';
-                            const messageText = getMessageText(message);
+                    {/* Message bubbles */}
+                    {messages.map((message) => {
+                        const isUser = message.role === 'user';
+                        const messageText = getMessageText(message);
+                        const attachment = messageAttachments[message.id];
 
-                            return (
+                        return (
+                            <div
+                                key={message.id}
+                                className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6 group`}
+                            >
+                                {!isUser && (
+                                    <div className="mr-4 mt-1">
+                                        <OctopusIcon className="w-8 h-8 text-lg rounded-full" />
+                                    </div>
+                                )}
+
                                 <div
-                                    key={message.id}
-                                    className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6 group`}
+                                    className={`max-w-[95%] sm:max-w-[90%] md:max-w-[85%] relative ${isUser
+                                        ? 'bg-card text-foreground rounded-2xl rounded-tr-sm px-5 py-3 border border-border'
+                                        : 'text-foreground px-0 py-2'
+                                        }`}
                                 >
-                                    {!isUser && (
-                                        <div className="flex-shrink-0 w-8 h-8 rounded-full border border-white/[0.05] bg-[#1A1A1C] flex items-center justify-center mr-4 mt-1">
-                                            <OctopusIcon size={14} className="text-zinc-100" />
-                                        </div>
-                                    )}
-
-                                    <div
-                                        className={`max-w-[90%] md:max-w-[85%] relative ${isUser
-                                            ? 'bg-[#1A1A1C] text-zinc-100 rounded-2xl rounded-tr-sm px-5 py-3 border border-white/[0.05]'
-                                            : 'text-zinc-300 px-0 py-2'
-                                            }`}
-                                    >
-                                        {isUser ? (
+                                    {isUser ? (
+                                        <div>
+                                            {/* File attachment display */}
+                                            {attachment && (
+                                                <div className="mb-2">
+                                                    {attachment.type === "image" && attachment.previewUrl ? (
+                                                        <img
+                                                            src={attachment.previewUrl}
+                                                            alt="Imagem enviada"
+                                                            className="rounded-lg max-w-[200px] max-h-[150px] object-cover border border-border"
+                                                        />
+                                                    ) : attachment.type === "pdf" ? (
+                                                        <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg border border-border">
+                                                            <FileText className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                                            <span className="text-xs text-muted-foreground truncate max-w-[180px]">
+                                                                {attachment.name}
+                                                            </span>
+                                                        </div>
+                                                    ) : null}
+                                                </div>
+                                            )}
                                             <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words font-sans">
                                                 {messageText}
                                             </p>
-                                        ) : (
-                                            <div className="prose prose-sm prose-invert max-w-none prose-p:text-zinc-400 prose-headings:font-serif prose-headings:text-zinc-200">
-                                                <ReactMarkdown
-                                                    remarkPlugins={[remarkGfm]}
-                                                    components={MarkdownComponents}
-                                                >
-                                                    {messageText}
-                                                </ReactMarkdown>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-
-                        {/* Loading indicator */}
-                        {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
-                            <div className="flex justify-start mb-6">
-                                <div className="flex-shrink-0 w-8 h-8 rounded-full border border-white/[0.05] bg-[#1A1A1C] flex items-center justify-center mr-4">
-                                    <OctopusIcon size={14} className="text-zinc-100" />
-                                </div>
-                                <div className="px-0 py-2">
-                                    <div className="flex space-x-2">
-                                        <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                                        <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                                        <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                                    </div>
+                                        </div>
+                                    ) : (
+                                        <div className="prose prose-sm prose-invert max-w-none prose-p:text-foreground prose-headings:font-serif prose-headings:text-foreground">
+                                            <ReactMarkdown
+                                                remarkPlugins={[remarkGfm]}
+                                                components={MarkdownComponents}
+                                            >
+                                                {messageText}
+                                            </ReactMarkdown>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        )}
+                        );
+                    })}
 
-                        <div ref={messagesEndRef} />
-                    </div>
-                </div>
+                    {/* Loading indicator */}
+                    {status !== "ready" && messages[messages.length - 1]?.role !== 'assistant' && (
+                        <div className="flex justify-start mb-6">
+                            <div className="mr-4">
+                                <OctopusIcon className="w-8 h-8 text-lg rounded-full" />
+                            </div>
+                            <div className="px-0 py-2">
+                                <div className="flex space-x-2">
+                                    <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                    <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                    <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
-                {/* Input Area */}
-                <div className="bg-[#0C0C0D] px-4 pb-6 pt-2">
-                    <div className="max-w-3xl mx-auto">
-                        <AstroChatInput
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onSubmit={handleSubmit}
-                            isLoading={isLoading}
-                            placeholder="Pergunte qualquer coisa..."
-                        />
-                        <p className="text-center text-[10px] text-zinc-600 mt-3 font-sans">Otto pode cometer erros. Verifique informações importantes.</p>
-                    </div>
+                    <div ref={messagesEndRef} />
                 </div>
             </div>
+
+            {/* Inline limit banner — shown instead of the input when limit is reached */}
+            {isLimitReached && limitResetAt ? (
+                <LimitBanner resetAt={limitResetAt} />
+            ) : null}
+
+            {/* Input Area */}
+            <div className="bg-background px-4 pb-6 pt-2">
+                <div className="max-w-3xl mx-auto">
+                    <AstroChatInput
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onSubmit={handleSubmit}
+                        onFileChange={setSelectedFile}
+                        isLoading={isLoading || showPaywall || isLimitReached}
+                        placeholder={isLimitReached ? "Limite atingido. Aguarde a renovação ou faça upgrade." : "Pergunte qualquer coisa..."}
+                    />
+                    <p className="text-center text-[10px] text-muted-foreground mt-3 font-sans">Otto pode cometer erros. Verifique informações importantes.</p>
+                </div>
+            </div>
+
+            {/* Paywall Modal — dismissable, but server re-blocks on next attempt */}
+            {showPaywall && <PaywallModal onClose={() => setShowPaywall(false)} />}
         </div>
     );
 }

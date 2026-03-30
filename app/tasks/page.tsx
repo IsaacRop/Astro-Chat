@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
 import { Plus, Trash2, GripVertical, Calendar, Loader2 } from "lucide-react";
 import { useEffect, useState, useCallback, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -54,7 +53,7 @@ export default function TasksPage() {
 
                 if (!user) {
                     setIsAuthenticated(false);
-                    router.replace("/?redirect=tasks");
+                    router.replace("/?authRequired=true");
                     return;
                 }
 
@@ -171,25 +170,18 @@ export default function TasksPage() {
         setDragOverColumn(null);
     };
 
-    // Loading state
     if (isLoading || isAuthenticated === null) {
         return (
-            <div className="min-h-screen min-h-[100dvh] bg-[#0C0C0D] text-foreground flex flex-col">
-                <Header title="Tarefas" />
-                <div className="flex-1 flex items-center justify-center">
-                    <Loader2 size={32} className="text-zinc-500 animate-spin" />
-                </div>
+            <div className="flex flex-col flex-1 items-center justify-center">
+                <Loader2 size={32} className="text-muted-foreground animate-spin" />
             </div>
         );
     }
 
-    return (
-        <div className="min-h-screen min-h-[100dvh] bg-[#0C0C0D] text-foreground flex flex-col overflow-x-hidden">
-            <Header title="Tarefas" />
-
             {/* Mobile: Vertical Stack / Desktop: Horizontal Kanban */}
+            return (
             <main className="flex-1 p-4 md:p-8 overflow-x-auto">
-                <div className="flex flex-col md:flex-row gap-6 md:gap-8 md:min-w-max h-full">
+                <div className="flex flex-col md:flex-row gap-6 md:gap-8 lg:min-w-max h-full">
                     {columns.map((column) => (
                         <div
                             key={column.id}
@@ -204,15 +196,15 @@ export default function TasksPage() {
                                                 'bg-zinc-500'
                                             }`}
                                     />
-                                    <h2 className="font-serif font-medium text-lg text-zinc-200 tracking-tight">{column.title}</h2>
-                                    <span className="text-zinc-600 text-sm font-sans">
+                                    <h2 className="font-serif font-medium text-lg text-foreground tracking-tight">{column.title}</h2>
+                                    <span className="text-muted-foreground text-sm font-sans">
                                         {getTasksByStatus(column.id).length}
                                     </span>
                                 </div>
                                 <button
                                     onClick={() => setAddingToColumn(column.id)}
                                     disabled={isPending}
-                                    className="p-1.5 rounded-lg hover:bg-white/5 text-zinc-500 hover:text-zinc-200 transition-colors disabled:opacity-50"
+                                    className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                                 >
                                     <Plus size={18} strokeWidth={1.5} />
                                 </button>
@@ -220,9 +212,9 @@ export default function TasksPage() {
 
                             {/* Column Content */}
                             <div
-                                className={`flex-1 bg-[#1A1A1C]/50 border rounded-2xl p-3 space-y-3 min-h-[200px] md:min-h-[400px] backdrop-blur-sm transition-all ${dragOverColumn === column.id
-                                    ? 'border-zinc-500 bg-zinc-800/30'
-                                    : 'border-white/[0.02]'
+                                className={`flex-1 bg-card/50 border rounded-2xl p-3 space-y-3 min-h-[200px] md:min-h-[400px] backdrop-blur-sm transition-all ${dragOverColumn === column.id
+                                    ? 'border-primary bg-primary/5'
+                                    : 'border-border'
                                     }`}
                                 onDragOver={(e) => handleDragOver(e, column.id)}
                                 onDragLeave={handleDragLeave}
@@ -237,7 +229,7 @@ export default function TasksPage() {
                                             exit={{ opacity: 0, height: 0 }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="bg-[#1A1A1C] border border-white/[0.05] rounded-xl p-3 space-y-3 shadow-xl">
+                                            <div className="bg-card border border-border rounded-xl p-3 space-y-3 shadow-xl">
                                                 <input
                                                     type="text"
                                                     value={newTaskTitle}
@@ -248,16 +240,16 @@ export default function TasksPage() {
                                                     }}
                                                     placeholder="Nova tarefa..."
                                                     autoFocus
-                                                    className="w-full px-3 py-2 bg-[#0C0C0D] border border-white/[0.05] rounded-lg text-zinc-200 placeholder-zinc-600 text-sm focus:outline-none focus:border-white/[0.2] transition-colors"
+                                                    className="w-full px-3 py-2 min-h-[44px] bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:border-primary/50 transition-colors"
                                                 />
                                                 <div className="flex items-center gap-2">
-                                                    <Calendar size={14} className="text-zinc-500 flex-shrink-0" strokeWidth={1.5} />
+                                                    <Calendar size={14} className="text-muted-foreground flex-shrink-0" strokeWidth={1.5} />
                                                     <input
                                                         type="date"
                                                         value={newTaskDate}
                                                         onChange={(e) => setNewTaskDate(e.target.value)}
                                                         min={today}
-                                                        className="flex-1 px-2 py-1.5 bg-[#0C0C0D] border border-white/[0.05] rounded-lg text-zinc-400 text-xs focus:outline-none focus:border-white/[0.2] transition-colors"
+                                                        className="flex-1 px-2 py-2 min-h-[44px] bg-muted border border-border rounded-lg text-foreground/80 text-xs focus:outline-none focus:border-primary/50 transition-colors"
                                                         placeholder="Data (opcional)"
                                                     />
                                                 </div>
@@ -265,13 +257,13 @@ export default function TasksPage() {
                                                     <button
                                                         onClick={() => handleAddTask(column.id)}
                                                         disabled={isPending || !newTaskTitle.trim()}
-                                                        className="flex-1 px-3 py-1.5 rounded-lg bg-zinc-100 text-zinc-900 text-sm font-medium hover:bg-white transition-colors disabled:opacity-50"
+                                                        className="flex-1 px-3 py-2 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
                                                     >
                                                         {isPending ? <Loader2 size={14} className="animate-spin mx-auto" /> : "Adicionar"}
                                                     </button>
                                                     <button
                                                         onClick={() => setAddingToColumn(null)}
-                                                        className="px-3 py-1.5 rounded-lg border border-white/[0.05] text-zinc-400 text-sm hover:bg-white/[0.05] hover:text-zinc-200 transition-colors"
+                                                        className="px-3 py-2 min-h-[44px] rounded-lg border border-border text-muted-foreground text-sm hover:bg-muted hover:text-foreground transition-colors"
                                                     >
                                                         Cancelar
                                                     </button>
@@ -292,27 +284,26 @@ export default function TasksPage() {
                                         draggable
                                         onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, task.id)}
                                         onDragEnd={handleDragEnd}
-                                        className={`bg-[#1A1A1C] border border-white/[0.05] rounded-xl p-4 group hover:border-white/[0.1] transition-all relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedTaskId === task.id ? 'opacity-50 scale-95' : ''
+                                        className={`bg-card border border-border rounded-xl p-4 group hover:border-primary/50 transition-all relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedTaskId === task.id ? 'opacity-50 scale-95' : ''
                                             }`}
                                     >
                                         <div className="flex items-start gap-3">
-                                            <div className="pt-1 text-zinc-600 group-hover:text-zinc-400 transition-opacity hidden md:block">
+                                            <div className="pt-1 text-muted-foreground group-hover:text-foreground transition-opacity hidden md:block">
                                                 <GripVertical size={14} strokeWidth={1.5} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-zinc-200 text-sm font-medium break-words leading-relaxed font-sans">
+                                                <p className="text-foreground text-sm font-medium break-words leading-relaxed font-sans">
                                                     {task.title}
                                                 </p>
                                                 <div className="flex items-center gap-2 mt-3 flex-wrap">
                                                     <div
-                                                        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${task.color === 'green' ? 'bg-emerald-500' :
-                                                            task.color === 'orange' ? 'bg-amber-500' :
-                                                                task.color === 'blue' ? 'bg-blue-500' :
-                                                                    'bg-purple-500'
+                                                        className={`w-2 h-2 rounded-full ${task.priority === 'high' ? 'bg-red-500' :
+                                                            task.priority === 'medium' ? 'bg-yellow-500' :
+                                                                'bg-primary'
                                                             }`}
                                                     />
                                                     {task.due_date && (
-                                                        <span className="text-[10px] text-zinc-500 flex items-center gap-1 bg-white/[0.03] px-2 py-0.5 rounded-full border border-white/[0.02]">
+                                                        <span className="text-[10px] text-muted-foreground flex items-center gap-1 bg-muted px-2 py-0.5 rounded-full border border-border">
                                                             <Calendar size={10} strokeWidth={1.5} />
                                                             {new Date(task.due_date + 'T00:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
                                                         </span>
@@ -323,7 +314,7 @@ export default function TasksPage() {
                                                             <button
                                                                 onClick={() => moveTask(task.id, column.id === "done" ? "inprogress" : "todo")}
                                                                 disabled={isPending}
-                                                                className="text-[10px] uppercase tracking-wider text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded hover:bg-white/[0.05] transition-colors disabled:opacity-50"
+                                                                className="text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition-colors disabled:opacity-50"
                                                             >
                                                                 ← Voltar
                                                             </button>
@@ -332,7 +323,7 @@ export default function TasksPage() {
                                                             <button
                                                                 onClick={() => moveTask(task.id, column.id === "todo" ? "inprogress" : "done")}
                                                                 disabled={isPending}
-                                                                className="text-[10px] uppercase tracking-wider text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded hover:bg-white/[0.05] transition-colors disabled:opacity-50"
+                                                                className="text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted transition-colors disabled:opacity-50"
                                                             >
                                                                 Avançar →
                                                             </button>
@@ -343,7 +334,7 @@ export default function TasksPage() {
                                             <button
                                                 onClick={() => handleDeleteTask(task.id)}
                                                 disabled={isPending}
-                                                className="p-1.5 rounded-lg md:opacity-0 md:group-hover:opacity-100 hover:bg-red-500/10 text-zinc-600 hover:text-red-500 transition-all flex-shrink-0 absolute top-2 right-2 disabled:opacity-50"
+                                                className="p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all flex-shrink-0 absolute top-2 right-2 disabled:opacity-50"
                                             >
                                                 <Trash2 size={14} strokeWidth={1.5} />
                                             </button>
@@ -353,7 +344,7 @@ export default function TasksPage() {
 
                                 {/* Empty state */}
                                 {getTasksByStatus(column.id).length === 0 && addingToColumn !== column.id && (
-                                    <div className="text-center py-10 text-zinc-700 text-sm font-serif italic">
+                                    <div className="text-center py-10 text-muted-foreground text-sm font-serif italic">
                                         Nenhuma tarefa
                                     </div>
                                 )}
@@ -362,6 +353,5 @@ export default function TasksPage() {
                     ))}
                 </div>
             </main>
-        </div>
-    );
+        );
 }

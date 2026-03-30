@@ -46,7 +46,7 @@ const FilePreviewCard: React.FC<FilePreviewCardProps> = ({
             className={cn(
                 "relative group flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden",
                 "border border-border bg-card animate-in fade-in-0 slide-in-from-bottom-2",
-                "transition-all hover:border-accent-purple/50"
+                "transition-all hover:border-primary/50"
             )}
         >
             {isImage ? (
@@ -105,6 +105,7 @@ interface AstroChatInputProps {
     value: string;
     onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
     onSubmit: (e: React.FormEvent) => void;
+    onFileChange?: (file: File | null) => void;
     isLoading?: boolean;
     placeholder?: string;
 }
@@ -113,6 +114,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
     value,
     onChange,
     onSubmit,
+    onFileChange,
     isLoading = false,
     placeholder = "Como posso ajudar você hoje?",
 }) => {
@@ -131,33 +133,43 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
         }
     }, [value]);
 
-    // File Handling
+    // Auto-focus input when loading ends so the user can keep typing
+    const prevLoadingRef = useRef(isLoading);
+    useEffect(() => {
+        if (prevLoadingRef.current && !isLoading) {
+            textareaRef.current?.focus();
+        }
+        prevLoadingRef.current = isLoading;
+    }, [isLoading]);
+
+    // Notify parent when file changes
+    useEffect(() => {
+        if (onFileChange) {
+            onFileChange(files.length > 0 ? files[0].file : null);
+        }
+    }, [files, onFileChange]);
+
+    // File Handling — single file, restricted types
     const handleFiles = useCallback((newFilesList: FileList | File[]) => {
-        const newFiles = Array.from(newFilesList).map((file) => {
-            const isImage =
-                file.type.startsWith("image/") ||
-                /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.name);
-            return {
-                id: Math.random().toString(36).substr(2, 9),
-                file,
-                type: isImage ? "image/unknown" : file.type || "application/octet-stream",
-                preview: isImage ? URL.createObjectURL(file) : null,
-                uploadStatus: "pending",
-            };
-        });
+        const fileArray = Array.from(newFilesList);
+        // Take only the first file (single upload)
+        const file = fileArray[0];
+        if (!file) return;
 
-        setFiles((prev) => [...prev, ...newFiles]);
+        const isImage =
+            file.type.startsWith("image/") ||
+            /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name);
 
-        // Simulate upload completion
-        newFiles.forEach((f) => {
-            setTimeout(() => {
-                setFiles((prev) =>
-                    prev.map((p) =>
-                        p.id === f.id ? { ...p, uploadStatus: "complete" } : p
-                    )
-                );
-            }, 800 + Math.random() * 500);
-        });
+        const attached: AttachedFile = {
+            id: Math.random().toString(36).substr(2, 9),
+            file,
+            type: isImage ? file.type || "image/unknown" : file.type || "application/octet-stream",
+            preview: isImage ? URL.createObjectURL(file) : null,
+            uploadStatus: "complete",
+        };
+
+        // Replace any existing file (single file mode)
+        setFiles([attached]);
     }, []);
 
     // Drag & Drop
@@ -191,11 +203,25 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
         }
     };
 
+    const removeFile = (id: string) => {
+        setFiles((prev) => {
+            const removed = prev.find((f) => f.id === id);
+            if (removed?.preview) URL.revokeObjectURL(removed.preview);
+            return prev.filter((f) => f.id !== id);
+        });
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (isLoading) return; // Block submission during loading
         if (!value.trim() && files.length === 0) return;
         onSubmit(e);
+        // Clear files after submit
+        files.forEach((f) => {
+            if (f.preview) URL.revokeObjectURL(f.preview);
+        });
         setFiles([]);
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -218,8 +244,8 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
             <div
                 className={cn(
                     "flex flex-col items-stretch transition-all duration-200 relative z-10",
-                    "rounded-2xl cursor-text border border-white/[0.05]",
-                    "shadow-sm bg-[#1A1A1C] backdrop-blur-xl"
+                    "rounded-2xl cursor-text shadow-sm backdrop-blur-xl",
+                    "bg-card border-border border"
                 )}
             >
                 <div className="flex flex-col px-3 pt-3 pb-2 gap-2">
@@ -230,9 +256,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 <FilePreviewCard
                                     key={file.id}
                                     file={file}
-                                    onRemove={(id) =>
-                                        setFiles((prev) => prev.filter((f) => f.id !== id))
-                                    }
+                                    onRemove={removeFile}
                                 />
                             ))}
                         </div>
@@ -240,7 +264,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
 
                     {/* Input Area */}
                     <div className="relative">
-                        <div className="max-h-48 w-full overflow-y-auto">
+                        <div className="max-h-36 md:max-h-48 w-full overflow-y-auto">
                             <textarea
                                 ref={textareaRef}
                                 value={value}
@@ -251,8 +275,8 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 disabled={isLoading}
                                 className={cn(
                                     "w-full bg-transparent border-0 outline-none",
-                                    "text-zinc-200 text-base font-sans",
-                                    "placeholder:text-zinc-500",
+                                    "text-foreground text-base font-sans",
+                                    "placeholder:text-muted-foreground",
                                     "resize-none overflow-hidden py-1 leading-relaxed",
                                     "disabled:opacity-50"
                                 )}
@@ -272,8 +296,8 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 onClick={() => fileInputRef.current?.click()}
                                 className={cn(
                                     "inline-flex items-center justify-center",
-                                    "h-10 w-10 rounded-lg transition-colors",
-                                    "text-zinc-500 hover:text-zinc-200 hover:bg-white/5"
+                                    "h-10 w-10 min-h-[44px] min-w-[44px] rounded-lg transition-colors",
+                                    "text-muted-foreground hover:text-foreground hover:bg-muted"
                                 )}
                                 type="button"
                                 aria-label="Anexar arquivo"
@@ -282,7 +306,7 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                             </button>
 
                             {/* AI Enhancement indicator */}
-                            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/[0.03] text-zinc-400 text-xs font-medium border border-white/[0.05]">
+                            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-muted text-muted-foreground text-xs font-medium border border-border">
                                 <Sparkles className="w-3 h-3" />
                                 <span className="hidden sm:inline">Otto AI</span>
                             </div>
@@ -295,10 +319,10 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
                                 disabled={!hasContent || isLoading}
                                 className={cn(
                                     "inline-flex items-center justify-center",
-                                    "h-10 w-10 rounded-lg transition-all duration-200",
+                                    "h-10 w-10 min-h-[44px] min-w-[44px] rounded-lg transition-all duration-200",
                                     hasContent && !isLoading
-                                        ? "bg-zinc-100 text-zinc-900 shadow-sm hover:bg-white"
-                                        : "bg-white/[0.05] text-zinc-600 cursor-not-allowed"
+                                        ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                                        : "bg-muted text-muted-foreground cursor-not-allowed"
                                 )}
                                 type="button"
                                 aria-label="Enviar mensagem"
@@ -316,19 +340,19 @@ export const AstroChatInput: React.FC<AstroChatInputProps> = ({
 
             {/* Drag Overlay */}
             {isDragging && (
-                <div className="absolute inset-0 bg-[#1A1A1C]/90 border border-white/[0.1] rounded-2xl z-50 flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none">
-                    <Archive className="w-8 h-8 text-zinc-300 mb-2 animate-bounce" strokeWidth={1.5} />
-                    <p className="text-zinc-300 font-medium text-sm font-sans">
+                <div className="absolute inset-0 bg-background/90 border border-border rounded-2xl z-50 flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none">
+                    <Archive className="w-8 h-8 text-muted-foreground mb-2 animate-bounce" strokeWidth={1.5} />
+                    <p className="text-muted-foreground font-medium text-sm font-sans">
                         Solte os arquivos aqui
                     </p>
                 </div>
             )}
 
-            {/* Hidden File Input */}
+            {/* Hidden File Input — restricted to PDF + images */}
             <input
                 ref={fileInputRef}
                 type="file"
-                multiple
+                accept=".pdf,image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
                 onChange={(e) => {
                     if (e.target.files) handleFiles(e.target.files);

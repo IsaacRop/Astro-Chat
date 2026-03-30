@@ -1,7 +1,6 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Header } from '@/components/Header';
 
 // Dynamic import the entire GraphVisualization component with SSR disabled
 const GraphVisualization = dynamic(
@@ -9,8 +8,8 @@ const GraphVisualization = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div className="flex-1 flex items-center justify-center bg-background px-4">
-                <div className="text-muted-foreground animate-pulse text-center text-sm md:text-base">Loading cosmic graph...</div>
+            <div className="flex-1 flex items-center justify-center bg-background px-4 min-h-[200px]">
+                <div className="text-muted-foreground animate-pulse text-center text-sm">Carregando grafo...</div>
             </div>
         ),
     }
@@ -18,14 +17,8 @@ const GraphVisualization = dynamic(
 
 export default function CadernosPage() {
     return (
-        <div className="min-h-screen min-h-[100dvh] bg-[#0C0C0D] text-foreground flex flex-col overflow-hidden">
-            {/* Shared Header */}
-            <Header title="Cadernos" />
-
-            {/* Dynamic Graph Component - fits remaining height */}
-            <div className="flex-1 relative overflow-hidden bg-[#0C0C0D]">
+            <div className="h-full relative overflow-hidden bg-[#F5F9F6]">
                 <GraphVisualization />
             </div>
-        </div>
     );
 }

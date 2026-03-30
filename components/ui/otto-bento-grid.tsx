@@ -29,8 +29,8 @@ function ChatPreview() {
     return (
         <div className="flex flex-col gap-2 h-full justify-center">
             <div className="flex gap-2">
-                <div className="w-6 h-6 rounded-full bg-accent-purple/50 flex items-center justify-center">
-                    <Sparkles size={12} className="text-accent-purple" />
+                <div className="w-6 h-6 rounded-full bg-primary/50 flex items-center justify-center">
+                    <Sparkles size={12} className="text-primary" />
                 </div>
                 <div className="flex-1 bg-white/10 rounded-xl rounded-bl-sm p-2">
                     <span className="text-xs text-white/80">Olá! Como posso ajudar?</span>
@@ -65,7 +65,7 @@ function CalendarPreview() {
                 <motion.div
                     key={day}
                     className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-medium ${day === activeDay
-                        ? "bg-accent-purple text-background"
+                        ? "bg-primary text-background"
                         : "bg-white/10 text-white/60"
                         }`}
                     animate={{ scale: day === activeDay ? 1.1 : 1 }}
@@ -294,12 +294,12 @@ function BentoCard({
     icon,
     children,
     className = "",
-    gradient = "from-accent-purple/20 to-accent-blue/20",
+    gradient = "from-primary/20 to-accent-blue/20",
 }: BentoCardProps) {
     return (
         <Link href={href}>
             <motion.div
-                className={`group relative bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-4 flex flex-col overflow-hidden cursor-pointer transition-colors hover:border-accent-purple/50 ${className}`}
+                className={`group relative bg-card/50 backdrop-blur-sm border border-border rounded-2xl p-4 flex flex-col overflow-hidden cursor-pointer transition-colors hover:border-primary/50 ${className}`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 initial={{ opacity: 0, y: 20 }}
@@ -316,7 +316,7 @@ function BentoCard({
 
                 {/* Footer */}
                 <div className="relative z-10 mt-3 flex items-center gap-2">
-                    <div className="text-accent-purple">{icon}</div>
+                    <div className="text-primary">{icon}</div>
                     <div>
                         <h3 className="font-medium text-foreground text-sm">{title}</h3>
                         <p className="text-muted-foreground text-xs">{description}</p>
@@ -337,7 +337,7 @@ export function OttoBentoGrid() {
                 description="Converse com Otto"
                 icon={<MessageCircle size={16} />}
                 className="col-span-2 row-span-2 min-h-[200px] md:min-h-[240px]"
-                gradient="from-accent-purple/30 to-accent-blue/20"
+                gradient="from-primary/30 to-accent-blue/20"
             >
                 <ChatPreview />
             </BentoCard>
@@ -349,7 +349,7 @@ export function OttoBentoGrid() {
                 description="Organize seu tempo"
                 icon={<Calendar size={16} />}
                 className="col-span-2 min-h-[120px]"
-                gradient="from-accent-blue/30 to-accent-purple/10"
+                gradient="from-accent-blue/30 to-primary/10"
             >
                 <CalendarPreview />
             </BentoCard>
@@ -373,7 +373,7 @@ export function OttoBentoGrid() {
                 description="Anote ideias"
                 icon={<FileText size={16} />}
                 className="min-h-[120px]"
-                gradient="from-accent-yellow/20 to-accent-purple/10"
+                gradient="from-accent-yellow/20 to-primary/10"
             >
                 <NotesPreview />
             </BentoCard>
@@ -397,7 +397,7 @@ export function OttoBentoGrid() {
                 description="Grafo de conhecimento"
                 icon={<Network size={16} />}
                 className="min-h-[120px]"
-                gradient="from-accent-purple/30 to-accent-blue/20"
+                gradient="from-primary/30 to-accent-blue/20"
             >
                 <GraphPreview />
             </BentoCard>
@@ -409,7 +409,7 @@ export function OttoBentoGrid() {
                 description="Itens salvos"
                 icon={<Star size={16} />}
                 className="min-h-[100px]"
-                gradient="from-accent-yellow/30 to-accent-purple/10"
+                gradient="from-accent-yellow/30 to-primary/10"
             >
                 <div className="flex items-center justify-center h-full">
                     <motion.div

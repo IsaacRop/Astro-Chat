@@ -297,27 +297,69 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          current_period_end: string | null
+          daily_message_count: number
           email: string | null
           full_name: string | null
           id: string
+          last_login_date: string | null
+          last_message_date: string | null
+          login_streak: number
           plan_tier: string | null
+          stripe_customer_id: string | null
+          subscription_status: string | null
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
+          current_period_end?: string | null
+          daily_message_count?: number
           email?: string | null
           full_name?: string | null
           id: string
+          last_login_date?: string | null
+          last_message_date?: string | null
+          login_streak?: number
           plan_tier?: string | null
+          stripe_customer_id?: string | null
+          subscription_status?: string | null
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
+          current_period_end?: string | null
+          daily_message_count?: number
           email?: string | null
           full_name?: string | null
           id?: string
+          last_login_date?: string | null
+          last_message_date?: string | null
+          login_streak?: number
           plan_tier?: string | null
+          stripe_customer_id?: string | null
+          subscription_status?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      enem_competencias: {
+        Row: {
+          id: number
+          area_id: number
+          codigo: string
+          nome: string
+        }
+        Insert: {
+          id?: number
+          area_id: number
+          codigo: string
+          nome: string
+        }
+        Update: {
+          id?: number
+          area_id?: number
+          codigo?: string
+          nome?: string
         }
         Relationships: []
       }
@@ -362,12 +404,71 @@ export type Database = {
           },
         ]
       }
+      user_xp: {
+        Row: {
+          id: string
+          user_id: string
+          xp_total: number
+          nivel_global: number
+          xp_por_area: Record<string, number>
+          nivel_por_area: Record<string, number>
+          streak_atual: number
+          streak_maximo: number
+          last_activity: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          xp_total?: number
+          nivel_global?: number
+          xp_por_area?: Record<string, number>
+          nivel_por_area?: Record<string, number>
+          streak_atual?: number
+          streak_maximo?: number
+          last_activity?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          xp_total?: number
+          nivel_global?: number
+          xp_por_area?: Record<string, number>
+          nivel_por_area?: Record<string, number>
+          streak_atual?: number
+          streak_maximo?: number
+          last_activity?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_xp_user_unique"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_xp: {
+        Args: {
+          p_user_id: string
+          p_source: string
+          p_amount: number
+          p_area_slug?: string | null
+          p_metadata?: string | null
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
