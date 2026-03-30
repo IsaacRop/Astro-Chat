@@ -28,7 +28,7 @@ export async function addXP(
     return null
   }
 
-  return data as AddXPResult
+  return data as unknown as AddXPResult
 }
 
 export async function getUserXP() {

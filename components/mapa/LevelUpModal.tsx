@@ -30,13 +30,13 @@ function ConfettiPiece({ i }: { i: number }) {
 }
 
 export function LevelUpModal({ event, onClose }: LevelUpModalProps) {
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
 
   useEffect(() => {
     if (event) {
       timerRef.current = setTimeout(onClose, 4000)
     }
-    return () => clearTimeout(timerRef.current)
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [event, onClose])
 
   if (!event) return null
