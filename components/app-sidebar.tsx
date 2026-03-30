@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Search, LogOut, User, Home, HelpCircle, Settings, Bell, Crown,
-    MessageSquare, BookOpen, FileText, Lightbulb, Star, CheckSquare, CalendarDays,
+    MessageSquare, Map, FileText, Lightbulb, Star, CheckSquare, CalendarDays,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -141,7 +141,7 @@ const mobileTabs: Array<{
 }> = [
     { id: "chat",       label: "Chat",       icon: MessageSquare, href: "/chat", badge: "Online",
       textClass: "text-[#4A9E6B]", bgClass: "bg-[#4A9E6B]/10", borderClass: "border-[#4A9E6B]" },
-    { id: "cadernos",   label: "Cadernos",   icon: BookOpen,      href: "/cadernos",       badge: "3",
+    { id: "mapa",       label: "Mapa",       icon: Map,           href: "/mapa",
       textClass: "text-[#5B9E9E]", bgClass: "bg-[#5B9E9E]/10", borderClass: "border-[#5B9E9E]" },
     { id: "notas",      label: "Notas",      icon: FileText,      href: "/notes",
       textClass: "text-[#6BBF8A]", bgClass: "bg-[#6BBF8A]/10", borderClass: "border-[#6BBF8A]" },

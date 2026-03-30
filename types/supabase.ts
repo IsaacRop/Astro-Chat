@@ -342,6 +342,27 @@ export type Database = {
         }
         Relationships: []
       }
+      enem_competencias: {
+        Row: {
+          id: number
+          area_id: number
+          codigo: string
+          nome: string
+        }
+        Insert: {
+          id?: number
+          area_id: number
+          codigo: string
+          nome: string
+        }
+        Update: {
+          id?: number
+          area_id?: number
+          codigo?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           created_at: string
@@ -383,12 +404,71 @@ export type Database = {
           },
         ]
       }
+      user_xp: {
+        Row: {
+          id: string
+          user_id: string
+          xp_total: number
+          nivel_global: number
+          xp_por_area: Record<string, number>
+          nivel_por_area: Record<string, number>
+          streak_atual: number
+          streak_maximo: number
+          last_activity: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          xp_total?: number
+          nivel_global?: number
+          xp_por_area?: Record<string, number>
+          nivel_por_area?: Record<string, number>
+          streak_atual?: number
+          streak_maximo?: number
+          last_activity?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          xp_total?: number
+          nivel_global?: number
+          xp_por_area?: Record<string, number>
+          nivel_por_area?: Record<string, number>
+          streak_atual?: number
+          streak_maximo?: number
+          last_activity?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_xp_user_unique"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_xp: {
+        Args: {
+          p_user_id: string
+          p_source: string
+          p_amount: number
+          p_area_slug?: string | null
+          p_metadata?: string | null
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

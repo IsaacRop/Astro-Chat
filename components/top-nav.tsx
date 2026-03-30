@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthModal } from "@/components/auth/auth-modal-provider";
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageSquare, BookOpen, FileText, Lightbulb, Star, CheckSquare, CalendarDays, FileCheck, Layers, Grid } from "lucide-react";
+import { MessageSquare, Map, FileText, Lightbulb, Star, CheckSquare, CalendarDays, FileCheck, Layers, Grid } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { usePendingTasksCount } from "@/hooks/usePendingTasksCount";
 
@@ -23,7 +23,7 @@ interface TabDef {
 const primaryTabs: TabDef[] = [
     { id: "chat",      label: "Chat",       icon: MessageSquare, href: "/chat", badge: "Online",
       textColor: "text-[#4A9E6B]", bgColor: "bg-[#DFF0E5]", indicatorColor: "bg-[#4A9E6B]" },
-    { id: "cadernos",  label: "Cadernos",   icon: BookOpen,      href: "/cadernos",
+    { id: "mapa",      label: "Mapa",       icon: Map,           href: "/mapa",
       textColor: "text-[#5B9E9E]", bgColor: "bg-[#DFF0F0]", indicatorColor: "bg-[#5B9E9E]" },
     { id: "provas",    label: "Provas",     icon: FileCheck,     href: "/provas",
       textColor: "text-[#C17D8A] dark:text-[#E8BDC4]", bgColor: "bg-[#F5E3E7] dark:bg-[#C17D8A]/20", indicatorColor: "bg-[#C17D8A] dark:bg-[#E8BDC4]" },

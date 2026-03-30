@@ -3,6 +3,7 @@ import { openai } from '@ai-sdk/openai'
 import { createClient } from "@/utils/supabase/server"
 import { getUserUsage, incrementUsage } from "@/app/actions/usage"
 import { buildSystemPrompt } from "@/lib/prompts/otto-system"
+import { addXP } from "@/lib/xp/actions"
 
 // Safety & Cost Configuration
 const MAX_CONTEXT_MESSAGES = 20;
@@ -16,8 +17,6 @@ export const maxDuration = 60;
  * Note: Message persistence is handled by /api/chat/save endpoint
  */
 export async function POST(request: Request) {
-    console.log('[Chat API] === REQUEST STARTED ===');
-
     try {
         // ── Auth ─────────────────────────────────────────────────────────────
         const supabase = await createClient();
@@ -43,16 +42,15 @@ export async function POST(request: Request) {
         incrementUsage("chat").catch(err =>
             console.error('[Chat API] Failed to increment usage:', err)
         );
+        // XP: +1 por mensagem enviada pelo usuário
+        addXP('chat_message').catch(console.error);
         // ─────────────────────────────────────────────────────────────────────
 
         const body = await request.json();
         const rawMessages = body.messages || [];
 
-        console.log('[Chat API] Received', rawMessages.length, 'messages');
-
         // Safety: Truncate context to last N messages
         const truncatedMessages = rawMessages.slice(-MAX_CONTEXT_MESSAGES);
-        console.log('[Chat API] Using last', truncatedMessages.length, 'messages for context');
 
         // Normalize messages to parts array format
         const normalizedMessages: UIMessage[] = truncatedMessages.map((message: {
@@ -74,7 +72,6 @@ export async function POST(request: Request) {
 
         // Convert to model messages
         const modelMessages = await convertToModelMessages(normalizedMessages);
-        console.log('[Chat API] Calling OpenAI with', modelMessages.length, 'messages');
 
         // Extract last user message for dynamic context injection
         const lastUserMsg = [...normalizedMessages]
@@ -86,8 +83,6 @@ export async function POST(request: Request) {
             .join(' ') ?? '';
 
         const systemPrompt = buildSystemPrompt(lastUserText);
-        // Debug: ~800 base, +~500 per area block, +~400 for redação
-        console.log('[Chat API] System prompt length:', systemPrompt.length, 'chars');
 
         const result = streamText({
             model: openai('gpt-4o-mini'),
@@ -96,7 +91,6 @@ export async function POST(request: Request) {
             maxOutputTokens: MAX_OUTPUT_TOKENS,
         });
 
-        console.log('[Chat API] Streaming response...');
         return result.toUIMessageStreamResponse();
     } catch (error) {
         console.error('[Chat API] Error:', error);
